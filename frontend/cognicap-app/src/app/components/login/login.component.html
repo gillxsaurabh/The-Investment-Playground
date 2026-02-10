@@ -1,0 +1,66 @@
+<div class="login-container">
+  <div class="login-card">
+    <div class="header">
+      <h1>CogniCap</h1>
+      <p class="subtitle">Trading Portfolio Dashboard</p>
+    </div>
+
+    <div class="login-content">
+      <div class="info-box" *ngIf="!showLoginUrl">
+        <p>Click below to get your Zerodha login URL</p>
+      </div>
+
+      <button 
+        class="btn btn-primary" 
+        (click)="getLoginUrl()"
+        [disabled]="isLoading"
+        *ngIf="!showLoginUrl">
+        <span *ngIf="!isLoading">Get Login URL</span>
+        <span *ngIf="isLoading">Loading...</span>
+      </button>
+
+      <div class="login-url-section" *ngIf="showLoginUrl">
+        <div class="success-box">
+          <p>Login URL opened in new window</p>
+          <small>If it didn't open, <a [href]="loginUrl" target="_blank">click here</a></small>
+        </div>
+
+        <div class="instructions">
+          <h3>Next Steps:</h3>
+          <ol>
+            <li>Login with your Zerodha credentials</li>
+            <li>After redirect, copy the <strong>request_token</strong> from URL</li>
+            <li>Paste it below and click Login</li>
+          </ol>
+        </div>
+
+        <div class="form-group">
+          <label for="requestToken">Request Token</label>
+          <input 
+            type="text" 
+            id="requestToken"
+            [(ngModel)]="requestToken"
+            placeholder="Paste your request token here"
+            [disabled]="isLoading"
+            (keyup.enter)="login()">
+        </div>
+
+        <button 
+          class="btn btn-success" 
+          (click)="login()"
+          [disabled]="isLoading || !requestToken.trim()">
+          <span *ngIf="!isLoading">Login to Dashboard</span>
+          <span *ngIf="isLoading">Authenticating...</span>
+        </button>
+      </div>
+
+      <div class="error-box" *ngIf="error">
+        {{ error }}
+      </div>
+    </div>
+
+    <div class="footer">
+      <small>Powered by Zerodha Kite API</small>
+    </div>
+  </div>
+</div>
