@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { KiteService } from '../../services/kite.service';
 import { ChatComponent } from '../chat/chat.component';
+import { MarketComponent } from '../market/market.component';
+import { HealthComponent } from '../health/health.component';
 
 interface Holding {
   tradingsymbol: string;
@@ -28,7 +30,7 @@ interface TopPerformer {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ChatComponent],
+  imports: [CommonModule, ChatComponent, MarketComponent, HealthComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss']
 })
@@ -40,6 +42,7 @@ export class DashboardComponent implements OnInit {
   topLosers: TopPerformer[] = [];
   isLoading: boolean = true;
   error: string = '';
+  activeTab: string = 'portfolio';
 
   constructor(
     private kiteService: KiteService,
@@ -106,6 +109,18 @@ export class DashboardComponent implements OnInit {
 
   refreshData(): void {
     this.loadPortfolioData();
+  }
+
+  switchTab(tab: string): void {
+    this.activeTab = tab;
+  }
+
+  isPortfolioTab(): boolean {
+    return this.activeTab === 'portfolio';
+  }
+
+  isMarketTab(): boolean {
+    return this.activeTab === 'market';
   }
 
   logout(): void {

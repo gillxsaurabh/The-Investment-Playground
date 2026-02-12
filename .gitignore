@@ -13,3 +13,22 @@ __pycache__/
 venv/
 env/
 backend/venv/
+
+# Node
+**/node_modules/
+npm-debug.log
+yarn-error.log
+
+# Angular
+**/.angular/
+
+# Build outputs
+**/dist/
+**/build/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
