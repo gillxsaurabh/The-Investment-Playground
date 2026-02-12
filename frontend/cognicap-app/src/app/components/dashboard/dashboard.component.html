@@ -17,22 +17,46 @@
     </div>
   </header>
 
-  <!-- Loading State -->
-  <div class="loading-container" *ngIf="isLoading">
-    <div class="spinner"></div>
-    <p>Loading your portfolio...</p>
+  <!-- Tabs Navigation -->
+  <div class="tabs-navigation">
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'portfolio'"
+      (click)="switchTab('portfolio')">
+      My Portfolio
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'health'"
+      (click)="switchTab('health')">
+      Stock Health Report
+    </button>
+    <button 
+      class="tab-button" 
+      [class.active]="activeTab === 'market'"
+      (click)="switchTab('market')">
+      Market Watch
+    </button>
   </div>
 
-  <!-- Error State -->
-  <div class="error-container" *ngIf="error && !isLoading">
-    <div class="error-box">
-      {{ error }}
-      <button class="btn-retry" (click)="refreshData()">Retry</button>
+  <!-- Portfolio Tab Content -->
+  <div class="tab-content" *ngIf="activeTab === 'portfolio'">
+    <!-- Loading State -->
+    <div class="loading-container" *ngIf="isLoading">
+      <div class="spinner"></div>
+      <p>Loading your portfolio...</p>
     </div>
-  </div>
 
-  <!-- Dashboard Content -->
-  <div class="dashboard-content" *ngIf="!isLoading && !error">
+    <!-- Error State -->
+    <div class="error-container" *ngIf="error && !isLoading">
+      <div class="error-box">
+        {{ error }}
+        <button class="btn-retry" (click)="refreshData()">Retry</button>
+      </div>
+    </div>
+
+    <!-- Dashboard Content -->
+    <div class="dashboard-content" *ngIf="!isLoading && !error">
     <!-- Summary Cards -->
     <div class="summary-section" *ngIf="summary">
       <div class="summary-card">
@@ -159,6 +183,17 @@
         </div>
       </div>
     </div>
+  </div>
+  </div>
+
+  <!-- Market Tab Content -->
+  <div class="tab-content" *ngIf="activeTab === 'market'">
+    <app-market></app-market>
+  </div>
+
+  <!-- Health Report Tab Content -->
+  <div class="tab-content" *ngIf="activeTab === 'health'">
+    <app-health></app-health>
   </div>
 
   <!-- AI Chat Assistant -->

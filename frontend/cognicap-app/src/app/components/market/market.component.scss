@@ -1,0 +1,281 @@
+.market-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 30px;
+  min-height: 60vh;
+}
+
+.loading-container,
+.error-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 3rem;
+  text-align: center;
+}
+
+.spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(0, 123, 255, 0.1);
+  border-left-color: #007bff;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.error-box {
+  background: #ffe6e6;
+  color: #c00;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  border: 1px solid #ffcccc;
+}
+
+.btn-retry {
+  margin-top: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #c00;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 500;
+}
+
+.btn-retry:hover {
+  background: #a00;
+}
+
+.market-content {
+  width: 100%;
+  display: block;
+}
+
+.section-title {
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+  color: #2c3e50;
+}
+
+/* Indices Section */
+.indices-section {
+  display: block;
+  margin-bottom: 2rem;
+}
+
+.indices-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.index-card {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.index-header h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 1rem 0;
+}
+
+.index-value {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
+}
+
+.index-change {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.index-change.positive .change-value::before {
+  content: '▲ ';
+}
+
+.index-change.negative .change-value::before {
+  content: '▼ ';
+}
+
+.index-stats {
+  display: flex;
+  gap: 2rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.stat-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  opacity: 0.9;
+}
+
+.stat-value {
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+/* Stocks Section */
+.stocks-section {
+  width: 100%;
+  display: block;
+}
+
+.stocks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.stocks-card {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.stocks-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.stocks-header h2 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0;
+  color: #2c3e50;
+}
+
+.badge {
+  padding: 0.25rem 0.75rem;
+  border-radius: 12px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.badge.positive {
+  background: #d4edda;
+  color: #155724;
+}
+
+.badge.negative {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.stocks-list {
+  max-height: 600px;
+  overflow-y: auto;
+}
+
+.stock-item {
+  display: grid;
+  grid-template-columns: 40px 1fr auto;
+  gap: 1rem;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #f0f0f0;
+  transition: background-color 0.2s;
+}
+
+.stock-item:hover {
+  background-color: #f8f9fa;
+}
+
+.stock-item:last-child {
+  border-bottom: none;
+}
+
+.stock-rank {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #6c757d;
+  text-align: center;
+}
+
+.stock-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.stock-symbol {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #2c3e50;
+}
+
+.stock-price {
+  font-size: 0.875rem;
+  color: #6c757d;
+}
+
+.stock-change {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.25rem;
+  font-weight: 600;
+}
+
+.stock-change.positive {
+  color: #28a745;
+}
+
+.stock-change.negative {
+  color: #dc3545;
+}
+
+.stock-change .change-value {
+  font-size: 1rem;
+}
+
+.stock-change .change-percent {
+  font-size: 0.875rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .indices-grid,
+  .stocks-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stock-item {
+    grid-template-columns: 30px 1fr auto;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+  }
+
+  .stock-rank {
+    font-size: 1rem;
+  }
+}

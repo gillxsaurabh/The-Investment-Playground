@@ -50,6 +50,103 @@ export interface TopPerformers {
   error?: string;
 }
 
+export interface MarketIndex {
+  name: string;
+  value: number;
+  change: number;
+  change_percent: number;
+  high: number;
+  low: number;
+  volume: number;
+}
+
+export interface MarketIndices {
+  success: boolean;
+  nifty?: MarketIndex;
+  sensex?: MarketIndex;
+  error?: string;
+}
+
+export interface Stock {
+  symbol: string;
+  name: string;
+  price: number;
+  change: number;
+  change_percent: number;
+  volume: number;
+  high: number;
+  low: number;
+}
+
+export interface TopStocks {
+  success: boolean;
+  top_gainers?: Stock[];
+  top_losers?: Stock[];
+  error?: string;
+}
+
+export interface HealthReport {
+  symbol: string;
+  company_name: string;
+  current_price: number;
+  quantity: number;
+  investment: number;
+  current_value: number;
+  pnl: number;
+  overall_score: number;
+  breakdown: {
+    momentum_score: number;
+    momentum_detail: string;
+    trend_score: number;
+    trend_strength: string;
+    trend_direction: string;
+    fundamental_score: number;
+    fundamental_health: string;
+    ai_score: number;
+    ai_summary: string;
+  };
+  last_updated: string;
+  error?: string;
+}
+
+export interface HealthReportResponse {
+  success: boolean;
+  reports?: HealthReport[];
+  total_stocks?: number;
+  generated_at?: string;
+  error?: string;
+}
+
+export interface StockAnalysisResponse {
+  success: boolean;
+  symbol?: string;
+  score?: number;
+  details?: {
+    recency: {
+      score: number;
+      detail: string;
+    };
+    trend: {
+      score: number;
+      strength: string;
+      direction: string;
+    };
+    fundamentals: {
+      score: number;
+      summary: string;
+      roe?: number;
+      debt_to_equity?: number;
+      sales_growth?: number;
+    };
+    ai_sentiment: {
+      score: number;
+      summary: string;
+    };
+  };
+  analyzed_at?: string;
+  error?: string;
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -129,6 +226,40 @@ export class KiteService {
   getTopPerformers(): Observable<TopPerformers> {
     const token = this.getStoredToken();
     return this.http.post<TopPerformers>(`${this.apiUrl}/portfolio/top-performers`, {
+      access_token: token
+    });
+  }
+
+  getMarketIndices(): Observable<MarketIndices> {
+    const token = this.getStoredToken();
+    return this.http.post<MarketIndices>(`${this.apiUrl}/market/indices`, {
+      access_token: token
+    });
+  }
+
+  getTopStocks(): Observable<TopStocks> {
+    return this.http.get<TopStocks>(`${this.apiUrl}/market/top-stocks`);
+  }
+
+  getHealthReport(): Observable<HealthReportResponse> {
+    const token = this.getStoredToken();
+    return this.http.post<HealthReportResponse>(`${this.apiUrl}/portfolio/health-report`, {
+      access_token: token
+    });
+  }
+
+  analyzeStock(symbol: string, instrumentToken?: number): Observable<StockAnalysisResponse> {
+    const token = this.getStoredToken();
+    return this.http.post<StockAnalysisResponse>(`${this.apiUrl}/analyze-stock`, {
+      access_token: token,
+      symbol: symbol,
+      instrument_token: instrumentToken
+    });
+  }
+
+  analyzeAllStocks(): Observable<any> {
+    const token = this.getStoredToken();
+    return this.http.post<any>(`${this.apiUrl}/analyze-all`, {
       access_token: token
     });
   }

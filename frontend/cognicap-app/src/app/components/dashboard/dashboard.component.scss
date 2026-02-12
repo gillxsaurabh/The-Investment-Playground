@@ -46,6 +46,55 @@
   }
 }
 
+.tabs-navigation {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 30px;
+  display: flex;
+  gap: 8px;
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+
+  .tab-button {
+    padding: 16px 24px;
+    border: none;
+    background: transparent;
+    color: #6b7280;
+    font-size: 14px;
+    font-weight: 500;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: all 0.2s ease;
+    position: relative;
+
+    &:hover {
+      color: #1a1a1a;
+      background: #f9fafb;
+    }
+
+    &.active {
+      color: #1a1a1a;
+      border-bottom-color: #1a1a1a;
+      font-weight: 600;
+    }
+  }
+}
+
+.tab-content {
+  animation: fadeIn 0.3s ease;
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
 .btn {
   padding: 8px 16px;
   border: none;
