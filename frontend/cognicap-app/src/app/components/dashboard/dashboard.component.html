@@ -3,12 +3,12 @@
   <header class="dashboard-header">
     <div class="header-content">
       <div class="logo-section">
-        <h1>CogniCap</h1>
+        <h1>CogniCap Dashboard</h1>
         <span class="user-name" *ngIf="user">{{ user.name }}</span>
       </div>
       <div class="header-actions">
-        <button class="btn btn-refresh" (click)="refreshData()" [disabled]="isLoading">
-          Refresh
+        <button class="btn btn-refresh" (click)="refreshData()" [disabled]="isLoading || isMarketLoading">
+          Refresh All
         </button>
         <button class="btn btn-logout" (click)="logout()">
           Logout
@@ -17,185 +17,329 @@
     </div>
   </header>
 
-  <!-- Tabs Navigation -->
-  <div class="tabs-navigation">
-    <button 
-      class="tab-button" 
-      [class.active]="activeTab === 'portfolio'"
-      (click)="switchTab('portfolio')">
-      My Portfolio
-    </button>
-    <button 
-      class="tab-button" 
-      [class.active]="activeTab === 'health'"
-      (click)="switchTab('health')">
-      Stock Health Report
-    </button>
-    <button 
-      class="tab-button" 
-      [class.active]="activeTab === 'market'"
-      (click)="switchTab('market')">
-      Market Watch
-    </button>
-  </div>
-
-  <!-- Portfolio Tab Content -->
-  <div class="tab-content" *ngIf="activeTab === 'portfolio'">
-    <!-- Loading State -->
-    <div class="loading-container" *ngIf="isLoading">
-      <div class="spinner"></div>
-      <p>Loading your portfolio...</p>
-    </div>
-
-    <!-- Error State -->
-    <div class="error-container" *ngIf="error && !isLoading">
-      <div class="error-box">
-        {{ error }}
-        <button class="btn-retry" (click)="refreshData()">Retry</button>
-      </div>
-    </div>
-
-    <!-- Dashboard Content -->
-    <div class="dashboard-content" *ngIf="!isLoading && !error">
-    <!-- Summary Cards -->
-    <div class="summary-section" *ngIf="summary">
-      <div class="summary-card">
-        <div class="card-content">
-          <h3>Total Investment</h3>
-          <p class="value">{{ formatCurrency(summary.total_investment) }}</p>
+  <!-- Main Dashboard Layout -->
+  <div class="dashboard-layout">
+    <!-- Left Sidebar - Market Watch -->
+    <aside class="market-sidebar">
+      <div class="market-section">
+        <h2 class="section-title">Market Watch</h2>
+        
+        <!-- Loading/Error States -->
+        <div class="market-loading" *ngIf="isMarketLoading">
+          <div class="small-spinner"></div>
+          <span>Loading market data...</span>
         </div>
-      </div>
 
-      <div class="summary-card">
-        <div class="card-content">
-          <h3>Current Value</h3>
-          <p class="value">{{ formatCurrency(summary.current_value) }}</p>
+        <div class="market-error" *ngIf="marketError && !isMarketLoading">
+          <span>{{ marketError }}</span>
+          <button class="retry-btn" (click)="loadMarketData()">Retry</button>
         </div>
-      </div>
 
-      <div class="summary-card" [ngClass]="getPnlClass(summary.total_pnl)">
-        <div class="card-content">
-          <h3>Total P&L</h3>
-          <p class="value">{{ formatCurrency(summary.total_pnl) }}</p>
-          <p class="percentage">{{ formatPercentage(summary.pnl_percentage) }}</p>
-        </div>
-      </div>
-
-      <div class="summary-card">
-        <div class="card-content">
-          <h3>Holdings</h3>
-          <p class="value">{{ summary.total_holdings }}</p>
-          <p class="subtitle">Stocks</p>
-        </div>
-      </div>
-    </div>
-
-    <!-- Top Performers Section -->
-    <div class="performers-section" *ngIf="topGainers.length > 0 || topLosers.length > 0">
-      <div class="performers-grid">
-        <!-- Top Gainers -->
-        <div class="performer-card">
-          <div class="performer-header">
-            <h2>Top Gainers</h2>
-            <span class="badge positive">{{ topGainers.length }} stocks</span>
+        <!-- Market Indices -->
+        <div class="indices-section" *ngIf="!isMarketLoading && !marketError">
+          <!-- Nifty -->
+          <div class="index-card nifty" *ngIf="nifty">
+            <h3>{{ nifty.name }}</h3>
+            <div class="index-value">{{ formatNumber(nifty.value) }}</div>
+            <div class="index-change" [ngClass]="getChangeClass(nifty.change)">
+              <span class="change-value">{{ formatCurrency(nifty.change) }}</span>
+              <span class="change-percent">{{ formatPercentage(nifty.change_percent) }}</span>
+            </div>
           </div>
-          <div class="performer-list">
-            <div class="performer-item" *ngFor="let stock of topGainers">
-              <div class="stock-info">
-                <div class="stock-symbol">{{ stock.tradingsymbol }}</div>
-                <div class="stock-exchange">{{ stock.exchange }}</div>
-              </div>
-              <div class="stock-metrics">
-                <div class="metric-value positive">{{ formatCurrency(stock.pnl) }}</div>
-                <div class="metric-percentage positive">{{ formatPercentage(stock.pnl_percentage) }}</div>
-              </div>
+
+          <!-- Sensex -->
+          <div class="index-card sensex" *ngIf="sensex">
+            <h3>{{ sensex.name }}</h3>
+            <div class="index-value">{{ formatNumber(sensex.value) }}</div>
+            <div class="index-change" [ngClass]="getChangeClass(sensex.change)">
+              <span class="change-value">{{ formatCurrency(sensex.change) }}</span>
+              <span class="change-percent">{{ formatPercentage(sensex.change_percent) }}</span>
             </div>
           </div>
         </div>
 
-        <!-- Top Losers -->
-        <div class="performer-card">
-          <div class="performer-header">
-            <h2>Top Losers</h2>
-            <span class="badge negative">{{ topLosers.length }} stocks</span>
-          </div>
-          <div class="performer-list">
-            <div class="performer-item" *ngFor="let stock of topLosers">
-              <div class="stock-info">
-                <div class="stock-symbol">{{ stock.tradingsymbol }}</div>
-                <div class="stock-exchange">{{ stock.exchange }}</div>
+        <!-- Top Gainers/Losers -->
+        <div class="market-lists" *ngIf="!isMarketLoading && !marketError && (marketGainers.length > 0 || marketLosers.length > 0)">
+          <!-- Top Gainers -->
+          <div class="market-list-section" *ngIf="marketGainers.length > 0">
+            <h4>Top Gainers</h4>
+            <div class="stock-list">
+              <div class="stock-item" *ngFor="let stock of marketGainers.slice(0, 5)">
+                <div class="stock-symbol">{{ stock.symbol }}</div>
+                <div class="stock-change positive">
+                  {{ formatPercentage(stock.change_percent) }}
+                </div>
               </div>
-              <div class="stock-metrics">
-                <div class="metric-value negative">{{ formatCurrency(stock.pnl) }}</div>
-                <div class="metric-percentage negative">{{ formatPercentage(stock.pnl_percentage) }}</div>
+            </div>
+          </div>
+
+          <!-- Top Losers -->
+          <div class="market-list-section" *ngIf="marketLosers.length > 0">
+            <h4>Top Losers</h4>
+            <div class="stock-list">
+              <div class="stock-item" *ngFor="let stock of marketLosers.slice(0, 5)">
+                <div class="stock-symbol">{{ stock.symbol }}</div>
+                <div class="stock-change negative">
+                  {{ formatPercentage(stock.change_percent) }}
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </aside>
 
-    <!-- Holdings Table -->
-    <div class="holdings-section">
-      <div class="section-header">
-        <h2>Your Holdings</h2>
-        <span class="count">{{ holdings.length }} stocks</span>
+    <!-- Main Content Area -->
+    <main class="dashboard-main">
+      <!-- Loading State -->
+      <div class="loading-container" *ngIf="isLoading">
+        <div class="spinner"></div>
+        <p>Loading your portfolio...</p>
       </div>
 
-      <div class="holdings-table-container">
-        <table class="holdings-table" *ngIf="holdings.length > 0">
-          <thead>
-            <tr>
-              <th>Symbol</th>
-              <th>Exchange</th>
-              <th class="text-right">Qty</th>
-              <th class="text-right">Avg Price</th>
-              <th class="text-right">LTP</th>
-              <th class="text-right">P&L</th>
-              <th class="text-right">Day Change</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr *ngFor="let holding of holdings" class="holding-row">
-              <td class="symbol">
-                <strong>{{ holding.tradingsymbol }}</strong>
-              </td>
-              <td class="exchange">{{ holding.exchange }}</td>
-              <td class="text-right">{{ holding.quantity }}</td>
-              <td class="text-right">{{ formatCurrency(holding.average_price) }}</td>
-              <td class="text-right">{{ formatCurrency(holding.last_price) }}</td>
-              <td class="text-right" [ngClass]="getPnlClass(holding.pnl)">
-                <strong>{{ formatCurrency(holding.pnl) }}</strong>
-              </td>
-              <td class="text-right" [ngClass]="getPnlClass(holding.day_change)">
-                {{ formatCurrency(holding.day_change) }}
-                <small class="percentage">
-                  ({{ formatPercentage(holding.day_change_percentage) }})
-                </small>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-
-        <div class="empty-state" *ngIf="holdings.length === 0">
-          <h3>No Holdings Found</h3>
-          <p>You don't have any holdings in your portfolio yet.</p>
+      <!-- Error State -->
+      <div class="error-container" *ngIf="error && !isLoading">
+        <div class="error-box">
+          {{ error }}
+          <button class="btn-retry" (click)="refreshData()">Retry</button>
         </div>
       </div>
-    </div>
-  </div>
-  </div>
 
-  <!-- Market Tab Content -->
-  <div class="tab-content" *ngIf="activeTab === 'market'">
-    <app-market></app-market>
-  </div>
+      <!-- Dashboard Content -->
+      <div class="dashboard-content" *ngIf="!isLoading && !error">
+        <!-- Top 4 Summary Cards -->
+        <div class="summary-section" *ngIf="summary">
+          <div class="summary-card">
+            <div class="card-content">
+              <h3>Total Investment</h3>
+              <p class="value">{{ formatCurrency(summary.total_investment) }}</p>
+            </div>
+          </div>
 
-  <!-- Health Report Tab Content -->
-  <div class="tab-content" *ngIf="activeTab === 'health'">
-    <app-health></app-health>
+          <div class="summary-card">
+            <div class="card-content">
+              <h3>Current Value</h3>
+              <p class="value">{{ formatCurrency(summary.current_value) }}</p>
+            </div>
+          </div>
+
+          <div class="summary-card" [ngClass]="getPnlClass(summary.total_pnl)">
+            <div class="card-content">
+              <h3>Total P&L</h3>
+              <p class="value">{{ formatCurrency(summary.total_pnl) }}</p>
+              <p class="percentage">{{ formatPercentage(summary.pnl_percentage) }}</p>
+            </div>
+          </div>
+
+          <div class="summary-card">
+            <div class="card-content">
+              <h3>Holdings</h3>
+              <p class="value">{{ summary.total_holdings }}</p>
+              <p class="subtitle">Stocks</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Stock Health Analysis Section -->
+        <div class="health-section">
+          <div class="health-header">
+            <div class="header-content">
+              <h2>Stock Health Analysis</h2>
+              <div class="health-stats">
+                <span class="stat">{{ holdings.length }} Total</span>
+                <span class="stat">{{ getAnalyzedCount() }} Analyzed</span>
+              </div>
+            </div>
+            <div class="header-actions">
+              <button 
+                class="analyze-all-btn" 
+                (click)="analyzeAllStocks()" 
+                [disabled]="isLoading || isAnalyzingAll || holdings.length === 0">
+                <span class="analyze-icon">⚡</span>
+                {{ isAnalyzingAll ? 'Analyzing...' : 'Analyze All' }}
+              </button>
+            </div>
+          </div>
+
+          <!-- Analysis Progress -->
+          <div class="analyze-progress" *ngIf="isAnalyzingAll && analyzeAllProgress">
+            <div class="progress-indicator">
+              <div class="progress-spinner"></div>
+              <span class="progress-text">{{ analyzeAllProgress }}</span>
+            </div>
+          </div>
+
+          <!-- Health Cards Grid -->
+          <div class="health-cards-grid" *ngIf="holdings.length > 0">
+            <div 
+              class="health-card" 
+              *ngFor="let holding of holdings"
+              [class.analyzed]="holding.analysisState === 'analyzed'">
+              
+              <!-- Card Header -->
+              <div class="card-header" (click)="holding.analysisState === 'analyzed' ? openStockModal(holding) : null">
+                <div class="stock-info">
+                  <h3 class="stock-symbol">{{ holding.tradingsymbol }}</h3>
+                  <div class="stock-metrics">
+                    <span class="metric">{{ formatCurrency(holding.last_price) }}</span>
+                    <span class="metric quantity">Qty: {{ holding.quantity }}</span>
+                  </div>
+                </div>
+
+                <!-- Analysis Actions/Results -->
+                <div class="action-section" *ngIf="holding.analysisState === 'not-analyzed'">
+                  <button class="analyze-btn" (click)="analyzeStock(holding); $event.stopPropagation()">
+                    ⚡ Analyze
+                  </button>
+                </div>
+
+                <div class="action-section" *ngIf="holding.analysisState === 'analyzing'">
+                  <div class="analyzing-state">
+                    <div class="small-spinner"></div>
+                    <span>Analyzing...</span>
+                  </div>
+                </div>
+
+                <div class="score-section" *ngIf="holding.analysisState === 'analyzed' && holding.analysis">
+                  <div class="overall-score" [style.background]="getScoreColor(holding.analysis.score!)">
+                    <span class="score-number">{{ holding.analysis.score }}</span>
+                  </div>
+                  <div class="view-details-icon">
+                    +
+                  </div>
+                </div>
+
+                <div class="action-section" *ngIf="holding.analysisState === 'error'">
+                  <button class="retry-analyze-btn" (click)="analyzeStock(holding); $event.stopPropagation()">
+                    🔄 Retry
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Empty State -->
+          <div class="empty-state" *ngIf="!isLoading && !error && holdings.length === 0">
+            <div class="empty-icon">📊</div>
+            <h3>No Holdings Found</h3>
+            <p>Your portfolio is empty. Add some stocks to see their health analysis.</p>
+          </div>
+        </div>
+      </div>
+    </main>
   </div>
 
   <!-- AI Chat Assistant -->
   <app-chat></app-chat>
+</div>
+
+<!-- Stock Details Modal - OUTSIDE dashboard-container to avoid stacking context issues -->
+<div class="modal-overlay" *ngIf="selectedStock" (click)="closeStockModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2>{{ selectedStock.tradingsymbol }} - Health Analysis</h2>
+      <button class="close-btn" (click)="closeStockModal()">&times;</button>
+    </div>
+    
+    <div class="modal-body">
+      <!-- Stock Overview -->
+      <div class="stock-overview">
+        <div class="overview-item">
+          <span class="label">Current Price</span>
+          <span class="value">{{ formatCurrency(selectedStock.last_price) }}</span>
+        </div>
+        <div class="overview-item">
+          <span class="label">Quantity</span>
+          <span class="value">{{ selectedStock.quantity }}</span>
+        </div>
+        <div class="overview-item">
+          <span class="label">Health Score</span>
+          <div class="score-display" [style.background]="getScoreColor(selectedStock.analysis?.score!)">
+            {{ selectedStock.analysis?.score }}
+          </div>
+        </div>
+      </div>
+
+      <!-- Investment Details -->
+      <div class="investment-section">
+        <h3>Investment Overview</h3>
+        <div class="investment-grid">
+          <div class="investment-item">
+            <span class="label">Average Price</span>
+            <span class="value">{{ formatCurrency(selectedStock.average_price) }}</span>
+          </div>
+          <div class="investment-item">
+            <span class="label">Current Value</span>
+            <span class="value">{{ formatCurrency(selectedStock.last_price * selectedStock.quantity) }}</span>
+          </div>
+          <div class="investment-item">
+            <span class="label">Total Investment</span>
+            <span class="value">{{ formatCurrency(selectedStock.average_price * selectedStock.quantity) }}</span>
+          </div>
+          <div class="investment-item">
+            <span class="label">P&L</span>
+            <span class="value" [class.positive]="selectedStock.pnl > 0" [class.negative]="selectedStock.pnl < 0">
+              {{ formatCurrency(selectedStock.pnl) }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Health Analysis -->
+      <ng-container *ngIf="selectedStock.analysis?.details as details">
+        <div class="health-analysis-section">
+          <h3>Detailed Health Analysis</h3>
+          
+          <div class="analysis-metric" *ngIf="details.recency">
+            <div class="metric-header">
+              <span class="metric-name">Recency (Relative Strength)</span>
+              <div class="metric-score" [style.background]="getScoreColor(details.recency.score)">
+                {{ details.recency.score }}
+              </div>
+            </div>
+            <p class="metric-description">{{ details.recency.detail }}</p>
+          </div>
+
+          <div class="analysis-metric" *ngIf="details.trend">
+            <div class="metric-header">
+              <span class="metric-name">Trend Analysis</span>
+              <div class="metric-score" [style.background]="getScoreColor(details.trend.score)">
+                {{ details.trend.score }}
+              </div>
+            </div>
+            <p class="metric-description">
+              {{ details.trend.strength }} - {{ details.trend.direction }}
+            </p>
+          </div>
+
+          <div class="analysis-metric" *ngIf="details.fundamentals">
+            <div class="metric-header">
+              <span class="metric-name">Fundamentals</span>
+              <div class="metric-score" [style.background]="getScoreColor(details.fundamentals.score)">
+                {{ details.fundamentals.score }}
+              </div>
+            </div>
+            <p class="metric-description">{{ details.fundamentals.summary }}</p>
+          </div>
+
+          <div class="analysis-metric" *ngIf="details.ai_sentiment">
+            <div class="metric-header">
+              <span class="metric-name">AI Sentiment</span>
+              <div class="metric-score" [style.background]="getScoreColor(details.ai_sentiment.score)">
+                {{ details.ai_sentiment.score }}
+              </div>
+            </div>
+            <p class="metric-description">{{ details.ai_sentiment.summary }}</p>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Analysis Timestamp -->
+      <ng-container *ngIf="selectedStock.analysis as analysis">
+        <div class="timestamp-section" *ngIf="analysis.analyzed_at">
+          <small>Analysis performed on: {{ formatDate(analysis.analyzed_at) }}</small>
+        </div>
+      </ng-container>
+    </div>
+  </div>
 </div>
