@@ -1,4 +1,14 @@
 <div class="dashboard-container">
+  <!-- Market Banner -->
+  <app-market-banner 
+    [nifty]="nifty" 
+    [sensex]="sensex" 
+    [marketGainers]="marketGainers" 
+    [marketLosers]="marketLosers" 
+    [isLoading]="isMarketLoading" 
+    [error]="marketError">
+  </app-market-banner>
+
   <!-- Header -->
   <header class="dashboard-header">
     <div class="header-content">
@@ -13,82 +23,17 @@
         <button class="btn btn-logout" (click)="logout()">
           Logout
         </button>
+        <!-- Live portfolio indicator -->
+        <div class="live-portfolio-indicator" *ngIf="!isLoading">
+          <span class="live-dot"></span>
+          <span class="live-text">LIVE PORTFOLIO</span>
+        </div>
       </div>
     </div>
   </header>
 
   <!-- Main Dashboard Layout -->
   <div class="dashboard-layout">
-    <!-- Left Sidebar - Market Watch -->
-    <aside class="market-sidebar">
-      <div class="market-section">
-        <h2 class="section-title">Market Watch</h2>
-        
-        <!-- Loading/Error States -->
-        <div class="market-loading" *ngIf="isMarketLoading">
-          <div class="small-spinner"></div>
-          <span>Loading market data...</span>
-        </div>
-
-        <div class="market-error" *ngIf="marketError && !isMarketLoading">
-          <span>{{ marketError }}</span>
-          <button class="retry-btn" (click)="loadMarketData()">Retry</button>
-        </div>
-
-        <!-- Market Indices -->
-        <div class="indices-section" *ngIf="!isMarketLoading && !marketError">
-          <!-- Nifty -->
-          <div class="index-card nifty" *ngIf="nifty">
-            <h3>{{ nifty.name }}</h3>
-            <div class="index-value">{{ formatNumber(nifty.value) }}</div>
-            <div class="index-change" [ngClass]="getChangeClass(nifty.change)">
-              <span class="change-value">{{ formatCurrency(nifty.change) }}</span>
-              <span class="change-percent">{{ formatPercentage(nifty.change_percent) }}</span>
-            </div>
-          </div>
-
-          <!-- Sensex -->
-          <div class="index-card sensex" *ngIf="sensex">
-            <h3>{{ sensex.name }}</h3>
-            <div class="index-value">{{ formatNumber(sensex.value) }}</div>
-            <div class="index-change" [ngClass]="getChangeClass(sensex.change)">
-              <span class="change-value">{{ formatCurrency(sensex.change) }}</span>
-              <span class="change-percent">{{ formatPercentage(sensex.change_percent) }}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Top Gainers/Losers -->
-        <div class="market-lists" *ngIf="!isMarketLoading && !marketError && (marketGainers.length > 0 || marketLosers.length > 0)">
-          <!-- Top Gainers -->
-          <div class="market-list-section" *ngIf="marketGainers.length > 0">
-            <h4>Top Gainers</h4>
-            <div class="stock-list">
-              <div class="stock-item" *ngFor="let stock of marketGainers.slice(0, 5)">
-                <div class="stock-symbol">{{ stock.symbol }}</div>
-                <div class="stock-change positive">
-                  {{ formatPercentage(stock.change_percent) }}
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Top Losers -->
-          <div class="market-list-section" *ngIf="marketLosers.length > 0">
-            <h4>Top Losers</h4>
-            <div class="stock-list">
-              <div class="stock-item" *ngFor="let stock of marketLosers.slice(0, 5)">
-                <div class="stock-symbol">{{ stock.symbol }}</div>
-                <div class="stock-change negative">
-                  {{ formatPercentage(stock.change_percent) }}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </aside>
-
     <!-- Main Content Area -->
     <main class="dashboard-main">
       <!-- Loading State -->
@@ -108,7 +53,7 @@
       <!-- Dashboard Content -->
       <div class="dashboard-content" *ngIf="!isLoading && !error">
         <!-- Top 4 Summary Cards -->
-        <div class="summary-section" *ngIf="summary">
+        <div class="summary-section" [class.updating]="isPortfolioUpdating" *ngIf="summary">
           <div class="summary-card">
             <div class="card-content">
               <h3>Total Investment</h3>

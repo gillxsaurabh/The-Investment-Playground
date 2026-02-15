@@ -1,9 +1,10 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { KiteService, StockAnalysisResponse, MarketIndex, Stock } from '../../services/kite.service';
 import { ChatComponent } from '../chat/chat.component';
-import { forkJoin } from 'rxjs';
+import { MarketBannerComponent } from '../market-banner/market-banner.component';
+import { forkJoin, interval, Subscription } from 'rxjs';
 
 interface Holding {
   tradingsymbol: string;
@@ -39,11 +40,11 @@ interface HoldingWithAnalysis extends Holding {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ChatComponent],
+  imports: [CommonModule, ChatComponent, MarketBannerComponent],
   templateUrl: './dashboard.component.html',
-  styleUrls: ['./dashboard.component.scss']
+  styleUrls: ['./dashboard.component.scss', './portfolio-live.scss']
 })
-export class DashboardComponent implements OnInit {
+export class DashboardComponent implements OnInit, OnDestroy {
   user: any = null;
   holdings: HoldingWithAnalysis[] = [];
   summary: any = null;
@@ -60,10 +61,19 @@ export class DashboardComponent implements OnInit {
   isMarketLoading: boolean = true;
   marketError: string = '';
   
+  // Portfolio update indicator
+  isPortfolioUpdating: boolean = false;
+  
   // Health analysis
   selectedStock: HoldingWithAnalysis | null = null;
   isAnalyzingAll: boolean = false;
   analyzeAllProgress: string = '';
+  
+  // Auto refresh subscriptions
+  private marketRefreshSubscription: Subscription | null = null;
+  private portfolioRefreshSubscription: Subscription | null = null;
+  private readonly MARKET_REFRESH_INTERVAL = 30000; // 30 seconds
+  private readonly PORTFOLIO_REFRESH_INTERVAL = 15000; // 15 seconds
 
   constructor(
     private kiteService: KiteService,
@@ -74,6 +84,48 @@ export class DashboardComponent implements OnInit {
     this.loadUserData();
     this.loadPortfolioData();
     this.loadMarketData();
+    this.startMarketDataAutoRefresh();
+    this.startPortfolioDataAutoRefresh();
+  }
+
+  ngOnDestroy(): void {
+    this.stopMarketDataAutoRefresh();
+    this.stopPortfolioDataAutoRefresh();
+  }
+
+  private startMarketDataAutoRefresh(): void {
+    // Auto-refresh market data every 30 seconds
+    this.marketRefreshSubscription = interval(this.MARKET_REFRESH_INTERVAL)
+      .subscribe(() => {
+        // Only refresh if we're not currently loading and no errors
+        if (!this.isMarketLoading && !this.marketError) {
+          this.loadMarketData();
+        }
+      });
+  }
+
+  private stopMarketDataAutoRefresh(): void {
+    if (this.marketRefreshSubscription) {
+      this.marketRefreshSubscription.unsubscribe();
+      this.marketRefreshSubscription = null;
+    }
+  }
+
+  private startPortfolioDataAutoRefresh(): void {
+    // Auto-refresh portfolio data every 15 seconds for live experience
+    this.portfolioRefreshSubscription = interval(this.PORTFOLIO_REFRESH_INTERVAL)
+      .subscribe(() => {
+        // Always refresh portfolio data (no conditions) for live experience
+        console.log('Auto-refreshing portfolio data...');
+        this.loadPortfolioData();
+      });
+  }
+
+  private stopPortfolioDataAutoRefresh(): void {
+    if (this.portfolioRefreshSubscription) {
+      this.portfolioRefreshSubscription.unsubscribe();
+      this.portfolioRefreshSubscription = null;
+    }
   }
 
   loadUserData(): void {
@@ -83,7 +135,14 @@ export class DashboardComponent implements OnInit {
   }
 
   loadPortfolioData(): void {
-    this.isLoading = true;
+    // Set loading state only if this is the first load
+    const isFirstLoad = this.holdings.length === 0 && !this.summary;
+    if (isFirstLoad) {
+      this.isLoading = true;
+    } else {
+      this.isPortfolioUpdating = true;
+    }
+    
     this.error = '';
 
     // Load holdings with analysis state
@@ -98,10 +157,22 @@ export class DashboardComponent implements OnInit {
         } else {
           this.error = response.error || 'Failed to load holdings';
         }
+        
+        // Clear update indicators
+        if (isFirstLoad) {
+          this.isLoading = false;
+        }
+        this.isPortfolioUpdating = false;
       },
       error: (err) => {
         this.error = 'Failed to load holdings. Please try again.';
         console.error('Holdings error:', err);
+        
+        // Clear update indicators
+        if (isFirstLoad) {
+          this.isLoading = false;
+        }
+        this.isPortfolioUpdating = false;
       }
     });
 
@@ -110,12 +181,13 @@ export class DashboardComponent implements OnInit {
       next: (response) => {
         if (response.success) {
           this.summary = response.summary;
+          console.log('Portfolio updated:', response.note || 'Live data loaded');
         }
-        this.isLoading = false;
+        // Don't set loading to false here since holdings might still be loading
       },
       error: (err) => {
-        this.isLoading = false;
         console.error('Summary error:', err);
+        // Don't set loading to false here since holdings might still be loading
       }
     });
 
@@ -134,7 +206,11 @@ export class DashboardComponent implements OnInit {
   }
 
   loadMarketData(): void {
-    this.isMarketLoading = true;
+    // Set loading state only if this is the first load
+    if (!this.nifty && !this.sensex && this.marketGainers.length === 0) {
+      this.isMarketLoading = true;
+    }
+    
     this.marketError = '';
 
     forkJoin({
