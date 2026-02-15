@@ -1,0 +1,228 @@
+.market-banner-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  background: linear-gradient(90deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+  border-bottom: 2px solid #333;
+  height: 40px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
+.market-banner {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  overflow: hidden;
+
+  &.updating {
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(0, 212, 170, 0.2), transparent);
+      animation: shimmer 2s infinite;
+      z-index: 1;
+    }
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+.market-scroll {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  gap: 40px;
+  white-space: nowrap;
+  animation: scroll-left 60s linear infinite;
+  will-change: transform;
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(100vw);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
+}
+
+.market-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 12px;
+  font-weight: 500;
+  min-width: fit-content;
+  flex-shrink: 0;
+  transition: all 0.3s ease;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: scale(1.02);
+  }
+
+  .symbol {
+    color: #fff;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .value {
+    color: #e0e0e0;
+    font-weight: 500;
+  }
+
+  .change {
+    font-weight: 600;
+    font-size: 11px;
+
+    &.positive {
+      color: #00d4aa;
+      text-shadow: 0 0 4px rgba(0, 212, 170, 0.3);
+    }
+
+    &.negative {
+      color: #ff6b6b;
+      text-shadow: 0 0 4px rgba(255, 107, 107, 0.3);
+    }
+
+    &.neutral {
+      color: #ffd93d;
+    }
+  }
+
+  &.index {
+    background: linear-gradient(135deg, rgba(0, 123, 255, 0.1), rgba(0, 123, 255, 0.05));
+    border: 1px solid rgba(0, 123, 255, 0.2);
+    
+    .symbol {
+      color: #4dabf7;
+      text-transform: uppercase;
+    }
+  }
+
+  &.gainer {
+    background: linear-gradient(135deg, rgba(0, 212, 170, 0.1), rgba(0, 212, 170, 0.05));
+    border: 1px solid rgba(0, 212, 170, 0.2);
+  }
+
+  &.loser {
+    background: linear-gradient(135deg, rgba(255, 107, 107, 0.1), rgba(255, 107, 107, 0.05));
+    border: 1px solid rgba(255, 107, 107, 0.2);
+  }
+
+  &.live-indicator {
+    background: linear-gradient(135deg, rgba(0, 212, 170, 0.2), rgba(0, 212, 170, 0.1));
+    border: 1px solid rgba(0, 212, 170, 0.3);
+    
+    .live-dot {
+      width: 6px;
+      height: 6px;
+      background: #00d4aa;
+      border-radius: 50%;
+      animation: pulse-dot 2s infinite;
+      display: inline-block;
+      margin-right: 4px;
+    }
+    
+    .live-text {
+      color: #00d4aa;
+      font-weight: 700;
+      font-size: 10px;
+      letter-spacing: 1px;
+      text-shadow: 0 0 4px rgba(0, 212, 170, 0.5);
+    }
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}
+
+.update-indicator {
+  position: absolute;
+  top: 2px;
+  right: 10px;
+  z-index: 10;
+  
+  .pulse {
+    width: 8px;
+    height: 8px;
+    background: #00d4aa;
+    border-radius: 50%;
+    animation: pulse-update 1.5s infinite;
+    box-shadow: 0 0 4px rgba(0, 212, 170, 0.6);
+  }
+}
+
+@keyframes pulse-update {
+  0% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(1.3);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Pause animation on hover */
+.market-banner-container:hover .market-scroll {
+  animation-play-state: paused;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .market-banner-container {
+    height: 35px;
+  }
+
+  .market-item {
+    font-size: 11px;
+    padding: 4px 8px;
+    gap: 6px;
+
+    .change {
+      font-size: 10px;
+    }
+  }
+}
+
+@media (max-width: 480px) {
+  .market-banner-container {
+    height: 30px;
+  }
+
+  .market-item {
+    font-size: 10px;
+    padding: 3px 6px;
+    gap: 4px;
+  }
+}

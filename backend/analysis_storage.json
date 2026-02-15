@@ -2,7 +2,7 @@
   "tVEdeCl4_M&M": {
     "analysis": {
       "symbol": "M&M",
-      "score": 3.0,
+      "score": 3.3,
       "details": {
         "recency": {
           "score": 3,
@@ -14,18 +14,20 @@
           "direction": "Mixed"
         },
         "fundamentals": {
-          "score": 3,
-          "summary": "Data unavailable - scraping failed",
-          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/M&M/consolidated/"
+          "score": 4,
+          "summary": "ROE: 18.0%",
+          "roe": 18.0,
+          "debt_to_equity": null,
+          "sales_growth": null
         },
         "ai_sentiment": {
           "score": 3,
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:10.972740"
+      "analyzed_at": "2026-02-12T18:21:07.685828"
     },
-    "saved_at": "2026-02-12T15:32:12.512413",
+    "saved_at": "2026-02-12T18:21:07.686672",
     "symbol": "M&M"
   },
   "tVEdeCl4_CEATLTD": {
@@ -54,9 +56,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:31:59.113401"
+      "analyzed_at": "2026-02-12T18:20:49.723451"
     },
-    "saved_at": "2026-02-12T15:32:12.513524",
+    "saved_at": "2026-02-12T18:21:02.495959",
     "symbol": "CEATLTD"
   },
   "tVEdeCl4_KARURVYSYA": {
@@ -75,17 +77,19 @@
         },
         "fundamentals": {
           "score": 3,
-          "summary": "Data unavailable - scraping failed",
-          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/KARURVYSYA/consolidated/"
+          "summary": "Data unavailable",
+          "roe": null,
+          "debt_to_equity": null,
+          "sales_growth": null
         },
         "ai_sentiment": {
           "score": 3,
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:07.996184"
+      "analyzed_at": "2026-02-12T18:21:04.621129"
     },
-    "saved_at": "2026-02-12T15:32:12.520932",
+    "saved_at": "2026-02-12T18:21:04.621582",
     "symbol": "KARURVYSYA"
   },
   "tVEdeCl4_CASTROLIND": {
@@ -114,15 +118,15 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:31:58.161906"
+      "analyzed_at": "2026-02-12T18:20:48.877465"
     },
-    "saved_at": "2026-02-12T15:32:12.521261",
+    "saved_at": "2026-02-12T18:21:02.508587",
     "symbol": "CASTROLIND"
   },
   "tVEdeCl4_NMDC": {
     "analysis": {
       "symbol": "NMDC",
-      "score": 3.75,
+      "score": 4.05,
       "details": {
         "recency": {
           "score": 5,
@@ -134,18 +138,20 @@
           "direction": "Bullish"
         },
         "fundamentals": {
-          "score": 3,
-          "summary": "Data unavailable - scraping failed",
-          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/NMDC/consolidated/"
+          "score": 4,
+          "summary": "ROE: 23.6%",
+          "roe": 23.6,
+          "debt_to_equity": null,
+          "sales_growth": null
         },
         "ai_sentiment": {
           "score": 3,
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:12.453232"
+      "analyzed_at": "2026-02-12T18:21:09.586442"
     },
-    "saved_at": "2026-02-12T15:32:12.521569",
+    "saved_at": "2026-02-12T18:21:09.587537",
     "symbol": "NMDC"
   },
   "tVEdeCl4_ITC": {
@@ -174,9 +180,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:06.434758"
+      "analyzed_at": "2026-02-12T18:21:02.305179"
     },
-    "saved_at": "2026-02-12T15:32:12.521888",
+    "saved_at": "2026-02-12T18:21:02.518214",
     "symbol": "ITC"
   },
   "tVEdeCl4_APARINDS": {
@@ -205,9 +211,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:31:52.783185"
+      "analyzed_at": "2026-02-12T18:20:43.002431"
     },
-    "saved_at": "2026-02-12T15:32:12.522336",
+    "saved_at": "2026-02-12T18:21:02.516686",
     "symbol": "APARINDS"
   },
   "tVEdeCl4_ASIANPAINT": {
@@ -226,19 +232,19 @@
         },
         "fundamentals": {
           "score": 4,
-          "summary": "ROE: 20.6%, Growth: 11.7%",
+          "summary": "ROE: 20.6%, Growth: 11.8%",
           "roe": 20.6,
           "debt_to_equity": null,
-          "sales_growth": 11.7
+          "sales_growth": 11.8
         },
         "ai_sentiment": {
           "score": 3,
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:31:54.365908"
+      "analyzed_at": "2026-02-12T18:20:44.587027"
     },
-    "saved_at": "2026-02-12T15:32:12.522810",
+    "saved_at": "2026-02-12T18:21:02.521092",
     "symbol": "ASIANPAINT"
   },
   "tVEdeCl4_NIFTYBEES": {
@@ -267,9 +273,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:12.453594"
+      "analyzed_at": "2026-02-12T18:21:09.209348"
     },
-    "saved_at": "2026-02-12T15:32:12.523317",
+    "saved_at": "2026-02-12T18:21:09.209663",
     "symbol": "NIFTYBEES"
   },
   "tVEdeCl4_IRFC": {
@@ -298,9 +304,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:05.828604"
+      "analyzed_at": "2026-02-12T18:21:02.785215"
     },
-    "saved_at": "2026-02-12T15:32:12.523864",
+    "saved_at": "2026-02-12T18:21:02.785679",
     "symbol": "IRFC"
   },
   "tVEdeCl4_DCBBANK": {
@@ -329,9 +335,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:01.565036"
+      "analyzed_at": "2026-02-12T18:20:52.425849"
     },
-    "saved_at": "2026-02-12T15:32:12.524430",
+    "saved_at": "2026-02-12T18:21:02.513323",
     "symbol": "DCBBANK"
   },
   "tVEdeCl4_BIRLACORPN": {
@@ -360,9 +366,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:31:57.519483"
+      "analyzed_at": "2026-02-12T18:20:48.140407"
     },
-    "saved_at": "2026-02-12T15:32:12.525030",
+    "saved_at": "2026-02-12T18:21:02.523827",
     "symbol": "BIRLACORPN"
   },
   "tVEdeCl4_HINDALCO": {
@@ -391,15 +397,15 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:03.138059"
+      "analyzed_at": "2026-02-12T18:20:54.761185"
     },
-    "saved_at": "2026-02-12T15:32:12.525636",
+    "saved_at": "2026-02-12T18:21:02.519656",
     "symbol": "HINDALCO"
   },
   "tVEdeCl4_KIRLOSENG": {
     "analysis": {
       "symbol": "KIRLOSENG",
-      "score": 4.0,
+      "score": 4.3,
       "details": {
         "recency": {
           "score": 5,
@@ -411,18 +417,20 @@
           "direction": "Bullish"
         },
         "fundamentals": {
-          "score": 3,
-          "summary": "Data unavailable - scraping failed",
-          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/KIRLOSENG/consolidated/"
+          "score": 4,
+          "summary": "ROE: 15.4%",
+          "roe": 15.4,
+          "debt_to_equity": null,
+          "sales_growth": null
         },
         "ai_sentiment": {
           "score": 3,
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:09.376122"
+      "analyzed_at": "2026-02-12T18:21:05.983890"
     },
-    "saved_at": "2026-02-12T15:32:12.526266",
+    "saved_at": "2026-02-12T18:21:05.984165",
     "symbol": "KIRLOSENG"
   },
   "tVEdeCl4_CHOLAFIN": {
@@ -451,9 +459,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:31:59.419189"
+      "analyzed_at": "2026-02-12T18:20:50.223921"
     },
-    "saved_at": "2026-02-12T15:32:12.526923",
+    "saved_at": "2026-02-12T18:21:02.498619",
     "symbol": "CHOLAFIN"
   },
   "tVEdeCl4_INFY": {
@@ -482,9 +490,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:04.877485"
+      "analyzed_at": "2026-02-12T18:20:59.444703"
     },
-    "saved_at": "2026-02-12T15:32:12.527615",
+    "saved_at": "2026-02-12T18:21:02.490653",
     "symbol": "INFY"
   },
   "tVEdeCl4_ARE&M": {
@@ -513,9 +521,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:31:53.453937"
+      "analyzed_at": "2026-02-12T18:20:43.724431"
     },
-    "saved_at": "2026-02-12T15:32:12.528277",
+    "saved_at": "2026-02-12T18:21:02.525156",
     "symbol": "ARE&M"
   },
   "tVEdeCl4_BALKRISIND": {
@@ -544,9 +552,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:31:56.235716"
+      "analyzed_at": "2026-02-12T18:20:46.647312"
     },
-    "saved_at": "2026-02-12T15:32:12.528954",
+    "saved_at": "2026-02-12T18:21:02.526500",
     "symbol": "BALKRISIND"
   },
   "tVEdeCl4_ASTRAL": {
@@ -575,9 +583,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:31:55.074026"
+      "analyzed_at": "2026-02-12T18:20:45.342480"
     },
-    "saved_at": "2026-02-12T15:32:12.529672",
+    "saved_at": "2026-02-12T18:21:02.522473",
     "symbol": "ASTRAL"
   },
   "tVEdeCl4_CIPLA": {
@@ -606,9 +614,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:31:59.712145"
+      "analyzed_at": "2026-02-12T18:20:50.575069"
     },
-    "saved_at": "2026-02-12T15:32:12.530398",
+    "saved_at": "2026-02-12T18:21:02.500799",
     "symbol": "CIPLA"
   },
   "tVEdeCl4_AVANTIFEED": {
@@ -637,9 +645,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:31:55.945987"
+      "analyzed_at": "2026-02-12T18:20:46.168452"
     },
-    "saved_at": "2026-02-12T15:32:12.531083",
+    "saved_at": "2026-02-12T18:21:02.528054",
     "symbol": "AVANTIFEED"
   },
   "tVEdeCl4_HINDUNILVR": {
@@ -668,9 +676,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:03.820283"
+      "analyzed_at": "2026-02-12T18:20:55.118472"
     },
-    "saved_at": "2026-02-12T15:32:12.531814",
+    "saved_at": "2026-02-12T18:21:02.484933",
     "symbol": "HINDUNILVR"
   },
   "tVEdeCl4_LTFOODS": {
@@ -699,9 +707,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:10.934052"
+      "analyzed_at": "2026-02-12T18:21:07.343664"
     },
-    "saved_at": "2026-02-12T15:32:12.532599",
+    "saved_at": "2026-02-12T18:21:07.344150",
     "symbol": "LTFOODS"
   },
   "tVEdeCl4_COROMANDEL": {
@@ -730,9 +738,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:00.985376"
+      "analyzed_at": "2026-02-12T18:20:51.800848"
     },
-    "saved_at": "2026-02-12T15:32:12.533352",
+    "saved_at": "2026-02-12T18:21:02.511177",
     "symbol": "COROMANDEL"
   },
   "tVEdeCl4_BEL": {
@@ -761,9 +769,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:31:56.632081"
+      "analyzed_at": "2026-02-12T18:20:47.202950"
     },
-    "saved_at": "2026-02-12T15:32:12.534146",
+    "saved_at": "2026-02-12T18:21:02.504915",
     "symbol": "BEL"
   },
   "tVEdeCl4_KEI": {
@@ -792,9 +800,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:09.514285"
+      "analyzed_at": "2026-02-12T18:21:05.746067"
     },
-    "saved_at": "2026-02-12T15:32:12.535344",
+    "saved_at": "2026-02-12T18:21:05.746433",
     "symbol": "KEI"
   },
   "tVEdeCl4_COALINDIA": {
@@ -823,9 +831,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:00.689859"
+      "analyzed_at": "2026-02-12T18:20:51.348254"
     },
-    "saved_at": "2026-02-12T15:32:12.537064",
+    "saved_at": "2026-02-12T18:21:02.478136",
     "symbol": "COALINDIA"
   },
   "tVEdeCl4_GOLDBEES": {
@@ -854,9 +862,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:02.534155"
+      "analyzed_at": "2026-02-12T18:20:53.375646"
     },
-    "saved_at": "2026-02-12T15:32:12.537922",
+    "saved_at": "2026-02-12T18:21:02.515105",
     "symbol": "GOLDBEES"
   },
   "tVEdeCl4_LIQUIDCASE": {
@@ -885,9 +893,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:09.574136"
+      "analyzed_at": "2026-02-12T18:21:06.149419"
     },
-    "saved_at": "2026-02-12T15:32:12.538755",
+    "saved_at": "2026-02-12T18:21:06.149862",
     "symbol": "LIQUIDCASE"
   },
   "tVEdeCl4_JKIL": {
@@ -916,9 +924,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:07.415151"
+      "analyzed_at": "2026-02-12T18:21:04.038598"
     },
-    "saved_at": "2026-02-12T15:32:12.539604",
+    "saved_at": "2026-02-12T18:21:04.039260",
     "symbol": "JKIL"
   },
   "tVEdeCl4_ICICIBANK": {
@@ -947,9 +955,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:04.120355"
+      "analyzed_at": "2026-02-12T18:20:59.397302"
     },
-    "saved_at": "2026-02-12T15:32:12.540485",
+    "saved_at": "2026-02-12T18:21:02.493262",
     "symbol": "ICICIBANK"
   },
   "tVEdeCl4_ASTERDM": {
@@ -968,19 +976,19 @@
         },
         "fundamentals": {
           "score": 3,
-          "summary": "ROE: 8.3%, Growth: 6.8%",
+          "summary": "ROE: 8.3%, Growth: 6.9%",
           "roe": 8.26,
           "debt_to_equity": null,
-          "sales_growth": 6.84
+          "sales_growth": 6.9
         },
         "ai_sentiment": {
           "score": 3,
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:31:54.656134"
+      "analyzed_at": "2026-02-12T18:20:44.970833"
     },
-    "saved_at": "2026-02-12T15:32:12.541368",
+    "saved_at": "2026-02-12T18:21:02.502928",
     "symbol": "ASTERDM"
   },
   "tVEdeCl4_JUNIORBEES": {
@@ -999,17 +1007,19 @@
         },
         "fundamentals": {
           "score": 3,
-          "summary": "Data unavailable - scraping failed",
-          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/JUNIORBEES/consolidated/"
+          "summary": "Data unavailable",
+          "roe": null,
+          "debt_to_equity": null,
+          "sales_growth": null
         },
         "ai_sentiment": {
           "score": 3,
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:07.903403"
+      "analyzed_at": "2026-02-12T18:21:04.335167"
     },
-    "saved_at": "2026-02-12T15:32:12.542330",
+    "saved_at": "2026-02-12T18:21:04.335785",
     "symbol": "JUNIORBEES"
   },
   "tVEdeCl4_APOLLOTYRE": {
@@ -1038,9 +1048,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:31:53.049090"
+      "analyzed_at": "2026-02-12T18:20:43.242461"
     },
-    "saved_at": "2026-02-12T15:32:12.543208",
+    "saved_at": "2026-02-12T18:21:02.506726",
     "symbol": "APOLLOTYRE"
   },
   "tVEdeCl4_JINDALSAW": {
@@ -1069,9 +1079,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:06.480048"
+      "analyzed_at": "2026-02-12T18:21:03.040109"
     },
-    "saved_at": "2026-02-12T15:32:12.544092",
+    "saved_at": "2026-02-12T18:21:03.040558",
     "symbol": "JINDALSAW"
   },
   "tVEdeCl4_CANBK": {
@@ -1100,9 +1110,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:31:57.841219"
+      "analyzed_at": "2026-02-12T18:20:48.583958"
     },
-    "saved_at": "2026-02-12T15:32:12.545074",
+    "saved_at": "2026-02-12T18:21:02.487989",
     "symbol": "CANBK"
   },
   "tVEdeCl4_FIVESTAR": {
@@ -1131,15 +1141,15 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:02.261854"
+      "analyzed_at": "2026-02-12T18:20:54.047507"
     },
-    "saved_at": "2026-02-12T15:32:12.546043",
+    "saved_at": "2026-02-12T18:21:02.481859",
     "symbol": "FIVESTAR"
   },
   "tVEdeCl4_MUTHOOTFIN": {
     "analysis": {
       "symbol": "MUTHOOTFIN",
-      "score": 3.75,
+      "score": 4.05,
       "details": {
         "recency": {
           "score": 5,
@@ -1151,18 +1161,20 @@
           "direction": "Bullish"
         },
         "fundamentals": {
-          "score": 3,
-          "summary": "Data unavailable - scraping failed",
-          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/MUTHOOTFIN/consolidated/"
+          "score": 4,
+          "summary": "ROE: 19.6%, Growth: 200.0%",
+          "roe": 19.6,
+          "debt_to_equity": null,
+          "sales_growth": 200.0
         },
         "ai_sentiment": {
           "score": 3,
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:11.124483"
+      "analyzed_at": "2026-02-12T18:21:08.892424"
     },
-    "saved_at": "2026-02-12T15:32:12.547029",
+    "saved_at": "2026-02-12T18:21:08.893091",
     "symbol": "MUTHOOTFIN"
   },
   "tVEdeCl4_NTPC": {
@@ -1181,17 +1193,19 @@
         },
         "fundamentals": {
           "score": 3,
-          "summary": "Data unavailable - scraping failed",
-          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/NTPC/consolidated/"
+          "summary": "ROE: 12.1%, Growth: 11.4%",
+          "roe": 12.1,
+          "debt_to_equity": null,
+          "sales_growth": 11.4
         },
         "ai_sentiment": {
           "score": 3,
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:12.639485"
+      "analyzed_at": "2026-02-12T18:21:10.633729"
     },
-    "saved_at": "2026-02-12T15:32:12.640126",
+    "saved_at": "2026-02-12T18:21:10.634191",
     "symbol": "NTPC"
   },
   "tVEdeCl4_PNBHOUSING": {
@@ -1218,9 +1232,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:13.917954"
+      "analyzed_at": "2026-02-12T18:21:10.796916"
     },
-    "saved_at": "2026-02-12T15:32:13.918179",
+    "saved_at": "2026-02-12T18:21:10.797750",
     "symbol": "PNBHOUSING"
   },
   "tVEdeCl4_PRINCEPIPE": {
@@ -1239,19 +1253,17 @@
         },
         "fundamentals": {
           "score": 3,
-          "summary": "Data unavailable",
-          "roe": null,
-          "debt_to_equity": null,
-          "sales_growth": null
+          "summary": "Data unavailable - scraping failed",
+          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/PRINCEPIPE/consolidated/"
         },
         "ai_sentiment": {
           "score": 3,
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:13.998701"
+      "analyzed_at": "2026-02-12T18:21:11.246169"
     },
-    "saved_at": "2026-02-12T15:32:13.999002",
+    "saved_at": "2026-02-12T18:21:11.247243",
     "symbol": "PRINCEPIPE"
   },
   "tVEdeCl4_RELIANCE": {
@@ -1278,9 +1290,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:14.098023"
+      "analyzed_at": "2026-02-12T18:21:13.590459"
     },
-    "saved_at": "2026-02-12T15:32:14.098402",
+    "saved_at": "2026-02-12T18:21:13.591391",
     "symbol": "RELIANCE"
   },
   "tVEdeCl4_RKFORGE": {
@@ -1309,9 +1321,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:15.514075"
+      "analyzed_at": "2026-02-12T18:21:12.785413"
     },
-    "saved_at": "2026-02-12T15:32:15.514323",
+    "saved_at": "2026-02-12T18:21:12.785760",
     "symbol": "RKFORGE"
   },
   "tVEdeCl4_SBILIFE": {
@@ -1340,15 +1352,15 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:15.532642"
+      "analyzed_at": "2026-02-12T18:21:12.881569"
     },
-    "saved_at": "2026-02-12T15:32:15.532850",
+    "saved_at": "2026-02-12T18:21:12.882022",
     "symbol": "SBILIFE"
   },
   "tVEdeCl4_SCHAEFFLER": {
     "analysis": {
       "symbol": "SCHAEFFLER",
-      "score": 2.75,
+      "score": 3.05,
       "details": {
         "recency": {
           "score": 2,
@@ -1360,18 +1372,20 @@
           "direction": "Mixed"
         },
         "fundamentals": {
-          "score": 3,
-          "summary": "Data unavailable - scraping failed",
-          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/SCHAEFFLER/consolidated/"
+          "score": 4,
+          "summary": "ROE: 18.5%",
+          "roe": 18.5,
+          "debt_to_equity": null,
+          "sales_growth": null
         },
         "ai_sentiment": {
           "score": 3,
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:15.640855"
+      "analyzed_at": "2026-02-12T18:21:14.555891"
     },
-    "saved_at": "2026-02-12T15:32:15.641253",
+    "saved_at": "2026-02-12T18:21:14.556656",
     "symbol": "SCHAEFFLER"
   },
   "tVEdeCl4_SUNTV": {
@@ -1398,9 +1412,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:16.985093"
+      "analyzed_at": "2026-02-12T18:21:15.085716"
     },
-    "saved_at": "2026-02-12T15:32:16.985294",
+    "saved_at": "2026-02-12T18:21:15.086351",
     "symbol": "SUNTV"
   },
   "tVEdeCl4_SUNDARMFIN": {
@@ -1429,9 +1443,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:17.066744"
+      "analyzed_at": "2026-02-12T18:21:15.467566"
     },
-    "saved_at": "2026-02-12T15:32:17.066979",
+    "saved_at": "2026-02-12T18:21:15.468115",
     "symbol": "SUNDARMFIN"
   },
   "tVEdeCl4_TIMETECHNO": {
@@ -1458,9 +1472,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:17.180935"
+      "analyzed_at": "2026-02-12T18:21:16.046000"
     },
-    "saved_at": "2026-02-12T15:32:17.181696",
+    "saved_at": "2026-02-12T18:21:16.046539",
     "symbol": "TIMETECHNO"
   },
   "tVEdeCl4_TMCV": {
@@ -1489,9 +1503,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:18.524202"
+      "analyzed_at": "2026-02-12T18:21:16.706476"
     },
-    "saved_at": "2026-02-12T15:32:18.524624",
+    "saved_at": "2026-02-12T18:21:16.707180",
     "symbol": "TMCV"
   },
   "tVEdeCl4_TMPV": {
@@ -1518,15 +1532,15 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:18.552239"
+      "analyzed_at": "2026-02-12T18:21:16.974862"
     },
-    "saved_at": "2026-02-12T15:32:18.552636",
+    "saved_at": "2026-02-12T18:21:16.975242",
     "symbol": "TMPV"
   },
   "tVEdeCl4_UNIONBANK": {
     "analysis": {
       "symbol": "UNIONBANK",
-      "score": 4.0,
+      "score": 4.3,
       "details": {
         "recency": {
           "score": 5,
@@ -1538,18 +1552,20 @@
           "direction": "Bullish"
         },
         "fundamentals": {
-          "score": 3,
-          "summary": "Data unavailable - scraping failed",
-          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/UNIONBANK/consolidated/"
+          "score": 4,
+          "summary": "ROE: 17.0%",
+          "roe": 17.0,
+          "debt_to_equity": null,
+          "sales_growth": null
         },
         "ai_sentiment": {
           "score": 3,
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:18.679884"
+      "analyzed_at": "2026-02-12T18:21:17.651066"
     },
-    "saved_at": "2026-02-12T15:32:18.680769",
+    "saved_at": "2026-02-12T18:21:17.651491",
     "symbol": "UNIONBANK"
   },
   "tVEdeCl4_ZENSARTECH": {
@@ -1576,12 +1592,1633 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:20.023260"
+      "analyzed_at": "2026-02-12T18:21:18.609423"
     },
-    "saved_at": "2026-02-12T15:32:20.023560",
+    "saved_at": "2026-02-12T18:21:18.610429",
     "symbol": "ZENSARTECH"
   },
   "tVEdeCl4_WELCORP": {
+    "analysis": {
+      "symbol": "WELCORP",
+      "score": 2.75,
+      "details": {
+        "recency": {
+          "score": 2,
+          "detail": "Underperforming: -8.3% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 3,
+          "strength": "Strong (ADX: 25.1)",
+          "direction": "Mixed"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable - scraping failed",
+          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/WELCORP/consolidated/"
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-12T18:21:18.186775"
+    },
+    "saved_at": "2026-02-12T18:21:18.187400",
+    "symbol": "WELCORP"
+  },
+  "tTnmQ5mB_APARINDS": {
+    "analysis": {
+      "symbol": "APARINDS",
+      "score": 4.05,
+      "details": {
+        "recency": {
+          "score": 4,
+          "detail": "Outperforming: 3.2% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 5,
+          "strength": "Strong (ADX: 54.5)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 19.5%",
+          "roe": 19.5,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:24.035171"
+    },
+    "saved_at": "2026-02-13T08:43:43.128695",
+    "symbol": "APARINDS"
+  },
+  "tTnmQ5mB_LIQUIDCASE": {
+    "analysis": {
+      "symbol": "LIQUIDCASE",
+      "score": 3.75,
+      "details": {
+        "recency": {
+          "score": 4,
+          "detail": "Outperforming: 1.2% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 5,
+          "strength": "Strong (ADX: 100.0)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable - scraping failed",
+          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/LIQUIDCASE/consolidated/"
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:40.781653"
+    },
+    "saved_at": "2026-02-13T08:43:43.108527",
+    "symbol": "LIQUIDCASE"
+  },
+  "tTnmQ5mB_BEL": {
+    "analysis": {
+      "symbol": "BEL",
+      "score": 4.05,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 4.6% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 4,
+          "strength": "Moderate (ADX: 23.3)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 29.2%",
+          "roe": 29.2,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:27.725360"
+    },
+    "saved_at": "2026-02-13T08:43:43.110902",
+    "symbol": "BEL"
+  },
+  "tTnmQ5mB_JUNIORBEES": {
+    "analysis": {
+      "symbol": "JUNIORBEES",
+      "score": 3.5,
+      "details": {
+        "recency": {
+          "score": 4,
+          "detail": "Outperforming: -0.5% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 4,
+          "strength": "Moderate (ADX: 23.4)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable",
+          "roe": null,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:39.312096"
+    },
+    "saved_at": "2026-02-13T08:43:43.112947",
+    "symbol": "JUNIORBEES"
+  },
+  "tTnmQ5mB_ICICIBANK": {
+    "analysis": {
+      "symbol": "ICICIBANK",
+      "score": 4.05,
+      "details": {
+        "recency": {
+          "score": 4,
+          "detail": "Outperforming: 3.7% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 5,
+          "strength": "Strong (ADX: 27.8)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 17.9%",
+          "roe": 17.9,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:35.499376"
+    },
+    "saved_at": "2026-02-13T08:43:43.114773",
+    "symbol": "ICICIBANK"
+  },
+  "tTnmQ5mB_COALINDIA": {
+    "analysis": {
+      "symbol": "COALINDIA",
+      "score": 3.8,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 8.1% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 3,
+          "strength": "Weak (ADX: 15.7)",
+          "direction": "Mixed"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 38.9%, Growth: 8.3%",
+          "roe": 38.9,
+          "debt_to_equity": null,
+          "sales_growth": 8.33
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:32.173759"
+    },
+    "saved_at": "2026-02-13T08:43:43.116607",
+    "symbol": "COALINDIA"
+  },
+  "tTnmQ5mB_HINDUNILVR": {
+    "analysis": {
+      "symbol": "HINDUNILVR",
+      "score": 3.8,
+      "details": {
+        "recency": {
+          "score": 4,
+          "detail": "Outperforming: -0.7% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 4,
+          "strength": "Weak (ADX: 12.9)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 20.7%, Growth: 11.6%",
+          "roe": 20.7,
+          "debt_to_equity": null,
+          "sales_growth": 11.6
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:35.465537"
+    },
+    "saved_at": "2026-02-13T08:43:43.118249",
+    "symbol": "HINDUNILVR"
+  },
+  "tTnmQ5mB_INFY": {
+    "analysis": {
+      "symbol": "INFY",
+      "score": 2.55,
+      "details": {
+        "recency": {
+          "score": 2,
+          "detail": "Underperforming: -8.0% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 1,
+          "strength": "Strong (ADX: 26.0)",
+          "direction": "Bearish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 28.8%",
+          "roe": 28.8,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:35.876797"
+    },
+    "saved_at": "2026-02-13T08:43:43.120052",
+    "symbol": "INFY"
+  },
+  "tTnmQ5mB_CASTROLIND": {
+    "analysis": {
+      "symbol": "CASTROLIND",
+      "score": 3.0,
+      "details": {
+        "recency": {
+          "score": 3,
+          "detail": "In-line: -3.5% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 3,
+          "strength": "Moderate (ADX: 24.8)",
+          "direction": "Mixed"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable",
+          "roe": null,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:29.263678"
+    },
+    "saved_at": "2026-02-13T08:43:43.121721",
+    "symbol": "CASTROLIND"
+  },
+  "tTnmQ5mB_APOLLOTYRE": {
+    "analysis": {
+      "symbol": "APOLLOTYRE",
+      "score": 2.75,
+      "details": {
+        "recency": {
+          "score": 3,
+          "detail": "In-line: -3.0% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 2,
+          "strength": "Weak (ADX: 17.4)",
+          "direction": "Bearish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "ROE: 8.6%, Growth: 9.8%",
+          "roe": 8.61,
+          "debt_to_equity": null,
+          "sales_growth": 9.83
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:24.035018"
+    },
+    "saved_at": "2026-02-13T08:43:43.123355",
+    "symbol": "APOLLOTYRE"
+  },
+  "tTnmQ5mB_JINDALSAW": {
+    "analysis": {
+      "symbol": "JINDALSAW",
+      "score": 4.05,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 13.6% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 4,
+          "strength": "Moderate (ADX: 24.6)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 16.3%",
+          "roe": 16.3,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:37.522329"
+    },
+    "saved_at": "2026-02-13T08:43:43.125229",
+    "symbol": "JINDALSAW"
+  },
+  "tTnmQ5mB_ASIANPAINT": {
+    "analysis": {
+      "symbol": "ASIANPAINT",
+      "score": 2.55,
+      "details": {
+        "recency": {
+          "score": 2,
+          "detail": "Underperforming: -16.5% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 1,
+          "strength": "Strong (ADX: 45.3)",
+          "direction": "Bearish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 20.6%, Growth: 11.8%",
+          "roe": 20.6,
+          "debt_to_equity": null,
+          "sales_growth": 11.8
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:25.636442"
+    },
+    "saved_at": "2026-02-13T08:43:43.126865",
+    "symbol": "ASIANPAINT"
+  },
+  "tTnmQ5mB_GOLDBEES": {
+    "analysis": {
+      "symbol": "GOLDBEES",
+      "score": 3.75,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 26.1% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 4,
+          "strength": "Weak (ADX: 17.7)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable",
+          "roe": null,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:33.888490"
+    },
+    "saved_at": "2026-02-13T08:43:43.130228",
+    "symbol": "GOLDBEES"
+  },
+  "tTnmQ5mB_CANBK": {
+    "analysis": {
+      "symbol": "CANBK",
+      "score": 3.3,
+      "details": {
+        "recency": {
+          "score": 3,
+          "detail": "In-line: -2.9% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 3,
+          "strength": "Weak (ADX: 9.4)",
+          "direction": "Mixed"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 17.8%",
+          "roe": 17.8,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:29.231059"
+    },
+    "saved_at": "2026-02-13T08:43:43.131752",
+    "symbol": "CANBK"
+  },
+  "tTnmQ5mB_IRFC": {
+    "analysis": {
+      "symbol": "IRFC",
+      "score": 2.5,
+      "details": {
+        "recency": {
+          "score": 2,
+          "detail": "Underperforming: -7.5% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 2,
+          "strength": "Weak (ADX: 17.8)",
+          "direction": "Bearish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable",
+          "roe": null,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:37.217656"
+    },
+    "saved_at": "2026-02-13T08:43:43.133319",
+    "symbol": "IRFC"
+  },
+  "tTnmQ5mB_AVANTIFEED": {
+    "analysis": {
+      "symbol": "AVANTIFEED",
+      "score": 4.3,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 85.2% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 5,
+          "strength": "Strong (ADX: 53.5)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 19.5%, Growth: 6.4%",
+          "roe": 19.5,
+          "debt_to_equity": null,
+          "sales_growth": 6.4
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:27.426098"
+    },
+    "saved_at": "2026-02-13T08:43:43.134910",
+    "symbol": "AVANTIFEED"
+  },
+  "tTnmQ5mB_CHOLAFIN": {
+    "analysis": {
+      "symbol": "CHOLAFIN",
+      "score": 4.05,
+      "details": {
+        "recency": {
+          "score": 4,
+          "detail": "Outperforming: 2.0% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 5,
+          "strength": "Strong (ADX: 31.0)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 19.7%, Growth: 32.3%",
+          "roe": 19.7,
+          "debt_to_equity": null,
+          "sales_growth": 32.3
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:30.778726"
+    },
+    "saved_at": "2026-02-13T08:43:43.136470",
+    "symbol": "CHOLAFIN"
+  },
+  "tTnmQ5mB_LTFOODS": {
+    "analysis": {
+      "symbol": "LTFOODS",
+      "score": 4.05,
+      "details": {
+        "recency": {
+          "score": 4,
+          "detail": "Outperforming: 3.9% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 5,
+          "strength": "Strong (ADX: 32.9)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 16.7%",
+          "roe": 16.7,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:42.065227"
+    },
+    "saved_at": "2026-02-13T08:43:43.137964",
+    "symbol": "LTFOODS"
+  },
+  "tTnmQ5mB_JKIL": {
+    "analysis": {
+      "symbol": "JKIL",
+      "score": 2.5,
+      "details": {
+        "recency": {
+          "score": 2,
+          "detail": "Underperforming: -8.6% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 2,
+          "strength": "Weak (ADX: 15.2)",
+          "direction": "Bearish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "ROE: 13.8%",
+          "roe": 13.8,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:39.009006"
+    },
+    "saved_at": "2026-02-13T08:43:43.139712",
+    "symbol": "JKIL"
+  },
+  "tTnmQ5mB_ASTRAL": {
+    "analysis": {
+      "symbol": "ASTRAL",
+      "score": 3.75,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 8.6% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 4,
+          "strength": "Moderate (ADX: 23.1)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "ROE: 14.9%",
+          "roe": 14.9,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:26.187768"
+    },
+    "saved_at": "2026-02-13T08:43:43.141292",
+    "symbol": "ASTRAL"
+  },
+  "tTnmQ5mB_HINDALCO": {
+    "analysis": {
+      "symbol": "HINDALCO",
+      "score": 3.75,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 19.5% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 4,
+          "strength": "Weak (ADX: 18.5)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "ROE: 14.0%",
+          "roe": 14.0,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:34.272460"
+    },
+    "saved_at": "2026-02-13T08:43:43.142836",
+    "symbol": "HINDALCO"
+  },
+  "tTnmQ5mB_MUTHOOTFIN": {
+    "analysis": {
+      "symbol": "MUTHOOTFIN",
+      "score": 3.75,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 8.2% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 4,
+          "strength": "Weak (ADX: 14.7)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable - scraping failed",
+          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/MUTHOOTFIN/consolidated/"
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:42.298808"
+    },
+    "saved_at": "2026-02-13T08:43:43.144412",
+    "symbol": "MUTHOOTFIN"
+  },
+  "tTnmQ5mB_ITC": {
+    "analysis": {
+      "symbol": "ITC",
+      "score": 2.55,
+      "details": {
+        "recency": {
+          "score": 2,
+          "detail": "Underperforming: -20.3% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 1,
+          "strength": "Strong (ADX: 46.7)",
+          "direction": "Bearish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 27.3%, Growth: 8.8%",
+          "roe": 27.3,
+          "debt_to_equity": null,
+          "sales_growth": 8.81
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:37.381600"
+    },
+    "saved_at": "2026-02-13T08:43:43.145979",
+    "symbol": "ITC"
+  },
+  "tTnmQ5mB_M&M": {
+    "analysis": {
+      "symbol": "M&M",
+      "score": 3.0,
+      "details": {
+        "recency": {
+          "score": 3,
+          "detail": "In-line: -3.8% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 3,
+          "strength": "Strong (ADX: 33.3)",
+          "direction": "Mixed"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable - scraping failed",
+          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/M&M/consolidated/"
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:42.262391"
+    },
+    "saved_at": "2026-02-13T08:43:43.147668",
+    "symbol": "M&M"
+  },
+  "tTnmQ5mB_KARURVYSYA": {
+    "analysis": {
+      "symbol": "KARURVYSYA",
+      "score": 4.0,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 26.1% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 5,
+          "strength": "Strong (ADX: 40.1)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable - scraping failed",
+          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/KARURVYSYA/consolidated/"
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:39.003459"
+    },
+    "saved_at": "2026-02-13T08:43:43.149344",
+    "symbol": "KARURVYSYA"
+  },
+  "tTnmQ5mB_CEATLTD": {
+    "analysis": {
+      "symbol": "CEATLTD",
+      "score": 3.25,
+      "details": {
+        "recency": {
+          "score": 3,
+          "detail": "In-line: -0.8% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 4,
+          "strength": "Weak (ADX: 19.4)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "ROE: 11.8%",
+          "roe": 11.8,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:30.599089"
+    },
+    "saved_at": "2026-02-13T08:43:43.150899",
+    "symbol": "CEATLTD"
+  },
+  "tTnmQ5mB_FIVESTAR": {
+    "analysis": {
+      "symbol": "FIVESTAR",
+      "score": 2.55,
+      "details": {
+        "recency": {
+          "score": 2,
+          "detail": "Underperforming: -30.3% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 1,
+          "strength": "Strong (ADX: 53.1)",
+          "direction": "Bearish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 16.0%, Growth: 400.0%",
+          "roe": 16.0,
+          "debt_to_equity": null,
+          "sales_growth": 400.0
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:33.723691"
+    },
+    "saved_at": "2026-02-13T08:43:43.152434",
+    "symbol": "FIVESTAR"
+  },
+  "tTnmQ5mB_ARE&M": {
+    "analysis": {
+      "symbol": "ARE&M",
+      "score": 2.25,
+      "details": {
+        "recency": {
+          "score": 2,
+          "detail": "Underperforming: -10.6% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 1,
+          "strength": "Strong (ADX: 43.7)",
+          "direction": "Bearish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "ROE: 11.9%",
+          "roe": 11.9,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:24.325782"
+    },
+    "saved_at": "2026-02-13T08:43:43.153924",
+    "symbol": "ARE&M"
+  },
+  "tTnmQ5mB_KEI": {
+    "analysis": {
+      "symbol": "KEI",
+      "score": 4.0,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 10.6% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 5,
+          "strength": "Strong (ADX: 41.7)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable - scraping failed",
+          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/KEI/consolidated/"
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:40.496893"
+    },
+    "saved_at": "2026-02-13T08:43:43.155440",
+    "symbol": "KEI"
+  },
+  "tTnmQ5mB_BIRLACORPN": {
+    "analysis": {
+      "symbol": "BIRLACORPN",
+      "score": 2.45,
+      "details": {
+        "recency": {
+          "score": 2,
+          "detail": "Underperforming: -8.8% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 3,
+          "strength": "Moderate (ADX: 22.6)",
+          "direction": "Mixed"
+        },
+        "fundamentals": {
+          "score": 2,
+          "summary": "ROE: 4.8%, Growth: 5.9%",
+          "roe": 4.79,
+          "debt_to_equity": null,
+          "sales_growth": 5.91
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:29.011317"
+    },
+    "saved_at": "2026-02-13T08:43:43.156984",
+    "symbol": "BIRLACORPN"
+  },
+  "tTnmQ5mB_BALKRISIND": {
+    "analysis": {
+      "symbol": "BALKRISIND",
+      "score": 4.3,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 11.8% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 5,
+          "strength": "Strong (ADX: 34.5)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 15.8%",
+          "roe": 15.8,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:27.201564"
+    },
+    "saved_at": "2026-02-13T08:43:43.158519",
+    "symbol": "BALKRISIND"
+  },
+  "tTnmQ5mB_ASTERDM": {
+    "analysis": {
+      "symbol": "ASTERDM",
+      "score": 2.75,
+      "details": {
+        "recency": {
+          "score": 2,
+          "detail": "Underperforming: -11.1% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 3,
+          "strength": "Strong (ADX: 40.8)",
+          "direction": "Mixed"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "ROE: 8.3%, Growth: 6.9%",
+          "roe": 8.26,
+          "debt_to_equity": null,
+          "sales_growth": 6.89
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:25.600070"
+    },
+    "saved_at": "2026-02-13T08:43:43.160057",
+    "symbol": "ASTERDM"
+  },
+  "tTnmQ5mB_COROMANDEL": {
+    "analysis": {
+      "symbol": "COROMANDEL",
+      "score": 3.3,
+      "details": {
+        "recency": {
+          "score": 4,
+          "detail": "Outperforming: 2.6% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 2,
+          "strength": "Moderate (ADX: 24.8)",
+          "direction": "Bearish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 16.9%",
+          "roe": 16.9,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:32.469889"
+    },
+    "saved_at": "2026-02-13T08:43:43.161590",
+    "symbol": "COROMANDEL"
+  },
+  "tTnmQ5mB_KIRLOSENG": {
+    "analysis": {
+      "symbol": "KIRLOSENG",
+      "score": 4.3,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 20.5% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 5,
+          "strength": "Strong (ADX: 32.3)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 15.4%",
+          "roe": 15.4,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:40.660811"
+    },
+    "saved_at": "2026-02-13T08:43:43.163120",
+    "symbol": "KIRLOSENG"
+  },
+  "tTnmQ5mB_CIPLA": {
+    "analysis": {
+      "symbol": "CIPLA",
+      "score": 2.55,
+      "details": {
+        "recency": {
+          "score": 2,
+          "detail": "Underperforming: -13.4% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 1,
+          "strength": "Strong (ADX: 47.0)",
+          "direction": "Bearish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 17.8%, Growth: 10.0%",
+          "roe": 17.8,
+          "debt_to_equity": null,
+          "sales_growth": 9.97
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:30.796564"
+    },
+    "saved_at": "2026-02-13T08:43:43.164655",
+    "symbol": "CIPLA"
+  },
+  "tTnmQ5mB_DCBBANK": {
+    "analysis": {
+      "symbol": "DCBBANK",
+      "score": 3.25,
+      "details": {
+        "recency": {
+          "score": 4,
+          "detail": "Outperforming: 2.2% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 3,
+          "strength": "Weak (ADX: 13.3)",
+          "direction": "Mixed"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable",
+          "roe": null,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:32.390030"
+    },
+    "saved_at": "2026-02-13T08:43:43.166212",
+    "symbol": "DCBBANK"
+  },
+  "tTnmQ5mB_NIFTYBEES": {
+    "analysis": {
+      "symbol": "NIFTYBEES",
+      "score": 3.25,
+      "details": {
+        "recency": {
+          "score": 4,
+          "detail": "Outperforming: -0.6% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 3,
+          "strength": "Strong (ADX: 34.5)",
+          "direction": "Mixed"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable",
+          "roe": null,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:43.569472"
+    },
+    "saved_at": "2026-02-13T08:43:43.570393",
+    "symbol": "NIFTYBEES"
+  },
+  "tTnmQ5mB_NMDC": {
+    "analysis": {
+      "symbol": "NMDC",
+      "score": 3.75,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 10.7% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 4,
+          "strength": "Weak (ADX: 18.5)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable - scraping failed",
+          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/NMDC/consolidated/"
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:43.737855"
+    },
+    "saved_at": "2026-02-13T08:43:43.738932",
+    "symbol": "NMDC"
+  },
+  "tTnmQ5mB_NTPC": {
+    "analysis": {
+      "symbol": "NTPC",
+      "score": 4.0,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 11.5% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 5,
+          "strength": "Strong (ADX: 26.6)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable - scraping failed",
+          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/NTPC/consolidated/"
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:44.015594"
+    },
+    "saved_at": "2026-02-13T08:43:44.016416",
+    "symbol": "NTPC"
+  },
+  "tTnmQ5mB_PNBHOUSING": {
+    "analysis": {
+      "symbol": "PNBHOUSING",
+      "score": 2.25,
+      "details": {
+        "recency": {
+          "score": 2,
+          "detail": "Underperforming: -7.1% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 1,
+          "strength": "Strong (ADX: 47.2)",
+          "direction": "Bearish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "ROE: 12.2%, Growth: -1.9%",
+          "roe": 12.2,
+          "debt_to_equity": null,
+          "sales_growth": -1.95
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:47.166321"
+    },
+    "saved_at": "2026-02-13T08:43:47.166733",
+    "symbol": "PNBHOUSING"
+  },
+  "tTnmQ5mB_PRINCEPIPE": {
+    "analysis": {
+      "symbol": "PRINCEPIPE",
+      "score": 2.75,
+      "details": {
+        "recency": {
+          "score": 2,
+          "detail": "Underperforming: -12.8% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 3,
+          "strength": "Strong (ADX: 38.0)",
+          "direction": "Mixed"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable",
+          "roe": null,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:47.241987"
+    },
+    "saved_at": "2026-02-13T08:43:47.242787",
+    "symbol": "PRINCEPIPE"
+  },
+  "tTnmQ5mB_RELIANCE": {
+    "analysis": {
+      "symbol": "RELIANCE",
+      "score": 3.0,
+      "details": {
+        "recency": {
+          "score": 3,
+          "detail": "In-line: -4.5% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 3,
+          "strength": "Strong (ADX: 35.0)",
+          "direction": "Mixed"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "ROE: 8.4%, Growth: 10.0%",
+          "roe": 8.4,
+          "debt_to_equity": null,
+          "sales_growth": 10.0
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:47.345438"
+    },
+    "saved_at": "2026-02-13T08:43:47.345960",
+    "symbol": "RELIANCE"
+  },
+  "tTnmQ5mB_SBILIFE": {
+    "analysis": {
+      "symbol": "SBILIFE",
+      "score": 3.25,
+      "details": {
+        "recency": {
+          "score": 4,
+          "detail": "Outperforming: 1.3% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 3,
+          "strength": "Strong (ADX: 26.8)",
+          "direction": "Mixed"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable - scraping failed",
+          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/SBILIFE/consolidated/"
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:49.243309"
+    },
+    "saved_at": "2026-02-13T08:43:49.244441",
+    "symbol": "SBILIFE"
+  },
+  "tTnmQ5mB_RKFORGE": {
+    "analysis": {
+      "symbol": "RKFORGE",
+      "score": 3.75,
+      "details": {
+        "recency": {
+          "score": 4,
+          "detail": "Outperforming: 3.9% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 5,
+          "strength": "Strong (ADX: 31.8)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "ROE: 14.4%, Growth: 110.0%",
+          "roe": 14.4,
+          "debt_to_equity": null,
+          "sales_growth": 110.0
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:49.243464"
+    },
+    "saved_at": "2026-02-13T08:43:49.249912",
+    "symbol": "RKFORGE"
+  },
+  "tTnmQ5mB_SCHAEFFLER": {
+    "analysis": {
+      "symbol": "SCHAEFFLER",
+      "score": 3.05,
+      "details": {
+        "recency": {
+          "score": 2,
+          "detail": "Underperforming: -8.5% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 3,
+          "strength": "Strong (ADX: 28.6)",
+          "direction": "Mixed"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 18.5%",
+          "roe": 18.5,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:50.645211"
+    },
+    "saved_at": "2026-02-13T08:43:50.646797",
+    "symbol": "SCHAEFFLER"
+  },
+  "tTnmQ5mB_TIMETECHNO": {
+    "analysis": {
+      "symbol": "TIMETECHNO",
+      "score": 3.0,
+      "details": {
+        "recency": {
+          "score": 3,
+          "detail": "In-line: -2.6% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 3,
+          "strength": "Strong (ADX: 33.0)",
+          "direction": "Mixed"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "ROE: 14.2%, Growth: -4.1%",
+          "roe": 14.2,
+          "debt_to_equity": null,
+          "sales_growth": -4.11
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:52.390029"
+    },
+    "saved_at": "2026-02-13T08:43:52.390507",
+    "symbol": "TIMETECHNO"
+  },
+  "tTnmQ5mB_SUNTV": {
+    "analysis": {
+      "symbol": "SUNTV",
+      "score": 4.3,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 5.3% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 5,
+          "strength": "Strong (ADX: 28.6)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 15.7%, Growth: 2.7%",
+          "roe": 15.7,
+          "debt_to_equity": null,
+          "sales_growth": 2.67
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:52.413099"
+    },
+    "saved_at": "2026-02-13T08:43:52.413633",
+    "symbol": "SUNTV"
+  },
+  "tTnmQ5mB_TMPV": {
+    "analysis": {
+      "symbol": "TMPV",
+      "score": 3.55,
+      "details": {
+        "recency": {
+          "score": 4,
+          "detail": "Outperforming: 2.9% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 3,
+          "strength": "Strong (ADX: 26.9)",
+          "direction": "Mixed"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 28.1%",
+          "roe": 28.1,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:55.026127"
+    },
+    "saved_at": "2026-02-13T08:43:55.026740",
+    "symbol": "TMPV"
+  },
+  "tTnmQ5mB_TMCV": {
+    "analysis": {
+      "symbol": "TMCV",
+      "score": 4.0,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 54.4% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 5,
+          "strength": "Strong (ADX: 28.6)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable",
+          "roe": null,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:55.030217"
+    },
+    "saved_at": "2026-02-13T08:43:55.031401",
+    "symbol": "TMCV"
+  },
+  "tTnmQ5mB_SUNDARMFIN": {
+    "analysis": {
+      "symbol": "SUNDARMFIN",
+      "score": 4.05,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 14.9% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 4,
+          "strength": "Weak (ADX: 16.3)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 4,
+          "summary": "ROE: 15.3%",
+          "roe": 15.3,
+          "debt_to_equity": null,
+          "sales_growth": null
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:55.344791"
+    },
+    "saved_at": "2026-02-13T08:43:55.345377",
+    "symbol": "SUNDARMFIN"
+  },
+  "tTnmQ5mB_UNIONBANK": {
+    "analysis": {
+      "symbol": "UNIONBANK",
+      "score": 3.75,
+      "details": {
+        "recency": {
+          "score": 5,
+          "detail": "Strong outperformance: 17.5% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 4,
+          "strength": "Moderate (ADX: 24.2)",
+          "direction": "Bullish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable - scraping failed",
+          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/UNIONBANK/consolidated/"
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:56.766200"
+    },
+    "saved_at": "2026-02-13T08:43:56.767750",
+    "symbol": "UNIONBANK"
+  },
+  "tTnmQ5mB_ZENSARTECH": {
+    "analysis": {
+      "symbol": "ZENSARTECH",
+      "score": 2.5,
+      "details": {
+        "recency": {
+          "score": 2,
+          "detail": "Underperforming: -20.4% vs Nifty -0.8%"
+        },
+        "trend": {
+          "score": 2,
+          "strength": "Moderate (ADX: 22.2)",
+          "direction": "Bearish"
+        },
+        "fundamentals": {
+          "score": 3,
+          "summary": "Data unavailable - scraping failed",
+          "error": "429 Client Error: Too Many Requests for url: https://www.screener.in/company/ZENSARTECH/consolidated/"
+        },
+        "ai_sentiment": {
+          "score": 3,
+          "summary": "AI analysis failed"
+        }
+      },
+      "analyzed_at": "2026-02-13T08:43:57.182946"
+    },
+    "saved_at": "2026-02-13T08:43:57.184336",
+    "symbol": "ZENSARTECH"
+  },
+  "tTnmQ5mB_WELCORP": {
     "analysis": {
       "symbol": "WELCORP",
       "score": 3.05,
@@ -1607,9 +3244,9 @@
           "summary": "AI analysis failed"
         }
       },
-      "analyzed_at": "2026-02-12T15:32:20.206305"
+      "analyzed_at": "2026-02-13T08:43:57.465634"
     },
-    "saved_at": "2026-02-12T15:32:20.207476",
+    "saved_at": "2026-02-13T08:43:57.466468",
     "symbol": "WELCORP"
   }
 }

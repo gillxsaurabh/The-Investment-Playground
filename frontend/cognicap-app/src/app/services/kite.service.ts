@@ -31,6 +31,7 @@ export interface PortfolioSummary {
     positions_count: number;
   };
   error?: string;
+  note?: string; // Optional note for simulation/debug info
 }
 
 export interface TopPerformer {
