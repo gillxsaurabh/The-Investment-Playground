@@ -1,0 +1,151 @@
+$bg-primary: #0a0a0a;
+$bg-card: #141414;
+$bg-elevated: #1a1a1a;
+$bg-hover: #1f1f1f;
+$border-subtle: rgba(255, 255, 255, 0.06);
+$border-default: rgba(255, 255, 255, 0.1);
+$text-primary: #f0f0f0;
+$text-secondary: #9ca3af;
+$text-muted: #6b7280;
+$green: #22c55e;
+$green-dim: rgba(34, 197, 94, 0.15);
+$red: #ef4444;
+$red-dim: rgba(239, 68, 68, 0.15);
+$accent: #3b82f6;
+$accent-dim: rgba(59, 130, 246, 0.15);
+
+// ============================================================
+// Top Banner
+// ============================================================
+
+.tip-banner {
+  background: $bg-primary;
+  border-bottom: 1px solid $border-subtle;
+  padding: 14px 28px;
+}
+
+.banner-content {
+  max-width: 1800px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.banner-left {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.platform-name {
+  font-size: 22px;
+  font-weight: 800;
+  color: $text-primary;
+  letter-spacing: -0.5px;
+}
+
+.platform-tagline {
+  font-size: 13px;
+  font-weight: 400;
+  color: $text-muted;
+  letter-spacing: 0.2px;
+}
+
+.banner-right {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.user-name {
+  background: $bg-elevated;
+  color: $text-secondary;
+  padding: 5px 14px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  border: 1px solid $border-default;
+}
+
+.logout-btn {
+  background: transparent;
+  color: $text-secondary;
+  border: 1px solid $border-default;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: $red-dim;
+    color: $red;
+    border-color: rgba($red, 0.3);
+  }
+}
+
+// ============================================================
+// Navigation Bar
+// ============================================================
+
+.tip-nav {
+  background: $bg-card;
+  border-bottom: 1px solid $border-subtle;
+  padding: 0 28px;
+}
+
+.nav-content {
+  max-width: 1800px;
+  margin: 0 auto;
+  display: flex;
+  gap: 4px;
+}
+
+.nav-btn {
+  background: transparent;
+  color: $text-muted;
+  border: none;
+  padding: 10px 18px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  position: relative;
+
+  &:hover {
+    color: $text-secondary;
+    background: rgba(255, 255, 255, 0.02);
+  }
+
+  &.active {
+    color: $text-primary;
+    border-bottom-color: $accent;
+    font-weight: 600;
+  }
+}
+
+// ============================================================
+// Responsive
+// ============================================================
+
+@media (max-width: 768px) {
+  .tip-banner {
+    padding: 10px 16px;
+  }
+
+  .platform-tagline {
+    display: none;
+  }
+
+  .tip-nav {
+    padding: 0 16px;
+  }
+
+  .nav-btn {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}

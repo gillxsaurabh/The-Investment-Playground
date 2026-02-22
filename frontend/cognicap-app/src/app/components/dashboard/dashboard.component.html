@@ -1,36 +1,16 @@
 <div class="dashboard-container">
-  <!-- Market Banner -->
-  <app-market-banner 
-    [nifty]="nifty" 
-    [sensex]="sensex" 
-    [marketGainers]="marketGainers" 
-    [marketLosers]="marketLosers" 
-    [isLoading]="isMarketLoading" 
-    [error]="marketError">
-  </app-market-banner>
-
-  <!-- Header -->
-  <header class="dashboard-header">
-    <div class="header-content">
-      <div class="logo-section">
-        <h1>CogniCap Dashboard</h1>
-        <span class="user-name" *ngIf="user">{{ user.name }}</span>
-      </div>
-      <div class="header-actions">
-        <button class="btn btn-refresh" (click)="refreshData()" [disabled]="isLoading || isMarketLoading">
-          Refresh All
-        </button>
-        <button class="btn btn-logout" (click)="logout()">
-          Logout
-        </button>
-        <!-- Live portfolio indicator -->
-        <div class="live-portfolio-indicator" *ngIf="!isLoading">
-          <span class="live-dot"></span>
-          <span class="live-text">LIVE PORTFOLIO</span>
-        </div>
-      </div>
-    </div>
-  </header>
+  <!-- Common Header Banner (includes market ticker) -->
+  <app-header-banner
+    [userName]="user?.name || ''"
+    [activePage]="'dashboard'"
+    [nifty]="nifty"
+    [sensex]="sensex"
+    [marketGainers]="marketGainers"
+    [marketLosers]="marketLosers"
+    [isMarketLoading]="isMarketLoading"
+    [marketError]="marketError"
+    (onLogout)="logout()">
+  </app-header-banner>
 
   <!-- Main Dashboard Layout -->
   <div class="dashboard-layout">
@@ -89,20 +69,22 @@
         <div class="health-section">
           <div class="health-header">
             <div class="header-content">
-              <h2>Stock Health Analysis</h2>
+              <div class="header-title-row">
+                <h2>Stock Health Analysis</h2>
+                <button 
+                  class="analyze-all-btn" 
+                  (click)="analyzeAllStocks()" 
+                  [disabled]="isLoading || isAnalyzingAll || holdings.length === 0">
+                  {{ isAnalyzingAll ? 'Analyzing...' : 'Analyze All' }}
+                </button>
+                <button class="arena-btn" (click)="navigateToTradingAgent()">
+                  Enter Trading Arena
+                </button>
+              </div>
               <div class="health-stats">
                 <span class="stat">{{ holdings.length }} Total</span>
                 <span class="stat">{{ getAnalyzedCount() }} Analyzed</span>
               </div>
-            </div>
-            <div class="header-actions">
-              <button 
-                class="analyze-all-btn" 
-                (click)="analyzeAllStocks()" 
-                [disabled]="isLoading || isAnalyzingAll || holdings.length === 0">
-                <span class="analyze-icon">⚡</span>
-                {{ isAnalyzingAll ? 'Analyzing...' : 'Analyze All' }}
-              </button>
             </div>
           </div>
 
@@ -112,6 +94,9 @@
               <div class="progress-spinner"></div>
               <span class="progress-text">{{ analyzeAllProgress }}</span>
             </div>
+            <button class="cancel-analysis-btn" (click)="cancelAnalysis()">
+              Cancel
+            </button>
           </div>
 
           <!-- Health Cards Grid -->
@@ -134,23 +119,40 @@
                 <!-- Analysis Actions/Results -->
                 <div class="action-section" *ngIf="holding.analysisState === 'not-analyzed'">
                   <button class="analyze-btn" (click)="analyzeStock(holding); $event.stopPropagation()">
-                    ⚡ Analyze
+                    Analyze
                   </button>
                 </div>
 
                 <div class="action-section" *ngIf="holding.analysisState === 'analyzing'">
-                  <div class="analyzing-state">
+                  <div class="analyzing-state" *ngIf="!holding.agentStatus">
                     <div class="small-spinner"></div>
                     <span>Analyzing...</span>
+                  </div>
+                  <div class="agent-progress" *ngIf="holding.agentStatus">
+                    <div
+                      class="agent-pill"
+                      *ngFor="let agent of ['stats_agent', 'company_health_agent', 'breaking_news_agent', 'synthesizer']"
+                      [class.running]="holding.agentStatus[agent] === 'running'"
+                      [class.completed]="holding.agentStatus[agent] === 'completed'"
+                      [class.pending]="holding.agentStatus[agent] === 'pending'">
+                      <span class="agent-name">{{ agentDisplayName(agent) }}</span>
+                      <span class="agent-icon" *ngIf="holding.agentStatus[agent] === 'running'">
+                        <span class="spinner-icon"></span>
+                      </span>
+                      <span class="agent-icon check" *ngIf="holding.agentStatus[agent] === 'completed'">&#10003;</span>
+                    </div>
                   </div>
                 </div>
 
                 <div class="score-section" *ngIf="holding.analysisState === 'analyzed' && holding.analysis">
-                  <div class="overall-score" [style.background]="getScoreColor(holding.analysis.score!)">
-                    <span class="score-number">{{ holding.analysis.score }}</span>
+                  <button class="reanalyze-btn" (click)="analyzeStock(holding); $event.stopPropagation()" title="Re-analyse">
+                    ↻
+                  </button>
+                  <div class="overall-score" [style.background]="getScoreColor(getOverallScore(holding.analysis)!)">
+                    <span class="score-number">{{ getOverallScore(holding.analysis) }}</span>
                   </div>
                   <div class="view-details-icon">
-                    +
+                    &#8599;
                   </div>
                 </div>
 
@@ -199,8 +201,8 @@
         </div>
         <div class="overview-item">
           <span class="label">Health Score</span>
-          <div class="score-display" [style.background]="getScoreColor(selectedStock.analysis?.score!)">
-            {{ selectedStock.analysis?.score }}
+          <div class="score-display" [style.background]="getScoreColor(getOverallScore(selectedStock.analysis)!)">
+            {{ getOverallScore(selectedStock.analysis) }}
           </div>
         </div>
       </div>
@@ -230,11 +232,53 @@
         </div>
       </div>
 
-      <!-- Health Analysis -->
-      <ng-container *ngIf="selectedStock.analysis?.details as details">
+      <!-- Agent Analysis (new format) -->
+      <ng-container *ngIf="selectedStock.analysis?.agents as agents">
+        <div class="verdict-banner" *ngIf="selectedStock.analysis?.verdict">
+          <h3>Verdict</h3>
+          <p class="verdict-text">{{ selectedStock.analysis?.verdict }}</p>
+        </div>
+
+        <div class="health-analysis-section">
+          <h3>Agent Analysis</h3>
+
+          <div class="analysis-metric">
+            <div class="metric-header">
+              <span class="metric-name">Stats Agent</span>
+              <div class="metric-score" [style.background]="getScoreColor(agents.stats_agent.score)">
+                {{ agents.stats_agent.score }}
+              </div>
+            </div>
+            <p class="metric-description">{{ agents.stats_agent.explanation }}</p>
+          </div>
+
+          <div class="analysis-metric">
+            <div class="metric-header">
+              <span class="metric-name">Company Health Check Agent</span>
+              <div class="metric-score" [style.background]="getScoreColor(agents.company_health_agent.score)">
+                {{ agents.company_health_agent.score }}
+              </div>
+            </div>
+            <p class="metric-description">{{ agents.company_health_agent.explanation }}</p>
+          </div>
+
+          <div class="analysis-metric">
+            <div class="metric-header">
+              <span class="metric-name">Breaking News Agent</span>
+              <div class="metric-score" [style.background]="getScoreColor(agents.breaking_news_agent.score)">
+                {{ agents.breaking_news_agent.score }}
+              </div>
+            </div>
+            <p class="metric-description">{{ agents.breaking_news_agent.explanation }}</p>
+          </div>
+        </div>
+      </ng-container>
+
+      <!-- Legacy format fallback (for cached results) -->
+      <ng-container *ngIf="!selectedStock.analysis?.agents && selectedStock.analysis?.details as details">
         <div class="health-analysis-section">
           <h3>Detailed Health Analysis</h3>
-          
+
           <div class="analysis-metric" *ngIf="details.recency">
             <div class="metric-header">
               <span class="metric-name">Recency (Relative Strength)</span>

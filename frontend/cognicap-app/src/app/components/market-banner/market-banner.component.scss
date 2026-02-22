@@ -1,14 +1,11 @@
 .market-banner-container {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1000;
-  background: linear-gradient(90deg, #1a1a1a 0%, #2d2d2d 50%, #1a1a1a 100%);
+  position: relative;
+  width: 100%;
+  background: #0f0f0f;
   border-bottom: 2px solid #333;
   height: 40px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
 }
 
 .market-banner {

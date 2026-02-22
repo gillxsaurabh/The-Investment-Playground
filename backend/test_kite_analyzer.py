@@ -35,7 +35,7 @@ def test_stock_analyzer():
         return False
     
     # Initialize Kite
-    api_key = os.getenv('KITE_API_KEY', 'bi56trp8ev6rdy9d')
+    api_key = os.getenv('KITE_API_KEY')
     gemini_api_key = os.getenv('GEMINI_API_KEY')
     
     kite = KiteConnect(api_key=api_key)
@@ -98,7 +98,7 @@ def test_nifty_caching():
         print("❌ Could not read access token")
         return False
     
-    api_key = os.getenv('KITE_API_KEY', 'bi56trp8ev6rdy9d')
+    api_key = os.getenv('KITE_API_KEY')
     gemini_api_key = os.getenv('GEMINI_API_KEY')
     
     kite = KiteConnect(api_key=api_key)

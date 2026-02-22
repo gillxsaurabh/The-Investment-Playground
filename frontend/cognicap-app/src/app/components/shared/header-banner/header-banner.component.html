@@ -1,0 +1,34 @@
+<!-- Top Banner -->
+<header class="tip-banner">
+  <div class="banner-content">
+    <div class="banner-left">
+      <span class="platform-name">TIP</span>
+      <span class="platform-tagline">The Investment Playground</span>
+    </div>
+    <div class="banner-right">
+      <span class="user-name" *ngIf="userName">{{ userName }}</span>
+      <button class="logout-btn" (click)="logout()">Logout</button>
+    </div>
+  </div>
+</header>
+
+<!-- Navigation Bar (dashboard only) -->
+<nav class="tip-nav" *ngIf="activePage === 'dashboard'">
+  <div class="nav-content">
+    <button
+      class="nav-btn active"
+      (click)="navigateTo('dashboard')">
+      Dashboard
+    </button>
+  </div>
+</nav>
+
+<!-- Live Market Ticker -->
+<app-market-banner
+  [nifty]="nifty"
+  [sensex]="sensex"
+  [marketGainers]="marketGainers"
+  [marketLosers]="marketLosers"
+  [isLoading]="isMarketLoading"
+  [error]="marketError">
+</app-market-banner>

@@ -4,6 +4,7 @@
   margin: 0 auto;
   padding: 30px;
   min-height: 60vh;
+  background: #0f0f0f;
 }
 
 .loading-container,
@@ -32,11 +33,11 @@
 }
 
 .error-box {
-  background: #ffe6e6;
-  color: #c00;
+  background: #1a0000;
+  color: #ff6b6b;
   padding: 1rem 2rem;
   border-radius: 8px;
-  border: 1px solid #ffcccc;
+  border: 1px solid #660000;
 }
 
 .btn-retry {
@@ -152,10 +153,11 @@
 }
 
 .stocks-card {
-  background: white;
+  background: #111111;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
   overflow: hidden;
+  border: 1px solid #333333;
 }
 
 .stocks-header {
@@ -163,15 +165,15 @@
   justify-content: space-between;
   align-items: center;
   padding: 1.25rem 1.5rem;
-  background: #f8f9fa;
-  border-bottom: 1px solid #e9ecef;
+  background: #111111;
+  border-bottom: 1px solid #333333;
 }
 
 .stocks-header h2 {
   font-size: 1.25rem;
   font-weight: 600;
   margin: 0;
-  color: #2c3e50;
+  color: #e5e5e5;
 }
 
 .badge {
@@ -182,13 +184,13 @@
 }
 
 .badge.positive {
-  background: #d4edda;
-  color: #155724;
+  background: #0a2a0a;
+  color: #4ade80;
 }
 
 .badge.negative {
-  background: #f8d7da;
-  color: #721c24;
+  background: #2a0a0a;
+  color: #f87171;
 }
 
 .stocks-list {
@@ -202,12 +204,12 @@
   gap: 1rem;
   align-items: center;
   padding: 1rem 1.5rem;
-  border-bottom: 1px solid #f0f0f0;
+  border-bottom: 1px solid #333333;
   transition: background-color 0.2s;
 }
 
 .stock-item:hover {
-  background-color: #f8f9fa;
+  background-color: #1a1a1a;
 }
 
 .stock-item:last-child {
@@ -217,7 +219,7 @@
 .stock-rank {
   font-size: 1.25rem;
   font-weight: 700;
-  color: #6c757d;
+  color: #9ca3af;
   text-align: center;
 }
 
@@ -230,12 +232,12 @@
 .stock-symbol {
   font-size: 1rem;
   font-weight: 600;
-  color: #2c3e50;
+  color: #e5e5e5;
 }
 
 .stock-price {
   font-size: 0.875rem;
-  color: #6c757d;
+  color: #9ca3af;
 }
 
 .stock-change {
