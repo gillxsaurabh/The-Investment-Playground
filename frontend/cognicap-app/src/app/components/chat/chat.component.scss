@@ -4,10 +4,13 @@
   bottom: 20px;
   width: 380px;
   max-height: 600px;
-  background: white;
+  background: #111111;
   border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  border: 1px solid #e5e7eb;
+  box-shadow: 
+    0 4px 12px rgba(0, 0, 0, 0.8),
+    0 0 20px rgba(77, 171, 247, 0.3),
+    inset 0 0 1px rgba(77, 171, 247, 0.4);
+  border: 1px solid rgba(77, 171, 247, 0.2);
   display: flex;
   flex-direction: column;
   z-index: 1000;
@@ -23,8 +26,8 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  border-bottom: 1px solid #e5e7eb;
-  background: #1a1a1a;
+  border-bottom: 1px solid #333333;
+  background: #111111;
   color: white;
   border-radius: 8px 8px 0 0;
 
@@ -97,15 +100,15 @@
   }
 
   &::-webkit-scrollbar-track {
-    background: #f9fafb;
+    background: #1a1a1a;
   }
 
   &::-webkit-scrollbar-thumb {
-    background: #d1d5db;
+    background: #4a5568;
     border-radius: 3px;
 
     &:hover {
-      background: #9ca3af;
+      background: #6b7280;
     }
   }
 }
@@ -118,8 +121,8 @@
     justify-content: flex-end;
 
     .message-content {
-      background: #1a1a1a;
-      color: white;
+      background: #333333;
+      color: #e5e5e5;
       border-radius: 12px 12px 4px 12px;
     }
   }
@@ -128,8 +131,8 @@
     justify-content: flex-start;
 
     .message-content {
-      background: #f3f4f6;
-      color: #1a1a1a;
+      background: #1a1a1a;
+      color: #e5e5e5;
       border-radius: 12px 12px 12px 4px;
     }
   }
@@ -202,26 +205,27 @@
   display: flex;
   gap: 8px;
   padding: 16px;
-  border-top: 1px solid #e5e7eb;
-  background: #f9fafb;
+  border-top: 1px solid #333333;
+  background: #111111;
   border-radius: 0 0 8px 8px;
 
   .input-field {
     flex: 1;
     padding: 10px 14px;
-    border: 1px solid #d1d5db;
+    border: 1px solid #4a5568;
     border-radius: 6px;
     font-size: 14px;
     outline: none;
     transition: border-color 0.2s ease;
-    background: white;
+    background: #1a1a1a;
+    color: #e5e5e5;
 
     &:focus {
-      border-color: #1a1a1a;
+      border-color: #6b7280;
     }
 
     &:disabled {
-      background: #f3f4f6;
+      background: #2a2a2a;
       cursor: not-allowed;
     }
   }
@@ -245,7 +249,7 @@
     }
 
     &:disabled {
-      background: #d1d5db;
+      background: #2a2a2a;
       cursor: not-allowed;
     }
   }

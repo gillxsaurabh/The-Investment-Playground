@@ -86,6 +86,23 @@ export interface TopStocks {
   error?: string;
 }
 
+export interface TradeExitResponse {
+  success: boolean;
+  symbol?: string;
+  ltp?: number;
+  atr?: number;
+  initial_sl?: number;
+  trail_multiplier?: number;
+  risk_per_share?: number;
+  error?: string;
+}
+
+export interface FundsResponse {
+  success: boolean;
+  available_funds?: number;
+  error?: string;
+}
+
 export interface HealthReport {
   symbol: string;
   company_name: string;
@@ -118,34 +135,32 @@ export interface HealthReportResponse {
   error?: string;
 }
 
+export interface AgentResult {
+  score: number;
+  explanation: string;
+}
+
 export interface StockAnalysisResponse {
   success: boolean;
   symbol?: string;
-  score?: number;
-  details?: {
-    recency: {
-      score: number;
-      detail: string;
-    };
-    trend: {
-      score: number;
-      strength: string;
-      direction: string;
-    };
-    fundamentals: {
-      score: number;
-      summary: string;
-      roe?: number;
-      debt_to_equity?: number;
-      sales_growth?: number;
-    };
-    ai_sentiment: {
-      score: number;
-      summary: string;
-    };
+  overall_score?: number;
+  verdict?: string;
+  agents?: {
+    stats_agent: AgentResult;
+    company_health_agent: AgentResult;
+    breaking_news_agent: AgentResult;
   };
+  agent_errors?: string[];
   analyzed_at?: string;
   error?: string;
+  // Legacy fields for backward compatibility with cached results
+  score?: number;
+  details?: {
+    recency: { score: number; detail: string; };
+    trend: { score: number; strength: string; direction: string; };
+    fundamentals: { score: number; summary: string; roe?: number; debt_to_equity?: number; sales_growth?: number; };
+    ai_sentiment: { score: number; summary: string; };
+  };
 }
 
 @Injectable({
@@ -262,6 +277,23 @@ export class KiteService {
     const token = this.getStoredToken();
     return this.http.post<any>(`${this.apiUrl}/analyze-all`, {
       access_token: token
+    });
+  }
+
+  getAvailableFunds(): Observable<FundsResponse> {
+    const token = this.getStoredToken();
+    return this.http.post<FundsResponse>(`${this.apiUrl}/trade/funds`, {
+      access_token: token
+    });
+  }
+
+  calculateExits(symbol: string, instrumentToken: number, ltp: number): Observable<TradeExitResponse> {
+    const token = this.getStoredToken();
+    return this.http.post<TradeExitResponse>(`${this.apiUrl}/trade/calculate-exits`, {
+      access_token: token,
+      symbol,
+      instrument_token: instrumentToken,
+      ltp
     });
   }
 

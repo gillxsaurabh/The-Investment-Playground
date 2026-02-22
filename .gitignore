@@ -1,8 +1,15 @@
 # Environment variables
 .env
+**/.env
 
 # Token files
 access_token.json
+
+# Runtime state files
+backend/data/state/
+backend/analysis_storage.json
+backend/simulator_data.json
+backend/simulator_price_history.json
 
 # Python
 __pycache__/

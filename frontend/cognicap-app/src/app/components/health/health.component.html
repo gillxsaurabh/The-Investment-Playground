@@ -10,7 +10,6 @@
         (click)="analyzeAllStocks()" 
         [disabled]="isLoadingHoldings || isAnalyzingAll || holdings.length === 0"
         title="Analyze All Holdings">
-        <span class="analyze-icon">⚡</span>
         {{ isAnalyzingAll ? 'Analyzing All...' : 'Analyze All (' + holdings.length + ' stocks)' }}
       </button>
       <button 
@@ -76,7 +75,7 @@
         <!-- Not Analyzed - Show Analyze Button -->
         <div class="action-section" *ngIf="holding.analysisState === 'not-analyzed'">
           <button [class]="holding.has_saved_analysis ? 'retry-analyze-btn' : 'analyze-btn'" (click)="analyzeStock(holding)">
-            {{ holding.has_saved_analysis ? '🔄 Re-analyze' : '⚡ Analyze' }}
+            {{ holding.has_saved_analysis ? '🔄 Re-analyze' : 'Analyze' }}
           </button>
         </div>
 
@@ -90,12 +89,12 @@
 
         <!-- Analyzed - Show Score -->
         <div class="score-section" *ngIf="holding.analysisState === 'analyzed' && holding.analysis">
-          <div class="overall-score" [style.background]="getScoreColor(holding.analysis.score!)">
-            <span class="score-number">{{ holding.analysis.score }}</span>
+          <div class="overall-score" [style.background]="getScoreColor(getOverallScore(holding.analysis))">
+            <span class="score-number">{{ getOverallScore(holding.analysis) }}</span>
             <span class="score-max">/5</span>
           </div>
-          <span class="score-label" [ngClass]="getScoreBadgeClass(holding.analysis.score!)">
-            {{ getScoreLabel(holding.analysis.score!) }}
+          <span class="score-label" [ngClass]="getScoreBadgeClass(getOverallScore(holding.analysis))">
+            {{ getScoreLabel(getOverallScore(holding.analysis)) }}
           </span>
           <div class="expand-icon">
             {{ isExpanded(holding.tradingsymbol) ? '▼' : '▶' }}
@@ -122,15 +121,24 @@
             {{ formatCurrency(holding.pnl) }}
           </span>
         </div>
-        <div class="summary-item">
-          <span class="summary-label">Trend:</span>
-          <span class="summary-value">{{ holding.analysis.details?.trend?.direction }}</span>
+        <div class="summary-item verdict-summary" *ngIf="getVerdict(holding.analysis)">
+          <span class="verdict-action" [ngClass]="getVerdictActionClass(getVerdict(holding.analysis))">
+            {{ getVerdictAction(getVerdict(holding.analysis)) || 'Hold' }}
+          </span>
         </div>
       </div>
 
       <!-- Detailed Analysis (when expanded) -->
       <div class="card-details" *ngIf="isExpanded(holding.tradingsymbol) && holding.analysisState === 'analyzed' && holding.analysis">
         
+        <!-- Verdict Banner -->
+        <div class="verdict-banner" *ngIf="getVerdict(holding.analysis)">
+          <div class="verdict-action-badge" [ngClass]="getVerdictActionClass(getVerdict(holding.analysis))">
+            {{ getVerdictAction(getVerdict(holding.analysis)) || 'Hold' }}
+          </div>
+          <p class="verdict-text">{{ getVerdict(holding.analysis) }}</p>
+        </div>
+
         <!-- Investment Overview -->
         <div class="detail-section">
           <h4>Investment Overview</h4>
@@ -155,14 +163,41 @@
           </div>
         </div>
 
-        <!-- Health Breakdown -->
-        <div class="detail-section" *ngIf="holding.analysis.details">
+        <!-- New Agent-Based Analysis -->
+        <div class="detail-section" *ngIf="holding.analysis.agents">
+          <h4>Agent Analysis</h4>
+          
+          <div 
+            class="health-metric" 
+            *ngFor="let agentKey of ['stats_agent', 'company_health_agent', 'breaking_news_agent']"
+            [class.agent-failed]="isAgentFailed(holding.analysis.agents[agentKey])">
+            <ng-container *ngIf="holding.analysis.agents[agentKey] as agent">
+              <div class="metric-header">
+                <span class="metric-title">
+                  {{ getAgentIcon(agentKey) }} {{ getAgentLabel(agentKey) }}
+                  <span class="agent-status-badge failed" *ngIf="isAgentFailed(agent)">Failed</span>
+                </span>
+                <span class="metric-score" [ngClass]="getScoreBadgeClass(agent.score)">
+                  {{ agent.score }}/5
+                </span>
+              </div>
+              <p class="metric-detail">{{ agent.explanation }}</p>
+            </ng-container>
+          </div>
+
+          <div class="agent-errors-note" *ngIf="holding.analysis.agent_errors?.length">
+            <small>⚠️ {{ holding.analysis.agent_errors.length }} agent(s) had issues — scores may be approximate</small>
+          </div>
+        </div>
+
+        <!-- Legacy Format Fallback -->
+        <div class="detail-section" *ngIf="!holding.analysis.agents && holding.analysis.details">
           <h4>Health Analysis</h4>
           
           <div class="health-metric">
             <div class="metric-header">
-              <span class="metric-title">💹 Recency (Relative Strength)</span>
-              <span class="metric-score score-{{ holding.analysis.details.recency.score }}">
+              <span class="metric-title">📈 Recency</span>
+              <span class="metric-score" [ngClass]="getScoreBadgeClass(holding.analysis.details.recency.score)">
                 {{ holding.analysis.details.recency.score }}/5
               </span>
             </div>
@@ -171,8 +206,8 @@
 
           <div class="health-metric">
             <div class="metric-header">
-              <span class="metric-title">📈 Trend</span>
-              <span class="metric-score score-{{ holding.analysis.details.trend.score }}">
+              <span class="metric-title">📊 Trend</span>
+              <span class="metric-score" [ngClass]="getScoreBadgeClass(holding.analysis.details.trend.score)">
                 {{ holding.analysis.details.trend.score }}/5
               </span>
             </div>
@@ -183,8 +218,8 @@
 
           <div class="health-metric">
             <div class="metric-header">
-              <span class="metric-title">📊 Fundamentals</span>
-              <span class="metric-score score-{{ holding.analysis.details.fundamentals.score }}">
+              <span class="metric-title">🏢 Fundamentals</span>
+              <span class="metric-score" [ngClass]="getScoreBadgeClass(holding.analysis.details.fundamentals.score)">
                 {{ holding.analysis.details.fundamentals.score }}/5
               </span>
             </div>
@@ -194,7 +229,7 @@
           <div class="health-metric">
             <div class="metric-header">
               <span class="metric-title">🤖 AI Sentiment</span>
-              <span class="metric-score score-{{ holding.analysis.details.ai_sentiment.score }}">
+              <span class="metric-score" [ngClass]="getScoreBadgeClass(holding.analysis.details.ai_sentiment.score)">
                 {{ holding.analysis.details.ai_sentiment.score }}/5
               </span>
             </div>

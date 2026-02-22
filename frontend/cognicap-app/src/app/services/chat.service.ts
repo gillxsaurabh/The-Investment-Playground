@@ -61,7 +61,8 @@ export class ChatService {
 
     return this.http.post<ChatResponse>(`${this.apiUrl}/chat/send`, {
       message,
-      session_id: this.sessionId
+      session_id: this.sessionId,
+      access_token: localStorage.getItem('access_token') || ''
     }).pipe(
       tap(response => {
         if (response.success && response.response) {
