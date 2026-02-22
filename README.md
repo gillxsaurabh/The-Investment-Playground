@@ -1,4 +1,4 @@
-# CogniCap - Trading Portfolio Dashboard
+# The Investment Playground
 
 A web application to view your Zerodha Kite trading portfolio with a beautiful dashboard.
 
