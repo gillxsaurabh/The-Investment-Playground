@@ -165,6 +165,39 @@ export class HealthComponent implements OnInit {
     return this.holdings.filter(h => h.has_saved_analysis).length;
   }
 
+  getOverallScore(analysis: StockAnalysisResponse): number {
+    return analysis.overall_score ?? analysis.score ?? 0;
+  }
+
+  getVerdict(analysis: StockAnalysisResponse): string {
+    return analysis.verdict || '';
+  }
+
+  getVerdictAction(verdict: string): string {
+    const actions = ['Strong Buy', 'Buy', 'Accumulate', 'Hold', 'Reduce', 'Exit'];
+    for (const action of actions) {
+      if (verdict.toLowerCase().startsWith(action.toLowerCase())) {
+        return action;
+      }
+      if (verdict.includes('—')) {
+        const before = verdict.split('—')[0].trim();
+        if (before.toLowerCase() === action.toLowerCase()) return action;
+      }
+    }
+    return '';
+  }
+
+  getVerdictActionClass(verdict: string): string {
+    const action = this.getVerdictAction(verdict).toLowerCase();
+    if (['strong buy', 'buy', 'accumulate'].includes(action)) return 'verdict-bullish';
+    if (action === 'hold') return 'verdict-neutral';
+    return 'verdict-bearish';
+  }
+
+  hasNewFormat(analysis: StockAnalysisResponse): boolean {
+    return !!analysis.agents;
+  }
+
   getScoreColor(score: number): string {
     if (score >= 4) return '#10b981'; // Green
     if (score >= 2.5) return '#f59e0b'; // Yellow
@@ -183,6 +216,29 @@ export class HealthComponent implements OnInit {
     if (score >= 3) return 'Average';
     if (score >= 2) return 'Below Average';
     return 'Poor';
+  }
+
+  getAgentIcon(agentName: string): string {
+    switch (agentName) {
+      case 'stats_agent': return '📊';
+      case 'company_health_agent': return '🏢';
+      case 'breaking_news_agent': return '📰';
+      default: return '🔍';
+    }
+  }
+
+  getAgentLabel(agentName: string): string {
+    switch (agentName) {
+      case 'stats_agent': return 'Technical Analysis';
+      case 'company_health_agent': return 'Company Health';
+      case 'breaking_news_agent': return 'News & Sentiment';
+      default: return agentName;
+    }
+  }
+
+  isAgentFailed(agent: any): boolean {
+    if (!agent) return true;
+    return agent.explanation?.includes('failed') || agent.explanation?.includes('could not be completed');
   }
 
   formatDate(isoDate: string): string {

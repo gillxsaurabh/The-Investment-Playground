@@ -5,8 +5,7 @@ echo "Starting CogniCap..."
 # Start backend in background
 echo "Starting Backend Server..."
 cd backend
-source venv/bin/activate
-python3 app.py &
+./venv/bin/python3 app.py &
 BACKEND_PID=$!
 cd ..
 

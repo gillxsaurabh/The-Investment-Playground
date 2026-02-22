@@ -2,6 +2,8 @@
   padding: 20px;
   max-width: 1200px;
   margin: 0 auto;
+  background: #0f0f0f;
+  min-height: 100vh;
 }
 
 .health-header {
@@ -10,19 +12,19 @@
   align-items: center;
   margin-bottom: 20px;
   padding-bottom: 15px;
-  border-bottom: 2px solid #e5e7eb;
+  border-bottom: 2px solid #333333;
 
   .header-content {
     h2 {
       margin: 0 0 5px 0;
-      color: #1f2937;
+      color: #e5e5e5;
       font-size: 24px;
       font-weight: 600;
     }
 
     .subtitle {
       margin: 0;
-      color: #6b7280;
+      color: #9ca3af;
       font-size: 14px;
     }
   }
@@ -159,18 +161,28 @@
 }
 
 .health-card {
-  background: white;
+  background: #161616;
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  box-shadow: 
+    0 2px 8px rgba(0, 0, 0, 0.3),
+    0 0 15px rgba(77, 171, 247, 0.25),
+    inset 0 0 1px rgba(77, 171, 247, 0.3);
   overflow: hidden;
   transition: all 0.3s ease;
+  border: 1px solid rgba(77, 171, 247, 0.2);
 
   &:hover {
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    box-shadow: 
+      0 4px 16px rgba(0, 0, 0, 0.12),
+      0 0 25px rgba(77, 171, 247, 0.4),
+      inset 0 0 2px rgba(77, 171, 247, 0.5);
   }
 
   &.expanded {
-    box-shadow: 0 4px 16px rgba(102, 126, 234, 0.15);
+    box-shadow: 
+      0 4px 16px rgba(102, 126, 234, 0.15),
+      0 0 30px rgba(77, 171, 247, 0.5),
+      inset 0 0 2px rgba(77, 171, 247, 0.6);
   }
 }
 
@@ -180,8 +192,8 @@
   padding: 20px;
   cursor: pointer;
   gap: 20px;
-  background: #f9fafb;
-  border-bottom: 1px solid #e5e7eb;
+  background: #262626;
+  border-bottom: 1px solid #333333;
 
   .stock-info {
     flex: 1;
@@ -190,14 +202,14 @@
       margin: 0 0 8px 0;
       font-size: 18px;
       font-weight: 600;
-      color: #1f2937;
+      color: #e5e5e5;
     }
 
     .stock-metrics {
       display: flex;
       gap: 15px;
       font-size: 14px;
-      color: #6b7280;
+      color: #9ca3af;
 
       .metric {
         &.quantity {
@@ -243,18 +255,18 @@
       white-space: nowrap;
 
       &.badge-green {
-        background: #d1fae5;
-        color: #065f46;
+        background: rgba(16, 185, 129, 0.15);
+        color: #6ee7b7;
       }
 
       &.badge-yellow {
-        background: #fef3c7;
-        color: #92400e;
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
       }
 
       &.badge-red {
-        background: #fee2e2;
-        color: #991b1b;
+        background: rgba(239, 68, 68, 0.15);
+        color: #fca5a5;
       }
     }
   }
@@ -270,8 +282,9 @@
   display: flex;
   gap: 30px;
   padding: 12px 20px;
-  background: white;
-  border-top: 1px solid #f3f4f6;
+  background: #1a1a1a;
+  border-top: 1px solid #333333;
+  align-items: center;
 
   .summary-item {
     display: flex;
@@ -283,7 +296,7 @@
     }
 
     .summary-value {
-      color: #1f2937;
+      color: #e5e5e5;
       font-weight: 500;
 
       &.positive {
@@ -294,12 +307,38 @@
         color: #ef4444;
       }
     }
+
+    &.verdict-summary {
+      margin-left: auto;
+    }
+  }
+
+  .verdict-action {
+    padding: 3px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+
+    &.verdict-bullish {
+      background: rgba(16, 185, 129, 0.15);
+      color: #6ee7b7;
+    }
+
+    &.verdict-neutral {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+    }
+
+    &.verdict-bearish {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+    }
   }
 }
 
 .card-details {
   padding: 20px;
-  background: white;
+  background: #1a1a1a;
   animation: slideDown 0.3s ease;
 }
 
@@ -314,6 +353,49 @@
   }
 }
 
+.verdict-banner {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 16px 20px;
+  background: rgba(16, 185, 129, 0.08);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 10px;
+  margin-bottom: 25px;
+
+  .verdict-action-badge {
+    padding: 6px 16px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+    flex-shrink: 0;
+
+    &.verdict-bullish {
+      background: rgba(16, 185, 129, 0.15);
+      color: #6ee7b7;
+    }
+
+    &.verdict-neutral {
+      background: rgba(245, 158, 11, 0.15);
+      color: #fbbf24;
+    }
+
+    &.verdict-bearish {
+      background: rgba(239, 68, 68, 0.15);
+      color: #fca5a5;
+    }
+  }
+
+  .verdict-text {
+    margin: 0;
+    color: #e5e5e5;
+    font-size: 14px;
+    line-height: 1.6;
+    padding-top: 4px;
+  }
+}
+
 .detail-section {
   margin-bottom: 25px;
 
@@ -323,11 +405,11 @@
 
   h4 {
     margin: 0 0 15px 0;
-    color: #374151;
+    color: #e5e5e5;
     font-size: 16px;
     font-weight: 600;
     padding-bottom: 8px;
-    border-bottom: 2px solid #e5e7eb;
+    border-bottom: 2px solid #333333;
   }
 }
 
@@ -347,7 +429,7 @@
     }
 
     .detail-value {
-      color: #1f2937;
+      color: #e5e5e5;
       font-size: 16px;
       font-weight: 600;
 
@@ -364,9 +446,15 @@
 
 .health-metric {
   padding: 15px;
-  background: #f9fafb;
+  background: #262626;
   border-radius: 8px;
   margin-bottom: 12px;
+  transition: all 0.3s ease;
+
+  &.agent-failed {
+    background: #2d1b1b;
+    border-left: 3px solid #ef4444;
+  }
 
   &:last-child {
     margin-bottom: 0;
@@ -380,8 +468,23 @@
 
     .metric-title {
       font-weight: 600;
-      color: #374151;
+      color: #e5e5e5;
       font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+
+      .agent-status-badge {
+        font-size: 11px;
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-weight: 600;
+
+        &.failed {
+          background: rgba(239, 68, 68, 0.15);
+          color: #fca5a5;
+        }
+      }
     }
 
     .metric-score {
@@ -390,42 +493,57 @@
       font-size: 13px;
       font-weight: 600;
 
+      &.badge-green {
+        background: rgba(16, 185, 129, 0.15);
+        color: #6ee7b7;
+      }
+
+      &.badge-yellow {
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
+      }
+
+      &.badge-red {
+        background: rgba(239, 68, 68, 0.15);
+        color: #fca5a5;
+      }
+
       &.score-5 {
-        background: #d1fae5;
-        color: #065f46;
+        background: rgba(16, 185, 129, 0.15);
+        color: #6ee7b7;
       }
 
       &.score-4 {
-        background: #d1fae5;
-        color: #065f46;
+        background: rgba(16, 185, 129, 0.15);
+        color: #6ee7b7;
       }
 
       &.score-3 {
-        background: #fef3c7;
-        color: #92400e;
+        background: rgba(245, 158, 11, 0.15);
+        color: #fbbf24;
       }
 
       &.score-2 {
-        background: #fee2e2;
-        color: #991b1b;
+        background: rgba(239, 68, 68, 0.15);
+        color: #fca5a5;
       }
 
       &.score-1 {
-        background: #fee2e2;
-        color: #991b1b;
+        background: rgba(239, 68, 68, 0.15);
+        color: #fca5a5;
       }
     }
   }
 
   .metric-detail {
     margin: 0;
-    color: #6b7280;
+    color: #9ca3af;
     font-size: 14px;
     line-height: 1.5;
 
     &.ai-summary {
       line-height: 1.6;
-      color: #4b5563;
+      color: #d1d5db;
     }
   }
 }
@@ -493,7 +611,7 @@
 
   .analyze-btn {
     padding: 12px 24px;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+    background: linear-gradient(135deg, #1f2937 0%, #111827 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -507,7 +625,7 @@
 
     &:hover {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+      box-shadow: 0 4px 12px rgba(31, 41, 55, 0.4);
     }
 
     &:active {
@@ -544,20 +662,20 @@
   align-items: center;
   gap: 10px;
   padding: 10px 20px;
-  background: #f3f4f6;
+  background: #262626;
   border-radius: 8px;
 
   .small-spinner {
     width: 20px;
     height: 20px;
-    border: 3px solid #e5e7eb;
+    border: 3px solid #4a5568;
     border-top-color: #667eea;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }
 
   span {
-    color: #6b7280;
+    color: #e5e5e5;
     font-size: 14px;
     font-weight: 500;
   }
@@ -569,7 +687,7 @@
       cursor: pointer;
 
       &:hover {
-        background: #f9fafb;
+        background: #1f1f1f;
       }
     }
   }
@@ -578,12 +696,26 @@
 .analysis-footer {
   margin-top: 20px;
   padding-top: 15px;
-  border-top: 1px solid #e5e7eb;
+  border-top: 1px solid #333333;
   text-align: center;
 
   small {
     color: #9ca3af;
     font-size: 12px;
+  }
+}
+
+.agent-errors-note {
+  margin-top: 12px;
+  padding: 10px 14px;
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 8px;
+  text-align: center;
+
+  small {
+    color: #fbbf24;
+    font-size: 13px;
   }
 }
 

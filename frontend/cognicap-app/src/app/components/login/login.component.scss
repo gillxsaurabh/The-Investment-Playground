@@ -4,17 +4,17 @@
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: #f8f9fa;
+  background: #0f0f0f;
 }
 
 .login-card {
-  background: white;
+  background: #111111;
   border-radius: 8px;
   padding: 48px;
   max-width: 480px;
   width: 100%;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
+  box-shadow: 0 1px 3px rgba(255, 255, 255, 0.1);
+  border: 1px solid #333333;
   animation: slideUp 0.5s ease-out;
 }
 
@@ -36,13 +36,13 @@
   h1 {
     font-size: 32px;
     font-weight: 600;
-    color: #1a1a1a;
+    color: #e5e5e5;
     margin-bottom: 8px;
     letter-spacing: -0.5px;
   }
 
   .subtitle {
-    color: #6b7280;
+    color: #9ca3af;
     font-size: 15px;
     font-weight: 400;
   }

@@ -1,0 +1,63 @@
+// Live Portfolio Indicator Styles
+.live-portfolio-indicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  background: linear-gradient(135deg, rgba(0, 212, 170, 0.1), rgba(0, 212, 170, 0.05));
+  border: 1px solid rgba(0, 212, 170, 0.2);
+  border-radius: 20px;
+  font-size: 11px;
+  
+  .live-dot {
+    width: 6px;
+    height: 6px;
+    background: #00d4aa;
+    border-radius: 50%;
+    animation: pulse-dot 2s infinite;
+  }
+  
+  .live-text {
+    color: #00d4aa;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+}
+
+// Portfolio update shimmer effect
+.summary-section.updating .summary-card {
+  position: relative;
+  overflow: hidden;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(0, 212, 170, 0.1), transparent);
+    animation: shimmer-portfolio 2s infinite;
+    z-index: 1;
+  }
+}
+
+@keyframes shimmer-portfolio {
+  0% {
+    left: -100%;
+  }
+  100% {
+    left: 100%;
+  }
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.2);
+  }
+}

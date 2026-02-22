@@ -1,0 +1,85 @@
+<div class="market-banner-container">
+  <div class="market-banner" [class.updating]="isLoading">
+    <div class="market-scroll" [style.transform]="'translateX(' + scrollPosition + 'px)'">
+      <!-- Live indicator -->
+      <div class="market-item live-indicator">
+        <span class="live-dot"></span>
+        <span class="live-text">LIVE</span>
+      </div>
+
+      <!-- Market Indices -->
+      <div class="market-item index" *ngIf="nifty">
+        <span class="symbol">{{ nifty.name }}</span>
+        <span class="value">{{ formatNumber(nifty.value) }}</span>
+        <span class="change" [ngClass]="getChangeClass(nifty.change)">
+          {{ formatCurrency(nifty.change) }} ({{ formatPercentage(nifty.change_percent) }})
+        </span>
+      </div>
+      
+      <div class="market-item index" *ngIf="sensex">
+        <span class="symbol">{{ sensex.name }}</span>
+        <span class="value">{{ formatNumber(sensex.value) }}</span>
+        <span class="change" [ngClass]="getChangeClass(sensex.change)">
+          {{ formatCurrency(sensex.change) }} ({{ formatPercentage(sensex.change_percent) }})
+        </span>
+      </div>
+
+      <!-- Top Gainers -->
+      <div class="market-item gainer" *ngFor="let stock of marketGainers?.slice(0, 10)">
+        <span class="symbol">{{ stock.symbol }}</span>
+        <span class="change positive">
+          ▲ {{ formatPercentage(stock.change_percent) }}
+        </span>
+      </div>
+
+      <!-- Top Losers -->
+      <div class="market-item loser" *ngFor="let stock of marketLosers?.slice(0, 10)">
+        <span class="symbol">{{ stock.symbol }}</span>
+        <span class="change negative">
+          ▼ {{ formatPercentage(stock.change_percent) }}
+        </span>
+      </div>
+
+      <!-- Live indicator (duplicate) -->
+      <div class="market-item live-indicator">
+        <span class="live-dot"></span>
+        <span class="live-text">LIVE</span>
+      </div>
+
+      <!-- Duplicate for seamless loop -->
+      <div class="market-item index" *ngIf="nifty">
+        <span class="symbol">{{ nifty.name }}</span>
+        <span class="value">{{ formatNumber(nifty.value) }}</span>
+        <span class="change" [ngClass]="getChangeClass(nifty.change)">
+          {{ formatCurrency(nifty.change) }} ({{ formatPercentage(nifty.change_percent) }})
+        </span>
+      </div>
+      
+      <div class="market-item index" *ngIf="sensex">
+        <span class="symbol">{{ sensex.name }}</span>
+        <span class="value">{{ formatNumber(sensex.value) }}</span>
+        <span class="change" [ngClass]="getChangeClass(sensex.change)">
+          {{ formatCurrency(sensex.change) }} ({{ formatPercentage(sensex.change_percent) }})
+        </span>
+      </div>
+
+      <div class="market-item gainer" *ngFor="let stock of marketGainers?.slice(0, 10)">
+        <span class="symbol">{{ stock.symbol }}</span>
+        <span class="change positive">
+          ▲ {{ formatPercentage(stock.change_percent) }}
+        </span>
+      </div>
+
+      <div class="market-item loser" *ngFor="let stock of marketLosers?.slice(0, 10)">
+        <span class="symbol">{{ stock.symbol }}</span>
+        <span class="change negative">
+          ▼ {{ formatPercentage(stock.change_percent) }}
+        </span>
+      </div>
+    </div>
+  </div>
+  <!-- Update indicator -->
+  <div class="update-indicator" *ngIf="isLoading">
+    <div class="pulse"></div>
+  </div>
+</div>

@@ -1,0 +1,455 @@
+<!-- Common Header Banner (includes market ticker) -->
+<app-header-banner
+  [userName]="'Saurabh Gill'"
+  [activePage]="'trading-agent'"
+  [nifty]="nifty"
+  [sensex]="sensex"
+  [marketGainers]="marketGainers"
+  [marketLosers]="marketLosers"
+  [isMarketLoading]="isMarketLoading"
+  [marketError]="marketError"
+  (onLogout)="goToLogin()">
+</app-header-banner>
+
+
+<div class="trading-agent-container">
+
+  <!-- ============================================================ -->
+  <!-- 3-Column Terminal Layout                                      -->
+  <!-- ============================================================ -->
+  <div class="terminal-grid">
+
+    <!-- LEFT PANEL: Run AI Analysis + AI Analysis Results -->
+    <aside class="panel-left">
+
+      <!-- Pipeline Controls + Stepper -->
+      <div class="panel-card pipeline-card">
+        <div class="panel-card-header">
+          <h3>Run AI Analysis</h3>
+        </div>
+
+        <!-- Strategy Gear Slider -->
+        <div class="gear-slider-section"
+          [class.turbo-mode]="selectedGear === 5"
+          [style.--section-color]="getSliderColor()"
+          [attr.data-gear]="selectedGear">
+          <div class="gear-icon-display" [class.shake]="selectedGear === 5">
+            {{ GEAR_ICONS[selectedGear] }}
+          </div>
+          <div class="gear-slider-wrapper">
+            <input
+              type="range"
+              class="gear-slider"
+              min="1"
+              max="5"
+              step="1"
+              [(ngModel)]="selectedGear"
+              [disabled]="isRunning"
+              [style.--slider-color]="getSliderColor()" />
+            <div class="gear-ticks">
+              <span
+                *ngFor="let g of [1,2,3,4,5]"
+                class="gear-tick"
+                [class.active]="g === selectedGear"
+                [style.color]="g === selectedGear ? getSliderColor() : ''"
+                (click)="selectedGear = g">
+                {{ GEAR_INFO[g].label }}
+              </span>
+            </div>
+          </div>
+          <div class="gear-description" [style.color]="getSliderColor()">
+            Level {{ selectedGear }} &mdash; {{ GEAR_INFO[selectedGear].description }}
+          </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="pipeline-actions">
+          <button
+            class="run-btn"
+            (click)="startPipeline()"
+            [disabled]="isRunning">
+            {{ isRunning ? 'Running...' : 'Discover Stocks' }}
+          </button>
+          <button
+            class="cancel-btn"
+            (click)="cancelPipeline()"
+            *ngIf="isRunning">
+            Cancel
+          </button>
+        </div>
+
+        <!-- Pipeline Steps (vertical) -->
+        <div class="pipeline-steps">
+          <div
+            class="pipeline-step"
+            *ngFor="let step of pipelineSteps; let last = last"
+            [class.running]="step.status === 'running'"
+            [class.completed]="step.status === 'completed'"
+            [class.error]="step.status === 'error'">
+            <div class="step-left">
+              <div class="step-circle">
+                <span class="step-icon" [class.spinner-icon]="step.status === 'running'">
+                  {{ getStepIcon(step) }}
+                </span>
+              </div>
+              <div class="step-line" *ngIf="!last"></div>
+            </div>
+            <div class="step-content">
+              <span class="step-name">{{ step.name }}</span>
+              <span class="step-count" *ngIf="step.stocksRemaining !== null">
+                <span class="from" *ngIf="step.previousCount !== null">{{ step.previousCount }}</span>
+                <span class="arrow" *ngIf="step.previousCount !== null">&#8594;</span>
+                <span class="to">{{ step.stocksRemaining }}</span>
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI Analysis Results (compact cards) -->
+      <div class="panel-card results-card" *ngIf="isCompleted">
+        <div class="panel-card-header">
+          <h3>AI Analysis Result</h3>
+          <span class="count-badge green" *ngIf="filteredStocks.length > 0">
+            {{ filteredStocks.length }} stock{{ filteredStocks.length === 1 ? '' : 's' }}
+          </span>
+        </div>
+
+        <!-- Empty result -->
+        <div class="empty-result" *ngIf="filteredStocks.length === 0 && pipelineMessage">
+          <p>{{ pipelineMessage }}</p>
+        </div>
+
+        <!-- Compact stock cards -->
+        <div class="stock-cards-list" *ngIf="filteredStocks.length > 0">
+          <div
+            class="stock-card"
+            *ngFor="let stock of filteredStocks"
+            [class.expanded]="expandedStock === stock.symbol"
+            (click)="toggleStockCard(stock.symbol)">
+            <!-- Collapsed: stock name + trade button -->
+            <div class="stock-card-row">
+              <span class="stock-card-symbol">{{ stock.symbol }}</span>
+              <button class="trade-btn" (click)="openTradeModal(stock); $event.stopPropagation()">Trade</button>
+            </div>
+            <!-- Expanded details (shown on click/hover) -->
+            <div class="stock-card-details" *ngIf="expandedStock === stock.symbol">
+              <div class="stock-detail-item">
+                <span class="stock-detail-label">Price</span>
+                <span class="stock-detail-value">{{ formatCurrency(stock.current_price) }}</span>
+              </div>
+              <div class="stock-detail-item">
+                <span class="stock-detail-label">RSI</span>
+                <span class="stock-detail-value">
+                  <span class="rsi-badge" [class.pullback]="stock.rsi < 40" [class.momentum]="stock.rsi >= 40">
+                    {{ stock.rsi | number:'1.1-1' }}
+                  </span>
+                </span>
+              </div>
+              <div class="stock-detail-item">
+                <span class="stock-detail-label">Trigger</span>
+                <span class="stock-detail-value">
+                  <span class="trigger-badge" [class.pullback]="stock.rsi_trigger === 'pullback'">
+                    {{ stock.rsi_trigger }}
+                  </span>
+                </span>
+              </div>
+              <div class="stock-detail-item">
+                <span class="stock-detail-label">Sector</span>
+                <span class="stock-detail-value">{{ stock.sector }}</span>
+              </div>
+              <div class="stock-detail-item">
+                <span class="stock-detail-label">3M Return</span>
+                <span class="stock-detail-value" [class.positive]="stock.stock_3m_return > 0" [class.negative]="stock.stock_3m_return < 0">
+                  {{ stock.stock_3m_return > 0 ? '+' : '' }}{{ stock.stock_3m_return | number:'1.1-1' }}%
+                </span>
+              </div>
+              <div class="stock-detail-item why-row">
+                <span class="stock-detail-label">Why</span>
+                <span class="stock-detail-value why-text">{{ stock.why_selected }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pipeline-summary" *ngIf="completedAt">
+          <small>Completed at {{ completedAt }}</small>
+        </div>
+      </div>
+    </aside>
+
+    <!-- CENTER PANEL: Positions -->
+    <main class="panel-center">
+
+      <!-- Active Positions Chart -->
+      <div class="panel-card positions-card" *ngIf="simulatorState && simulatorState.positions.length > 0">
+        <div class="panel-card-header">
+          <div class="header-left">
+            <h3>Live Positions</h3>
+            <span class="mode-indicator simulator">SIM</span>
+            <button class="mode-switch-btn" (click)="switchToTradeMode()">Trade Mode</button>
+            <button class="sim-reset-btn" (click)="resetSimulator()" title="Reset Simulator">&#8635;</button>
+          </div>
+          <span class="count-badge accent">{{ simulatorState.positions.length }} open</span>
+        </div>
+        <app-positions-chart
+          [positions]="simulatorState.positions"
+          [exitingIds]="isExiting"
+          (onExit)="exitPosition($event)">
+        </app-positions-chart>
+
+        <!-- Positions Detail Table -->
+        <div class="positions-detail-table">
+          <table class="data-table positions-table">
+            <thead>
+              <tr>
+                <th>Symbol</th>
+                <th>Entry</th>
+                <th>Current</th>
+                <th>High Seen</th>
+                <th>Trailing SL</th>
+                <th>Status</th>
+                <th>P&amp;L</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr *ngFor="let pos of simulatorState.positions">
+                <td class="stock-symbol">{{ pos.symbol }}</td>
+                <td>{{ formatCurrency(pos.entry_price) }}</td>
+                <td [class.positive]="pos.ltp! > pos.entry_price" [class.negative]="pos.ltp! < pos.entry_price">
+                  {{ formatCurrency(pos.ltp || pos.entry_price) }}
+                </td>
+                <td [class.breakout-high]="isBreakingOut(pos)">
+                  {{ formatCurrency(pos.highest_price_seen || pos.entry_price) }}
+                </td>
+                <td class="sl-cell">{{ formatCurrency(pos.current_sl || pos.stop_loss || 0) }}</td>
+                <td>
+                  <span class="trail-status-badge" [ngClass]="getTrailStatus(pos).cssClass">
+                    {{ getTrailStatus(pos).icon }} {{ getTrailStatus(pos).label }}
+                  </span>
+                </td>
+                <td [class.positive]="getUnrealizedPnl(pos) > 0" [class.negative]="getUnrealizedPnl(pos) < 0">
+                  {{ formatCurrency(getUnrealizedPnl(pos)) }}
+                </td>
+                <td>
+                  <button class="pill-exit-btn" (click)="exitPosition(pos.trade_id)" [disabled]="isExiting[pos.trade_id]">
+                    {{ isExiting[pos.trade_id] ? '...' : 'Exit' }}
+                  </button>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Empty state when nothing to show -->
+      <div class="panel-card empty-center" *ngIf="!(simulatorState && simulatorState.positions.length > 0)">
+        <div class="empty-icon">&#9881;</div>
+        <p>Hit Discover Stocks to find trade opportunities.</p>
+        <p class="empty-sub">Results and active positions will appear here.</p>
+      </div>
+    </main>
+
+    <!-- RIGHT PANEL: Fund Management + Trade History -->
+    <aside class="panel-right">
+
+      <!-- Fund Management Card -->
+      <div class="panel-card account-card" *ngIf="simulatorState">
+        <div class="panel-card-header">
+          <h3>Fund Management</h3>
+          <span class="live-dot"></span>
+        </div>
+        <div class="account-metrics">
+          <div class="metric">
+            <span class="metric-label">Available</span>
+            <span class="metric-value">{{ formatCurrency(simulatorState.account_summary.current_balance) }}</span>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric">
+            <span class="metric-label">Realized P&amp;L</span>
+            <span class="metric-value" [class.positive]="simulatorState.account_summary.total_pnl > 0" [class.negative]="simulatorState.account_summary.total_pnl < 0">
+              {{ simulatorState.account_summary.total_pnl > 0 ? '+' : '' }}{{ formatCurrency(simulatorState.account_summary.total_pnl) }}
+            </span>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric" *ngIf="simulatorState.account_summary.unrealized_pnl !== undefined">
+            <span class="metric-label">Unrealized</span>
+            <span class="metric-value" [class.positive]="simulatorState.account_summary.unrealized_pnl! > 0" [class.negative]="simulatorState.account_summary.unrealized_pnl! < 0">
+              {{ simulatorState.account_summary.unrealized_pnl! > 0 ? '+' : '' }}{{ formatCurrency(simulatorState.account_summary.unrealized_pnl!) }}
+            </span>
+          </div>
+          <div class="metric-divider"></div>
+          <div class="metric">
+            <span class="metric-label">Open Trades</span>
+            <span class="metric-value accent">{{ simulatorState.positions.length }}</span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Closed Trades</span>
+            <span class="metric-value">{{ simulatorState.trade_history.length }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sector Leaderboard -->
+      <div class="panel-card sector-card">
+        <div class="panel-card-header">
+          <h3>Sector Leaderboard</h3>
+          <button
+            class="sector-research-btn"
+            (click)="researchSectors()"
+            [disabled]="isSectorResearching">
+            {{ isSectorResearching ? 'Researching...' : 'Research' }}
+          </button>
+        </div>
+
+        <div class="sector-loading" *ngIf="isSectorResearching">
+          <div class="small-spinner"></div>
+          <span>Analyzing global trends...</span>
+        </div>
+
+        <div class="sector-empty" *ngIf="!isSectorResearching && sectorLeaderboard.length === 0">
+          <p>No research yet.</p>
+          <p class="empty-sub">Hit Research to discover top sectors.</p>
+        </div>
+
+        <div class="sector-list" *ngIf="!isSectorResearching && sectorLeaderboard.length > 0">
+          <div class="sector-item" *ngFor="let sector of sectorLeaderboard; let i = index">
+            <span class="sector-rank">{{ i + 1 }}</span>
+            <span class="sector-name">{{ sector.name }}</span>
+            <span class="conviction-badge" [style.background]="getConvictionColor(sector.conviction)">
+              {{ sector.conviction }}/5
+            </span>
+          </div>
+        </div>
+
+        <div class="sector-timestamp" *ngIf="sectorResearchedAt">
+          <small>Researched: {{ sectorResearchedAt | date:'d MMM y, h:mm a' }}</small>
+        </div>
+      </div>
+
+      <!-- Trade History -->
+      <div class="panel-card history-card">
+        <div class="panel-card-header">
+          <h3>Trade History</h3>
+          <span class="count-badge" *ngIf="simulatorState && simulatorState.trade_history.length > 0">
+            {{ simulatorState.trade_history.length }}
+          </span>
+        </div>
+
+        <div class="history-empty" *ngIf="!simulatorState || simulatorState.trade_history.length === 0">
+          <p>No closed trades yet.</p>
+          <p class="empty-sub">Completed trades will appear here with P&amp;L details.</p>
+        </div>
+
+        <div class="history-list" *ngIf="simulatorState && simulatorState.trade_history.length > 0">
+          <div class="history-item" *ngFor="let trade of simulatorState.trade_history.slice(-4).reverse()"
+            [class.history-profit]="trade.realized_pnl >= 0"
+            [class.history-loss]="trade.realized_pnl < 0">
+            <div class="history-item-top">
+              <span class="history-symbol">{{ trade.symbol }}</span>
+              <span class="history-pnl" [class.positive]="trade.realized_pnl >= 0" [class.negative]="trade.realized_pnl < 0">
+                {{ trade.realized_pnl >= 0 ? '+' : '' }}{{ formatCurrency(trade.realized_pnl) }}
+              </span>
+            </div>
+            <div class="history-item-mid">
+              <span>{{ trade.quantity }} x {{ formatCurrency(trade.entry_price) }}</span>
+              <span class="history-arrow">&#8594;</span>
+              <span>{{ formatCurrency(trade.exit_price) }}</span>
+            </div>
+            <div class="history-item-bottom">
+              <span class="reason-badge"
+                [class.reason-sl]="trade.reason === 'Stop Loss Hit'"
+                [class.reason-tsl]="trade.reason === 'Trailing Stop Hit'"
+                [class.reason-tp]="trade.reason === 'Target Hit'"
+                [class.reason-stall]="trade.reason.startsWith('Stall')"
+                [class.reason-manual]="trade.reason === 'Manual Close'">
+                {{ trade.reason }}
+              </span>
+              <span class="history-time">{{ trade.exit_time }}</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+</div>
+
+<!-- Trade Confirmation Modal -->
+<div class="trade-modal-overlay" *ngIf="showTradeModal" (click)="closeTradeModal()">
+  <div class="trade-modal-content" (click)="$event.stopPropagation()">
+    <div class="trade-modal-header">
+      <h2>Trade Confirmation</h2>
+      <button class="trade-modal-close" (click)="closeTradeModal()">&times;</button>
+    </div>
+
+    <!-- Loading state -->
+    <div class="trade-modal-loading" *ngIf="isLoadingTrade">
+      <div class="trade-spinner"></div>
+      <p>Calculating exit levels...</p>
+    </div>
+
+    <!-- Error state -->
+    <div class="trade-modal-error" *ngIf="!isLoadingTrade && tradeError">
+      <div class="error-icon">!</div>
+      <p>{{ tradeError }}</p>
+      <button class="cancel-trade-btn" (click)="closeTradeModal()">Close</button>
+    </div>
+
+    <!-- Trade details -->
+    <div class="trade-modal-body" *ngIf="!isLoadingTrade && !tradeError && tradeDetails">
+      <div class="trade-stock-header">
+        <span class="trade-symbol">{{ tradeDetails.symbol }}</span>
+        <span class="trade-ltp">LTP: {{ formatCurrency(tradeDetails.ltp) }}</span>
+      </div>
+
+      <div class="trade-details-grid">
+        <div class="trade-detail-row">
+          <span class="trade-label">Available Funds</span>
+          <span class="trade-value">{{ formatCurrency(tradeDetails.availableFunds) }}</span>
+        </div>
+        <div class="trade-detail-row">
+          <span class="trade-label">Stocks in Shortlist</span>
+          <span class="trade-value">{{ tradeDetails.totalStocks }}</span>
+        </div>
+        <div class="trade-detail-row">
+          <span class="trade-label">Investment Amount</span>
+          <span class="trade-value">{{ formatCurrency(tradeDetails.investmentAmount) }}</span>
+        </div>
+        <div class="trade-detail-row">
+          <span class="trade-label">Quantity</span>
+          <span class="trade-value quantity">{{ tradeDetails.quantity }}</span>
+        </div>
+
+        <div class="trade-separator"></div>
+
+        <div class="trade-detail-row">
+          <span class="trade-label">ATR (14)</span>
+          <span class="trade-value">{{ formatCurrency(tradeDetails.atr) }}</span>
+        </div>
+        <div class="trade-detail-row sl-row">
+          <span class="trade-label">Initial Stop Loss ({{ tradeDetails.trailMultiplier }}x ATR)</span>
+          <span class="trade-value sl">{{ formatCurrency(tradeDetails.initialSl) }}</span>
+        </div>
+        <div class="trade-detail-row">
+          <span class="trade-label">Risk / Share</span>
+          <span class="trade-value sl">{{ formatCurrency(tradeDetails.riskPerShare) }}</span>
+        </div>
+
+        <div class="trade-separator"></div>
+
+        <div class="trade-detail-row">
+          <span class="trade-label">Exit Strategy</span>
+          <span class="trade-value trail-note">Dynamic trailing stop at {{ tradeDetails.trailMultiplier }}x ATR</span>
+        </div>
+      </div>
+
+      <div class="trade-modal-actions">
+        <button class="cancel-trade-btn" (click)="closeTradeModal()">Cancel</button>
+        <button class="confirm-trade-btn" (click)="confirmTrade()" [disabled]="tradeConfirmLoading">
+          {{ tradeConfirmLoading ? 'Executing...' : 'Confirm (Simulated)' }}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
