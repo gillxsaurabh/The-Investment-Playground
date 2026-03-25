@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject } from 'rxjs';
-import { map, tap } from 'rxjs/operators';
+import { Observable, BehaviorSubject, of } from 'rxjs';
+import { map, tap, catchError } from 'rxjs/operators';
 
 export interface AuthResponse {
   success: boolean;
@@ -250,11 +250,14 @@ export class KiteService {
     const token = this.getStoredToken();
     return this.http.post<MarketIndices>(`${this.apiUrl}/market/indices`, {
       access_token: token
-    });
+    }).pipe(catchError(() => of({ success: false } as MarketIndices)));
   }
 
   getTopStocks(): Observable<TopStocks> {
-    return this.http.get<TopStocks>(`${this.apiUrl}/market/top-stocks`);
+    const token = this.getStoredToken();
+    return this.http.post<TopStocks>(`${this.apiUrl}/market/top-stocks`, {
+      access_token: token
+    }).pipe(catchError(() => of({ success: false, top_gainers: [], top_losers: [] } as TopStocks)));
   }
 
   getHealthReport(): Observable<HealthReportResponse> {

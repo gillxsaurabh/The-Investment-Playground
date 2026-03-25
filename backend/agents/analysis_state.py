@@ -12,6 +12,9 @@ class AnalysisState(TypedDict):
     access_token: str
     instrument_token: Optional[int]
 
+    # LLM provider selection ("gemini" | "claude" | "openai" | None → gemini default)
+    llm_provider: Optional[str]
+
     # Agent outputs (each agent writes only its own key)
     stats_result: Optional[AgentResult]
     company_health_result: Optional[AgentResult]
@@ -20,6 +23,8 @@ class AnalysisState(TypedDict):
     # Synthesizer output
     overall_score: Optional[float]
     verdict: Optional[str]
+    risk_factors: Optional[list]    # Claude path: explicit downside risks
+    conflict_summary: Optional[str] # Claude path: explanation when agents disagree
 
     # Metadata
     analyzed_at: Optional[str]

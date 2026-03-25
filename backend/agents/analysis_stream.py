@@ -24,21 +24,33 @@ def _sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
-def run_analysis_stream(symbol: str, access_token: str, instrument_token: int | None = None):
+def run_analysis_stream(
+    symbol: str,
+    access_token: str,
+    instrument_token: int | None = None,
+    llm_provider: str | None = None,
+):
     """Generator yielding SSE events as each agent completes.
 
     Agents run sequentially: stats → company_health → breaking_news → synthesizer.
     Each agent is wrapped in try/except so failures don't stop the pipeline.
+
+    Args:
+        llm_provider: "gemini" | "claude" | "openai" | None.
+                      None keeps existing Gemini+fallback behaviour.
     """
     state: AnalysisState = {
         "symbol": symbol,
         "access_token": access_token,
         "instrument_token": instrument_token,
+        "llm_provider": llm_provider,
         "stats_result": None,
         "company_health_result": None,
         "breaking_news_result": None,
         "overall_score": None,
         "verdict": None,
+        "risk_factors": None,
+        "conflict_summary": None,
         "analyzed_at": None,
     }
 
@@ -88,6 +100,8 @@ def run_analysis_stream(symbol: str, access_token: str, instrument_token: int | 
         "symbol": symbol,
         "overall_score": state.get("overall_score"),
         "verdict": state.get("verdict"),
+        "risk_factors": state.get("risk_factors"),       # Claude path only
+        "conflict_summary": state.get("conflict_summary"),  # Claude path only
         "agents": {
             "stats_agent": state.get("stats_result"),
             "company_health_agent": state.get("company_health_result"),

@@ -39,3 +39,35 @@ def run_decision_support():
 
     except Exception as e:
         return jsonify({"success": False, "error": str(e)}), 500
+
+
+@decision_support_bp.route("/sell", methods=["POST"])
+def run_sell_analysis():
+    """SSE endpoint — runs the portfolio sell analysis pipeline."""
+    try:
+        from agents.decision_support.sell_stream import run_sell_pipeline_stream
+
+        data = request.json
+        access_token = data.get("access_token")
+        config = data.get("config", {})
+
+        if not access_token:
+            return jsonify({"success": False, "error": "access_token is required"}), 400
+
+        def generate():
+            for event in run_sell_pipeline_stream(access_token, config=config):
+                yield event
+            yield "event: end\ndata: {}\n\n"
+
+        return Response(
+            stream_with_context(generate()),
+            mimetype="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "X-Accel-Buffering": "no",
+                "Connection": "keep-alive",
+            },
+        )
+
+    except Exception as e:
+        return jsonify({"success": False, "error": str(e)}), 500

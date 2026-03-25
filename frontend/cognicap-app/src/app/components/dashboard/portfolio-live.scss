@@ -4,21 +4,22 @@
   align-items: center;
   gap: 4px;
   padding: 6px 12px;
-  background: linear-gradient(135deg, rgba(0, 212, 170, 0.1), rgba(0, 212, 170, 0.05));
-  border: 1px solid rgba(0, 212, 170, 0.2);
+  background: linear-gradient(135deg, rgba(249, 115, 22, 0.12), rgba(249, 115, 22, 0.05));
+  border: 1px solid rgba(249, 115, 22, 0.25);
   border-radius: 20px;
   font-size: 11px;
-  
+
   .live-dot {
     width: 6px;
     height: 6px;
-    background: #00d4aa;
+    background: #f97316;
     border-radius: 50%;
     animation: pulse-dot 2s infinite;
+    box-shadow: 0 0 6px rgba(249, 115, 22, 0.6);
   }
-  
+
   .live-text {
-    color: #00d4aa;
+    color: #f97316;
     font-weight: 600;
     letter-spacing: 0.5px;
   }
@@ -28,7 +29,7 @@
 .summary-section.updating .summary-card {
   position: relative;
   overflow: hidden;
-  
+
   &::before {
     content: '';
     position: absolute;
@@ -36,7 +37,7 @@
     left: -100%;
     width: 100%;
     height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0, 212, 170, 0.1), transparent);
+    background: linear-gradient(90deg, transparent, rgba(249, 115, 22, 0.07), transparent);
     animation: shimmer-portfolio 2s infinite;
     z-index: 1;
   }

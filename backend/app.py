@@ -20,7 +20,23 @@ def create_app():
     app = Flask(__name__)
     CORS(app, origins=["http://localhost:4200"])
 
+    # Initialize SQLite schema on every startup (idempotent)
+    try:
+        from services.db import init_db
+        init_db()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"[App] DB init failed: {e}")
+
     register_blueprints(app)
+
+    # Start the weekly automation scheduler (Monday 9:00 AM IST)
+    try:
+        from automation.scheduler import start_scheduler
+        start_scheduler()
+    except Exception as e:
+        import logging
+        logging.getLogger(__name__).warning(f"[App] Scheduler failed to start: {e}")
 
     return app
 

@@ -22,14 +22,39 @@
     <!-- LEFT PANEL: Run AI Analysis + AI Analysis Results -->
     <aside class="panel-left">
 
-      <!-- Pipeline Controls + Stepper -->
-      <div class="panel-card pipeline-card">
-        <div class="panel-card-header">
-          <h3>Run AI Analysis</h3>
+      <!-- Left Panel Tab Header -->
+      <div class="left-panel-header">
+        <div class="left-tab-strip">
+          <button class="left-tab" [class.active]="leftTab === 'setup'" (click)="leftTab = 'setup'">Pipeline</button>
+          <button class="left-tab" [class.active]="leftTab === 'results'" (click)="leftTab = 'results'">
+            Results
+            <span class="tab-badge" *ngIf="pipelineMode === 'buy' && filteredStocks.length > 0">&nbsp;{{ filteredStocks.length }}</span>
+            <span class="tab-badge sell-badge" *ngIf="pipelineMode === 'sell' && sellResults.length > 0">&nbsp;{{ sellResults.length }}</span>
+          </button>
+        </div>
+        <span class="regime-pill regime-normal" *ngIf="marketRegime && marketRegime.vix && marketRegime.regime === 'normal'">VIX {{ marketRegime.vix }}</span>
+        <span class="regime-pill regime-fearful" *ngIf="marketRegime && marketRegime.vix && marketRegime.regime !== 'normal'" [title]="marketRegime.warning || ''">VIX {{ marketRegime.vix }}</span>
+      </div>
+
+      <!-- SETUP TAB: Pipeline Controls + Stepper -->
+      <div class="panel-card pipeline-card" *ngIf="leftTab === 'setup'">
+
+        <!-- BUY / SELL Mode Toggle -->
+        <div class="mode-toggle-section">
+          <div class="mode-toggle-pills">
+            <button class="mode-pill mode-buy" [class.active]="pipelineMode === 'buy'" [disabled]="isRunning" (click)="togglePipelineMode('buy')">
+              &#9650; BUY
+            </button>
+            <button class="mode-pill mode-sell" [class.active]="pipelineMode === 'sell'" [disabled]="isRunning" (click)="togglePipelineMode('sell')">
+              &#9660; SELL
+            </button>
+          </div>
+          <p class="mode-description" *ngIf="pipelineMode === 'buy'">Find new stocks to enter</p>
+          <p class="mode-description sell-mode-desc" *ngIf="pipelineMode === 'sell'">Audit portfolio for exits</p>
         </div>
 
-        <!-- Strategy Gear Slider -->
-        <div class="gear-slider-section"
+        <!-- Strategy Gear Slider (BUY mode only) -->
+        <div class="gear-slider-section" *ngIf="pipelineMode === 'buy'"
           [class.turbo-mode]="selectedGear === 5"
           [style.--section-color]="getSliderColor()"
           [attr.data-gear]="selectedGear">
@@ -62,13 +87,38 @@
           </div>
         </div>
 
+        <!-- AI Provider Selector -->
+        <div class="provider-selector-section">
+          <div class="provider-label">
+            <span class="material-icons provider-label-icon">smart_toy</span>
+            AI Provider
+          </div>
+          <div class="provider-chips">
+            <button
+              *ngFor="let p of ['gemini', 'claude', 'openai']"
+              class="provider-chip"
+              [class.active]="selectedProvider === p"
+              [disabled]="isRunning"
+              (click)="selectedProvider = $any(p)">
+              {{ PROVIDER_INFO[p].label }}
+              <span class="provider-badge">{{ PROVIDER_INFO[p].badge }}</span>
+            </button>
+          </div>
+          <p class="provider-desc">{{ PROVIDER_INFO[selectedProvider].description }}</p>
+          <div class="thinking-badge" *ngIf="selectedProvider === 'claude'">
+            <span class="material-icons" style="font-size:12px">psychology</span>
+            Extended Thinking Active
+          </div>
+        </div>
+
         <!-- Action Buttons -->
         <div class="pipeline-actions">
           <button
             class="run-btn"
-            (click)="startPipeline()"
+            [class.sell-run-btn]="pipelineMode === 'sell'"
+            (click)="pipelineMode === 'buy' ? startPipeline() : startSellPipeline()"
             [disabled]="isRunning">
-            {{ isRunning ? 'Running...' : 'Discover Stocks' }}
+            {{ isRunning ? 'Analyzing...' : (pipelineMode === 'buy' ? 'Discover Stocks' : 'Analyze Portfolio') }}
           </button>
           <button
             class="cancel-btn"
@@ -78,61 +128,159 @@
           </button>
         </div>
 
-        <!-- Pipeline Steps (vertical) -->
+        <!-- Pipeline Steps (connected flow) -->
         <div class="pipeline-steps">
-          <div
-            class="pipeline-step"
-            *ngFor="let step of pipelineSteps; let last = last"
-            [class.running]="step.status === 'running'"
-            [class.completed]="step.status === 'completed'"
-            [class.error]="step.status === 'error'">
-            <div class="step-left">
-              <div class="step-circle">
-                <span class="step-icon" [class.spinner-icon]="step.status === 'running'">
-                  {{ getStepIcon(step) }}
-                </span>
-              </div>
-              <div class="step-line" *ngIf="!last"></div>
-            </div>
-            <div class="step-content">
+          <ng-container *ngFor="let step of activePipelineSteps; let i = index; let last = last">
+            <div class="pipeline-step"
+              [class.running]="step.status === 'running'"
+              [class.completed]="step.status === 'completed'"
+              [class.error]="step.status === 'error'"
+              [class.sell-step]="pipelineMode === 'sell'">
+              <span class="step-dot"></span>
               <span class="step-name">{{ step.name }}</span>
               <span class="step-count" *ngIf="step.stocksRemaining !== null">
-                <span class="from" *ngIf="step.previousCount !== null">{{ step.previousCount }}</span>
-                <span class="arrow" *ngIf="step.previousCount !== null">&#8594;</span>
-                <span class="to">{{ step.stocksRemaining }}</span>
+                <span class="count-from" *ngIf="step.previousCount !== null">{{ step.previousCount }}</span>
+                <span class="count-sep" *ngIf="step.previousCount !== null">&#8250;</span>
+                <span class="count-to">{{ step.stocksRemaining }}</span>
               </span>
+            </div>
+            <div class="step-connector" *ngIf="!last"
+              [class.conn-done]="step.status === 'completed' && activePipelineSteps[i+1].status !== 'running'"
+              [class.conn-active]="step.status === 'completed' && activePipelineSteps[i+1].status === 'running'">
+              <div class="conn-track"></div>
+              <div class="conn-tip"></div>
+            </div>
+          </ng-container>
+        </div>
+
+        <!-- Agent Logs Trigger Row (visible after pipeline completes) -->
+        <div class="logs-trigger-row" *ngIf="isCompleted">
+          <button class="logs-toggle-btn" (click)="toggleAgentLogs()" [class.active]="showAgentLogs" title="Toggle agent execution logs">
+            <span class="logs-toggle-icon">{{ showAgentLogs ? '&#9650;' : '&#9660;' }}</span>
+            Agent Execution Trace
+          </button>
+          <small *ngIf="startedAt && completedAt">{{ startedAt | date:'HH:mm:ss' }} &rarr; {{ completedAt | date:'HH:mm:ss' }}</small>
+        </div>
+
+        <!-- Agent Execution Logs Panel (collapsible) -->
+        <div class="agent-logs-panel" *ngIf="showAgentLogs && isCompleted">
+          <div class="agent-logs-header">
+            <span class="agent-logs-title">Agent Execution Trace</span>
+            <span class="agent-logs-meta" *ngIf="startedAt && completedAt">
+              {{ startedAt | date:'HH:mm:ss' }} &rarr; {{ completedAt | date:'HH:mm:ss' }}
+            </span>
+          </div>
+          <div class="agent-log-items">
+            <div
+              class="agent-log-item"
+              *ngFor="let step of activePipelineSteps"
+              [class.expanded]="expandedLogStep === step.id"
+              [class.status-completed]="step.status === 'completed'"
+              [class.status-running]="step.status === 'running'"
+              [class.status-error]="step.status === 'error'"
+              [class.status-pending]="step.status === 'pending'">
+
+              <!-- Accordion header -->
+              <div class="agent-log-item-header" (click)="toggleLogStep(step.id)">
+                <div class="agent-log-status-dot"
+                  [class.dot-completed]="step.status === 'completed'"
+                  [class.dot-running]="step.status === 'running'"
+                  [class.dot-error]="step.status === 'error'"
+                  [class.dot-pending]="step.status === 'pending'">
+                </div>
+                <div class="agent-log-item-meta">
+                  <span class="agent-log-name">{{ step.agentName }}</span>
+                  <span class="agent-log-role">{{ step.agentRole }}</span>
+                </div>
+                <div class="agent-log-item-right">
+                  <span class="agent-log-duration" *ngIf="step.durationMs !== null">
+                    {{ formatDuration(step.durationMs) }}
+                  </span>
+                  <span class="agent-log-count" *ngIf="step.stocksRemaining !== null">
+                    {{ step.previousCount }} &rarr; {{ step.stocksRemaining }}
+                  </span>
+                  <span class="agent-log-chevron">{{ expandedLogStep === step.id ? '&#9650;' : '&#9660;' }}</span>
+                </div>
+              </div>
+
+              <!-- Accordion body: log entries -->
+              <div class="agent-log-entries" *ngIf="expandedLogStep === step.id">
+                <div *ngIf="step.logs.length === 0" class="agent-log-empty">
+                  No log entries for this agent.
+                </div>
+                <div
+                  class="agent-log-entry"
+                  *ngFor="let log of step.logs"
+                  [class.log-success]="log.type === 'success'"
+                  [class.log-error]="log.type === 'error'">
+                  <span class="log-time">{{ formatTime(log.timestamp) }}</span>
+                  <span class="log-msg">{{ log.message }}</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      </div><!-- /pipeline-card -->
 
-      <!-- AI Analysis Results (compact cards) -->
-      <div class="panel-card results-card" *ngIf="isCompleted">
-        <div class="panel-card-header">
-          <h3>AI Analysis Result</h3>
-          <span class="count-badge green" *ngIf="filteredStocks.length > 0">
-            {{ filteredStocks.length }} stock{{ filteredStocks.length === 1 ? '' : 's' }}
-          </span>
+      <!-- RESULTS TAB: Stock Cards -->
+      <div class="panel-card results-card" *ngIf="leftTab === 'results'">
+
+        <!-- Pre-run empty state -->
+        <div class="empty-result" *ngIf="!isCompleted && !isRunning">
+          <p>{{ pipelineMode === 'buy' ? 'Run the pipeline to see stock recommendations.' : 'Run the analysis to audit your portfolio for exits.' }}</p>
         </div>
 
-        <!-- Empty result -->
-        <div class="empty-result" *ngIf="filteredStocks.length === 0 && pipelineMessage">
-          <p>{{ pipelineMessage }}</p>
+        <!-- Running state -->
+        <div class="empty-result" *ngIf="isRunning">
+          <p>{{ pipelineMode === 'buy' ? 'Pipeline is running\u2026' : 'Analyzing portfolio\u2026' }}</p>
         </div>
 
-        <!-- Compact stock cards -->
-        <div class="stock-cards-list" *ngIf="filteredStocks.length > 0">
+        <!-- ── BUY MODE RESULTS ────────────────────────────── -->
+        <ng-container *ngIf="pipelineMode === 'buy'">
+
+          <!-- Empty result after pipeline -->
+          <div class="empty-result" *ngIf="isCompleted && filteredStocks.length === 0 && pipelineMessage">
+            <p>{{ pipelineMessage }}</p>
+          </div>
+
+          <!-- Compact stock cards -->
+          <div class="stock-cards-list" *ngIf="isCompleted && filteredStocks.length > 0">
           <div
             class="stock-card"
             *ngFor="let stock of filteredStocks"
             [class.expanded]="expandedStock === stock.symbol"
+            [class.news-warning]="stock.news_flag === 'warning'"
             (click)="toggleStockCard(stock.symbol)">
-            <!-- Collapsed: stock name + trade button -->
+            <!-- Collapsed: rank badge + stock name + score + trade button -->
             <div class="stock-card-row">
-              <span class="stock-card-symbol">{{ stock.symbol }}</span>
-              <button class="trade-btn" (click)="openTradeModal(stock); $event.stopPropagation()">Trade</button>
+              <div class="stock-card-left">
+                <span class="rank-badge" *ngIf="stock.final_rank"
+                  [class.rank-gold]="stock.final_rank === 1"
+                  [class.rank-silver]="stock.final_rank === 2"
+                  [class.rank-bronze]="stock.final_rank === 3">
+                  #{{ stock.final_rank }}
+                </span>
+                <span class="news-dot"
+                  *ngIf="stock.news_flag"
+                  [class.news-clear]="stock.news_flag === 'clear'"
+                  [class.news-warn]="stock.news_flag === 'warning'">
+                </span>
+                <span class="stock-card-symbol">{{ stock.symbol }}</span>
+              </div>
+              <div class="stock-card-right">
+                <span class="composite-score-badge" *ngIf="stock.composite_score"
+                  [style.background]="getCompositeScoreColor(stock.composite_score)"
+                  [style.color]="getCompositeScoreTextColor(stock.composite_score)">
+                  {{ stock.composite_score }}
+                </span>
+                <button class="add-staging-btn"
+                  [class.staged]="isInStaging(stock)"
+                  (click)="toggleStaging(stock); $event.stopPropagation()">
+                  {{ isInStaging(stock) ? '&#10003; Added' : '+ Add' }}
+                </button>
+              </div>
             </div>
-            <!-- Expanded details (shown on click/hover) -->
+            <!-- Expanded details (shown on click) -->
             <div class="stock-card-details" *ngIf="expandedStock === stock.symbol">
               <div class="stock-detail-item">
                 <span class="stock-detail-label">Price</span>
@@ -154,6 +302,10 @@
                   </span>
                 </span>
               </div>
+              <div class="stock-detail-item" *ngIf="stock.adx">
+                <span class="stock-detail-label">ADX</span>
+                <span class="stock-detail-value">{{ stock.adx | number:'1.1-1' }}</span>
+              </div>
               <div class="stock-detail-item">
                 <span class="stock-detail-label">Sector</span>
                 <span class="stock-detail-value">{{ stock.sector }}</span>
@@ -164,17 +316,305 @@
                   {{ stock.stock_3m_return > 0 ? '+' : '' }}{{ stock.stock_3m_return | number:'1.1-1' }}%
                 </span>
               </div>
+              <div class="stock-detail-item" *ngIf="stock.roe">
+                <span class="stock-detail-label">ROE</span>
+                <span class="stock-detail-value">{{ stock.roe | number:'1.1-1' }}%</span>
+              </div>
+              <div class="stock-detail-item" *ngIf="stock.debt_to_equity !== undefined && stock.debt_to_equity !== null">
+                <span class="stock-detail-label">D/E</span>
+                <span class="stock-detail-value">{{ stock.debt_to_equity | number:'1.2-2' }}</span>
+              </div>
+              <!-- AI Conviction -->
+              <div class="stock-detail-item" *ngIf="stock.ai_conviction">
+                <span class="stock-detail-label">AI Conviction</span>
+                <span class="stock-detail-value">
+                  <span class="conviction-score" [style.color]="getConvictionColor(stock.ai_conviction / 2)">
+                    {{ stock.ai_conviction }}/10
+                  </span>
+                </span>
+              </div>
+              <!-- Score Breakdown -->
+              <div class="score-breakdown" *ngIf="stock.score_breakdown">
+                <div class="score-bar-row">
+                  <span class="score-bar-label">Tech</span>
+                  <div class="score-bar-track"><div class="score-bar-fill tech" [style.width.%]="stock.score_breakdown.technical * 4"></div></div>
+                  <span class="score-bar-val">{{ stock.score_breakdown.technical }}</span>
+                </div>
+                <div class="score-bar-row">
+                  <span class="score-bar-label">Fund</span>
+                  <div class="score-bar-track"><div class="score-bar-fill fund" [style.width.%]="stock.score_breakdown.fundamental * 4"></div></div>
+                  <span class="score-bar-val">{{ stock.score_breakdown.fundamental }}</span>
+                </div>
+                <div class="score-bar-row">
+                  <span class="score-bar-label">RS</span>
+                  <div class="score-bar-track"><div class="score-bar-fill rs" [style.width.%]="stock.score_breakdown.relative_strength * 4"></div></div>
+                  <span class="score-bar-val">{{ stock.score_breakdown.relative_strength }}</span>
+                </div>
+                <div class="score-bar-row">
+                  <span class="score-bar-label">Vol</span>
+                  <div class="score-bar-track"><div class="score-bar-fill vol" [style.width.%]="stock.score_breakdown.volume_health * 4"></div></div>
+                  <span class="score-bar-val">{{ stock.score_breakdown.volume_health }}</span>
+                </div>
+              </div>
+              <!-- News Headlines -->
+              <div class="stock-news" *ngIf="stock.news_headlines && stock.news_headlines.length > 0">
+                <span class="stock-detail-label">Recent News</span>
+                <div class="news-list">
+                  <span class="news-headline" *ngFor="let headline of stock.news_headlines">{{ headline }}</span>
+                </div>
+              </div>
+              <!-- Why Selected -->
               <div class="stock-detail-item why-row">
                 <span class="stock-detail-label">Why</span>
                 <span class="stock-detail-value why-text">{{ stock.why_selected }}</span>
+              </div>
+              <!-- Portfolio Ranker: Final Rank + Rank Reason + Rank Factors -->
+              <div class="rank-section" *ngIf="stock.final_rank">
+                <div class="rank-section-header">
+                  <span class="rank-badge rank-badge-lg"
+                    [class.rank-gold]="stock.final_rank === 1"
+                    [class.rank-silver]="stock.final_rank === 2"
+                    [class.rank-bronze]="stock.final_rank === 3">
+                    Rank #{{ stock.final_rank }}
+                  </span>
+                  <span class="rank-score-label">Score {{ stock.final_rank_score }}/100</span>
+                </div>
+                <p class="rank-reason" *ngIf="stock.rank_reason">{{ stock.rank_reason }}</p>
+                <div class="rank-factors-bars" *ngIf="stock.rank_factors">
+                  <div class="score-bar-row">
+                    <span class="score-bar-label">Conv</span>
+                    <div class="score-bar-track"><div class="score-bar-fill rank-conv" [style.width.%]="stock.rank_factors.ai_conviction_norm"></div></div>
+                    <span class="score-bar-val">{{ stock.rank_factors.ai_conviction_norm | number:'1.0-0' }}</span>
+                  </div>
+                  <div class="score-bar-row">
+                    <span class="score-bar-label">Comp</span>
+                    <div class="score-bar-track"><div class="score-bar-fill rank-comp" [style.width.%]="stock.rank_factors.composite_score_norm"></div></div>
+                    <span class="score-bar-val">{{ stock.rank_factors.composite_score_norm | number:'1.0-0' }}</span>
+                  </div>
+                  <div class="score-bar-row">
+                    <span class="score-bar-label">RS</span>
+                    <div class="score-bar-track"><div class="score-bar-fill rank-rs" [style.width.%]="stock.rank_factors.relative_strength_norm"></div></div>
+                    <span class="score-bar-val">{{ stock.rank_factors.relative_strength_norm | number:'1.0-0' }}</span>
+                  </div>
+                  <div class="score-bar-row">
+                    <span class="score-bar-label">Fund</span>
+                    <div class="score-bar-track"><div class="score-bar-fill rank-fund" [style.width.%]="stock.rank_factors.fundamental_norm"></div></div>
+                    <span class="score-bar-val">{{ stock.rank_factors.fundamental_norm | number:'1.0-0' }}</span>
+                  </div>
+                  <div class="score-bar-row">
+                    <span class="score-bar-label">Sec</span>
+                    <div class="score-bar-track"><div class="score-bar-fill rank-sec" [style.width.%]="stock.rank_factors.sector_momentum_norm"></div></div>
+                    <span class="score-bar-val">{{ stock.rank_factors.sector_momentum_norm | number:'1.0-0' }}</span>
+                  </div>
+                </div>
+              </div>
+              <!-- Claude-only: Primary Risk + Trade Type + Portfolio Note -->
+              <div class="claude-insights" *ngIf="stock.primary_risk || stock.trade_type || stock.portfolio_note">
+                <div class="claude-insights-header">
+                  <span class="material-icons" style="font-size:13px;vertical-align:middle">psychology</span>
+                  Claude Insights
+                </div>
+                <div class="stock-detail-item" *ngIf="stock.primary_risk">
+                  <span class="stock-detail-label">Key Risk</span>
+                  <span class="stock-detail-value risk-text">{{ stock.primary_risk }}</span>
+                </div>
+                <div class="stock-detail-item" *ngIf="stock.trade_type">
+                  <span class="stock-detail-label">Trade Type</span>
+                  <span class="trade-type-badge">{{ stock.trade_type }}</span>
+                </div>
+                <div class="stock-detail-item" *ngIf="stock.portfolio_note">
+                  <span class="stock-detail-label">Portfolio</span>
+                  <span class="portfolio-note-badge"
+                    [class.note-risk]="stock.portfolio_note === 'sector_concentration_risk'"
+                    [class.note-corr]="stock.portfolio_note === 'correlated_with_rank_1'">
+                    {{ stock.portfolio_note | titlecase }}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="pipeline-summary" *ngIf="completedAt">
+        <div class="pipeline-summary" *ngIf="pipelineMode === 'buy' && completedAt">
           <small>Completed at {{ completedAt }}</small>
         </div>
+        </ng-container><!-- /BUY MODE RESULTS -->
+
+        <!-- ── SELL MODE RESULTS ──────────────────────────── -->
+        <ng-container *ngIf="pipelineMode === 'sell'">
+
+          <!-- Empty result after analysis -->
+          <div class="empty-result" *ngIf="isCompleted && sellResults.length === 0 && sellPipelineMessage">
+            <p>{{ sellPipelineMessage }}</p>
+          </div>
+
+          <!-- Sell summary bar -->
+          <div class="sell-summary-bar" *ngIf="isCompleted && sellSummary && sellResults.length > 0">
+            <span class="sell-summary-pill strong-sell">{{ sellSummary.strong_sell_count }} Strong Sell</span>
+            <span class="sell-summary-pill sell">{{ sellSummary.sell_count }} Sell</span>
+            <span class="sell-summary-pill watch">{{ sellSummary.watch_count }} Watch</span>
+            <span class="sell-summary-pill hold">{{ sellSummary.hold_count }} Hold</span>
+          </div>
+
+          <!-- Sell holding cards -->
+          <div class="sell-cards-list" *ngIf="isCompleted && sellResults.length > 0">
+            <div
+              class="sell-card"
+              *ngFor="let holding of sellResults"
+              [class.expanded]="expandedStock === holding.symbol"
+              [class.urgency-strong]="holding.sell_urgency_score >= 70"
+              [class.urgency-sell-card]="holding.sell_urgency_score >= 40 && holding.sell_urgency_score < 70"
+              [class.urgency-watch-card]="holding.sell_urgency_score >= 20 && holding.sell_urgency_score < 40"
+              [class.news-warning]="holding.news_flag === 'warning'"
+              (click)="toggleStockCard(holding.symbol)">
+
+              <!-- Collapsed row -->
+              <div class="stock-card-row">
+                <div class="stock-card-left">
+                  <span class="urgency-badge" [ngClass]="getSellUrgencyClass(holding.sell_urgency_score)">
+                    {{ holding.sell_urgency_score }}
+                  </span>
+                  <span class="news-dot"
+                    *ngIf="holding.news_flag"
+                    [class.news-clear]="holding.news_flag === 'clear'"
+                    [class.news-warn]="holding.news_flag === 'warning'">
+                  </span>
+                  <span class="stock-card-symbol">{{ holding.symbol }}</span>
+                  <span class="urgency-label-text" [ngClass]="getSellUrgencyClass(holding.sell_urgency_score)">
+                    {{ holding.sell_urgency_label }}
+                  </span>
+                </div>
+                <div class="stock-card-right">
+                  <span class="pnl-badge"
+                    [class.positive]="holding.pnl_percentage >= 0"
+                    [class.negative]="holding.pnl_percentage < 0">
+                    {{ holding.pnl_percentage >= 0 ? '+' : '' }}{{ holding.pnl_percentage | number:'1.1-1' }}%
+                  </span>
+                  <button class="exit-sell-btn"
+                    *ngIf="canExitSellPosition(holding.symbol)"
+                    (click)="exitSellPosition(holding.symbol); $event.stopPropagation()">
+                    Exit
+                  </button>
+                </div>
+              </div>
+
+              <!-- Expanded details -->
+              <div class="stock-card-details sell-card-details" *ngIf="expandedStock === holding.symbol">
+
+                <!-- Sell signals -->
+                <div class="sell-signals-section" *ngIf="holding.sell_signals && holding.sell_signals.length > 0">
+                  <div class="sell-signal-item" *ngFor="let signal of holding.sell_signals">
+                    <span class="signal-dot">&#9632;</span>
+                    <span class="signal-text">{{ signal }}</span>
+                  </div>
+                </div>
+                <div class="sell-signals-section" *ngIf="!holding.sell_signals || holding.sell_signals.length === 0">
+                  <p class="no-signals">No sell signals triggered — hold position.</p>
+                </div>
+
+                <!-- Score breakdown bars -->
+                <div class="score-breakdown" *ngIf="holding.sell_score_breakdown">
+                  <div class="score-bar-row">
+                    <span class="score-bar-label">Technical</span>
+                    <div class="score-bar-track"><div class="score-bar-fill sell-tech" [style.width.%]="(holding.sell_score_breakdown.technical_breakdown / 30) * 100"></div></div>
+                    <span class="score-bar-val">{{ holding.sell_score_breakdown.technical_breakdown }}/30</span>
+                  </div>
+                  <div class="score-bar-row">
+                    <span class="score-bar-label">RS</span>
+                    <div class="score-bar-track"><div class="score-bar-fill sell-rs" [style.width.%]="(holding.sell_score_breakdown.relative_weakness / 25) * 100"></div></div>
+                    <span class="score-bar-val">{{ holding.sell_score_breakdown.relative_weakness }}/25</span>
+                  </div>
+                  <div class="score-bar-row">
+                    <span class="score-bar-label">Fundamentals</span>
+                    <div class="score-bar-track"><div class="score-bar-fill sell-fund" [style.width.%]="(holding.sell_score_breakdown.fundamental_flags / 25) * 100"></div></div>
+                    <span class="score-bar-val">{{ holding.sell_score_breakdown.fundamental_flags }}/25</span>
+                  </div>
+                  <div class="score-bar-row">
+                    <span class="score-bar-label">P&amp;L</span>
+                    <div class="score-bar-track"><div class="score-bar-fill sell-pnl" [style.width.%]="(holding.sell_score_breakdown.position_health / 20) * 100"></div></div>
+                    <span class="score-bar-val">{{ holding.sell_score_breakdown.position_health }}/20</span>
+                  </div>
+                </div>
+
+                <!-- Key metrics row -->
+                <div class="stock-detail-item" *ngIf="holding.current_price">
+                  <span class="stock-detail-label">Price</span>
+                  <span class="stock-detail-value">{{ formatCurrency(holding.current_price) }}</span>
+                </div>
+                <div class="stock-detail-item" *ngIf="holding.rsi !== null && holding.rsi !== undefined">
+                  <span class="stock-detail-label">RSI</span>
+                  <span class="stock-detail-value">
+                    <span class="rsi-badge" [class.rsi-overbought]="holding.rsi > 70" [class.rsi-weak]="holding.rsi < 40">
+                      {{ holding.rsi | number:'1.1-1' }}
+                    </span>
+                  </span>
+                </div>
+                <div class="stock-detail-item" *ngIf="holding.adx !== null && holding.adx !== undefined">
+                  <span class="stock-detail-label">ADX</span>
+                  <span class="stock-detail-value" [class.adx-weak]="holding.adx < 20">{{ holding.adx | number:'1.1-1' }}</span>
+                </div>
+                <div class="stock-detail-item" *ngIf="holding.stock_3m_return !== null && holding.stock_3m_return !== undefined">
+                  <span class="stock-detail-label">3M Return</span>
+                  <span class="stock-detail-value" [class.positive]="holding.stock_3m_return > 0" [class.negative]="holding.stock_3m_return < 0">
+                    {{ holding.stock_3m_return >= 0 ? '+' : '' }}{{ holding.stock_3m_return | number:'1.1-1' }}%<ng-container *ngIf="holding.nifty_3m_return !== null && holding.nifty_3m_return !== undefined"> vs Nifty {{ holding.nifty_3m_return! >= 0 ? '+' : '' }}{{ holding.nifty_3m_return | number:'1.1-1' }}%</ng-container>
+                  </span>
+                </div>
+                <div class="stock-detail-item" *ngIf="holding.sector">
+                  <span class="stock-detail-label">Sector</span>
+                  <span class="stock-detail-value">{{ holding.sector }}</span>
+                </div>
+
+                <!-- AI Sell Reasoning -->
+                <div class="sell-reasoning-section" *ngIf="holding.sell_reason || holding.hold_reason">
+                  <div class="reasoning-row sell" *ngIf="holding.sell_reason">
+                    <span class="reasoning-icon">&#9660;</span>
+                    <span class="reasoning-text">{{ holding.sell_reason }}</span>
+                  </div>
+                  <div class="reasoning-row hold" *ngIf="holding.hold_reason">
+                    <span class="reasoning-icon">&#9650;</span>
+                    <span class="reasoning-text">{{ holding.hold_reason }}</span>
+                  </div>
+                </div>
+
+                <!-- AI Sell Conviction -->
+                <div class="stock-detail-item" *ngIf="holding.sell_ai_conviction">
+                  <span class="stock-detail-label">AI Sell Signal</span>
+                  <span class="stock-detail-value">
+                    <span class="conviction-score" [style.color]="getSellUrgencyColor(holding.sell_ai_conviction * 10)">
+                      {{ holding.sell_ai_conviction }}/10
+                    </span>
+                  </span>
+                </div>
+
+                <!-- News -->
+                <div class="news-headlines" *ngIf="holding.news_headlines && holding.news_headlines.length > 0">
+                  <div class="news-item" *ngFor="let h of holding.news_headlines">{{ h }}</div>
+                </div>
+
+                <!-- Position details -->
+                <div class="stock-detail-item">
+                  <span class="stock-detail-label">Qty</span>
+                  <span class="stock-detail-value">{{ holding.quantity }}</span>
+                </div>
+                <div class="stock-detail-item">
+                  <span class="stock-detail-label">Avg Cost</span>
+                  <span class="stock-detail-value">{{ formatCurrency(holding.average_price) }}</span>
+                </div>
+                <div class="stock-detail-item">
+                  <span class="stock-detail-label">Unrealized P&amp;L</span>
+                  <span class="stock-detail-value" [class.positive]="holding.pnl >= 0" [class.negative]="holding.pnl < 0">
+                    {{ holding.pnl >= 0 ? '+' : '' }}{{ formatCurrency(holding.pnl) }}
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="pipeline-summary" *ngIf="sellCompletedAt">
+            <small>Completed at {{ sellCompletedAt }}</small>
+          </div>
+        </ng-container><!-- /SELL MODE RESULTS -->
+
       </div>
     </aside>
 
@@ -186,8 +626,11 @@
         <div class="panel-card-header">
           <div class="header-left">
             <h3>Live Positions</h3>
-            <span class="mode-indicator simulator">SIM</span>
-            <button class="mode-switch-btn" (click)="switchToTradeMode()">Trade Mode</button>
+            <span class="mode-indicator" [class.simulator]="tradingMode === 'simulator'" [class.live]="tradingMode === 'live'">
+              {{ tradingMode === 'live' ? 'LIVE' : 'SIM' }}
+            </span>
+            <button class="mode-switch-btn" *ngIf="tradingMode === 'simulator'" (click)="requestSwitchToLive()">Switch to Live</button>
+            <button class="mode-switch-btn simulator" *ngIf="tradingMode === 'live'" (click)="switchToSimulator()">Switch to Sim</button>
             <button class="sim-reset-btn" (click)="resetSimulator()" title="Reset Simulator">&#8635;</button>
           </div>
           <span class="count-badge accent">{{ simulatorState.positions.length }} open</span>
@@ -251,91 +694,89 @@
       </div>
     </main>
 
-    <!-- RIGHT PANEL: Fund Management + Trade History -->
+    <!-- RIGHT PANEL: Account Hub (Stats + Tabs) -->
     <aside class="panel-right">
 
-      <!-- Fund Management Card -->
-      <div class="panel-card account-card" *ngIf="simulatorState">
-        <div class="panel-card-header">
-          <h3>Fund Management</h3>
-          <span class="live-dot"></span>
+      <!-- Pinned Account Stats Bar (2x2 grid) -->
+      <div class="account-stats-bar" *ngIf="simulatorState">
+        <div class="stat-cell">
+          <span class="stat-label">Balance</span>
+          <span class="stat-val">{{ formatCurrency(simulatorState.account_summary.current_balance) }}</span>
         </div>
-        <div class="account-metrics">
-          <div class="metric">
-            <span class="metric-label">Available</span>
-            <span class="metric-value">{{ formatCurrency(simulatorState.account_summary.current_balance) }}</span>
-          </div>
-          <div class="metric-divider"></div>
-          <div class="metric">
-            <span class="metric-label">Realized P&amp;L</span>
-            <span class="metric-value" [class.positive]="simulatorState.account_summary.total_pnl > 0" [class.negative]="simulatorState.account_summary.total_pnl < 0">
-              {{ simulatorState.account_summary.total_pnl > 0 ? '+' : '' }}{{ formatCurrency(simulatorState.account_summary.total_pnl) }}
-            </span>
-          </div>
-          <div class="metric-divider"></div>
-          <div class="metric" *ngIf="simulatorState.account_summary.unrealized_pnl !== undefined">
-            <span class="metric-label">Unrealized</span>
-            <span class="metric-value" [class.positive]="simulatorState.account_summary.unrealized_pnl! > 0" [class.negative]="simulatorState.account_summary.unrealized_pnl! < 0">
-              {{ simulatorState.account_summary.unrealized_pnl! > 0 ? '+' : '' }}{{ formatCurrency(simulatorState.account_summary.unrealized_pnl!) }}
-            </span>
-          </div>
-          <div class="metric-divider"></div>
-          <div class="metric">
-            <span class="metric-label">Open Trades</span>
-            <span class="metric-value accent">{{ simulatorState.positions.length }}</span>
-          </div>
-          <div class="metric">
-            <span class="metric-label">Closed Trades</span>
-            <span class="metric-value">{{ simulatorState.trade_history.length }}</span>
-          </div>
+        <div class="stat-cell">
+          <span class="stat-label">Realized P&amp;L</span>
+          <span class="stat-val"
+            [class.positive]="simulatorState.account_summary.total_pnl > 0"
+            [class.negative]="simulatorState.account_summary.total_pnl < 0">
+            {{ simulatorState.account_summary.total_pnl > 0 ? '+' : '' }}{{ formatCurrency(simulatorState.account_summary.total_pnl) }}
+          </span>
         </div>
+        <div class="stat-cell">
+          <span class="stat-label">Unrealized</span>
+          <span class="stat-val"
+            *ngIf="simulatorState.account_summary.unrealized_pnl !== undefined"
+            [class.positive]="simulatorState.account_summary.unrealized_pnl! > 0"
+            [class.negative]="simulatorState.account_summary.unrealized_pnl! < 0">
+            {{ simulatorState.account_summary.unrealized_pnl! > 0 ? '+' : '' }}{{ formatCurrency(simulatorState.account_summary.unrealized_pnl!) }}
+          </span>
+          <span class="stat-val" *ngIf="simulatorState.account_summary.unrealized_pnl === undefined">&#x2014;</span>
+        </div>
+        <div class="stat-cell">
+          <span class="stat-label">Open / Closed</span>
+          <span class="stat-val">
+            <span class="accent">{{ simulatorState.positions.length }}</span>&nbsp;/&nbsp;{{ simulatorState.trade_history.length }}
+          </span>
+        </div>
+        <span class="live-dot"></span>
       </div>
 
-      <!-- Sector Leaderboard -->
-      <div class="panel-card sector-card">
-        <div class="panel-card-header">
-          <h3>Sector Leaderboard</h3>
-          <button
-            class="sector-research-btn"
-            (click)="researchSectors()"
-            [disabled]="isSectorResearching">
-            {{ isSectorResearching ? 'Researching...' : 'Research' }}
+      <!-- Right Panel Tab Strip -->
+      <div class="right-tab-strip">
+        <button class="right-tab" [class.active]="rightTab === 'staging'" (click)="rightTab = 'staging'">
+          Queue<span class="tab-badge accent" *ngIf="stagingList.length > 0">&nbsp;{{ stagingList.length }}</span>
+        </button>
+        <button class="right-tab" [class.active]="rightTab === 'history'" (click)="rightTab = 'history'">
+          History<span class="tab-badge" *ngIf="simulatorState && simulatorState.trade_history.length > 0">&nbsp;{{ simulatorState.trade_history.length }}</span>
+        </button>
+        <button class="right-tab" [class.active]="rightTab === 'automation'" (click)="rightTab = 'automation'">
+          Auto&nbsp;<span class="tab-auto-dot" [class.enabled]="automationEnabled" [class.disabled]="!automationEnabled"></span>
+        </button>
+      </div>
+
+      <!-- TAB: Queue (Staging List) -->
+      <div class="right-tab-pane" *ngIf="rightTab === 'staging'">
+
+        <div class="staging-actions-row" *ngIf="stagingList.length > 0">
+          <button class="staging-clear-btn" (click)="clearStaging()">Clear</button>
+          <button class="trade-all-btn" (click)="openBulkTradeModal()">
+            Trade All ({{ stagingList.length }})
           </button>
         </div>
 
-        <div class="sector-loading" *ngIf="isSectorResearching">
-          <div class="small-spinner"></div>
-          <span>Analyzing global trends...</span>
+        <div class="staging-empty" *ngIf="stagingList.length === 0">
+          <p>No stocks staged.</p>
+          <p class="empty-sub">Click <strong>+ Add</strong> on results to stage stocks for trading.</p>
         </div>
 
-        <div class="sector-empty" *ngIf="!isSectorResearching && sectorLeaderboard.length === 0">
-          <p>No research yet.</p>
-          <p class="empty-sub">Hit Research to discover top sectors.</p>
-        </div>
-
-        <div class="sector-list" *ngIf="!isSectorResearching && sectorLeaderboard.length > 0">
-          <div class="sector-item" *ngFor="let sector of sectorLeaderboard; let i = index">
-            <span class="sector-rank">{{ i + 1 }}</span>
-            <span class="sector-name">{{ sector.name }}</span>
-            <span class="conviction-badge" [style.background]="getConvictionColor(sector.conviction)">
-              {{ sector.conviction }}/5
-            </span>
+        <div class="staging-list" *ngIf="stagingList.length > 0">
+          <div class="staging-item" *ngFor="let stock of stagingList">
+            <div class="staging-item-left">
+              <span class="staging-rank" *ngIf="stock.final_rank">#{{ stock.final_rank }}</span>
+              <span class="staging-symbol">{{ stock.symbol }}</span>
+            </div>
+            <div class="staging-item-right">
+              <span class="staging-score" *ngIf="stock.composite_score"
+                [style.color]="getCompositeScoreTextColor(stock.composite_score)">
+                {{ stock.composite_score }}
+              </span>
+              <button class="staging-remove-btn" (click)="removeFromStaging(stock)" title="Remove">&#10005;</button>
+            </div>
           </div>
-        </div>
-
-        <div class="sector-timestamp" *ngIf="sectorResearchedAt">
-          <small>Researched: {{ sectorResearchedAt | date:'d MMM y, h:mm a' }}</small>
         </div>
       </div>
 
-      <!-- Trade History -->
-      <div class="panel-card history-card">
-        <div class="panel-card-header">
-          <h3>Trade History</h3>
-          <span class="count-badge" *ngIf="simulatorState && simulatorState.trade_history.length > 0">
-            {{ simulatorState.trade_history.length }}
-          </span>
-        </div>
+      <!-- TAB: History (Trade History) -->
+      <div class="right-tab-pane" *ngIf="rightTab === 'history'">
 
         <div class="history-empty" *ngIf="!simulatorState || simulatorState.trade_history.length === 0">
           <p>No closed trades yet.</p>
@@ -343,7 +784,7 @@
         </div>
 
         <div class="history-list" *ngIf="simulatorState && simulatorState.trade_history.length > 0">
-          <div class="history-item" *ngFor="let trade of simulatorState.trade_history.slice(-4).reverse()"
+          <div class="history-item" *ngFor="let trade of simulatorState.trade_history.slice().reverse()"
             [class.history-profit]="trade.realized_pnl >= 0"
             [class.history-loss]="trade.realized_pnl < 0">
             <div class="history-item-top">
@@ -371,7 +812,156 @@
           </div>
         </div>
       </div>
+
+      <!-- TAB: Automation -->
+      <div class="right-tab-pane automation-pane" *ngIf="rightTab === 'automation'">
+        <div class="automation-body">
+
+          <!-- Enable/disable toggle -->
+          <div class="auto-row">
+            <span class="auto-row-label">Auto-trade Mondays</span>
+            <label class="toggle-switch">
+              <input type="checkbox" [(ngModel)]="automationEnabled" (change)="toggleAutomation()">
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <!-- Mode selector -->
+          <div class="auto-row">
+            <span class="auto-row-label">Mode</span>
+            <div class="mode-toggle">
+              <button class="mode-btn" [class.active]="automationMode === 'simulator'" (click)="setAutomationMode('simulator')">Simulator</button>
+              <button class="mode-btn mode-btn-live" [class.active]="automationMode === 'live'" (click)="setAutomationMode('live')">Live</button>
+            </div>
+          </div>
+
+          <!-- Next run -->
+          <div class="auto-next-run" *ngIf="automationStatus?.next_run">
+            <span class="auto-row-label">Next run</span>
+            <span class="auto-next-time">{{ formatNextRun(automationStatus?.next_run) }}</span>
+          </div>
+
+          <!-- Last run summary -->
+          <div class="auto-last-run" *ngIf="automationStatus?.last_run as lr">
+            <div class="auto-last-header">
+              <span class="auto-row-label">Last run</span>
+              <span class="auto-run-status" [class.status-ok]="lr.status === 'completed'" [class.status-skip]="lr.status === 'skipped'" [class.status-err]="lr.status === 'error'">
+                {{ lr.status | uppercase }}
+              </span>
+            </div>
+            <div class="auto-last-date">{{ lr.date }} &mdash; {{ lr.trades_executed }} trade{{ lr.trades_executed !== 1 ? 's' : '' }} executed</div>
+            <div class="auto-picks" *ngIf="lr.stocks_selected?.length">
+              <span class="auto-pick-chip" *ngFor="let s of lr.stocks_selected" [title]="'Gear ' + s.gear + ': ' + getGearLabel(s.gear)">
+                {{ s.symbol }}
+                <span class="auto-pick-gear">G{{ s.gear }}</span>
+              </span>
+            </div>
+            <div class="auto-skipped" *ngIf="lr.previous_positions_still_open > 0">
+              {{ lr.previous_positions_still_open }} position{{ lr.previous_positions_still_open !== 1 ? 's' : '' }} still running from prev. week
+            </div>
+          </div>
+
+          <!-- Run now controls -->
+          <div class="auto-run-now-section">
+            <div class="auto-row" style="margin-bottom:6px">
+              <span class="auto-row-label">Dry run only</span>
+              <label class="toggle-switch toggle-switch-sm">
+                <input type="checkbox" [(ngModel)]="automationDryRun">
+                <span class="toggle-slider"></span>
+              </label>
+            </div>
+            <button class="run-now-btn" (click)="runAutomationNow()" [disabled]="automationRunning">
+              {{ automationRunning ? 'Running...' : 'Run Now' }}
+            </button>
+          </div>
+
+          <!-- Run now result -->
+          <div class="auto-run-result" *ngIf="automationRunResult && !automationRunning">
+            <div class="auto-result-header">
+              <span class="auto-result-label">{{ automationRunResult.status === 'dry_run' ? 'Dry Run' : 'Run' }} Result</span>
+              <span class="auto-run-status" [class.status-ok]="automationRunResult.status === 'completed' || automationRunResult.status === 'dry_run'" [class.status-skip]="automationRunResult.status === 'skipped'" [class.status-err]="automationRunResult.status === 'error'">
+                {{ automationRunResult.status | uppercase }}
+              </span>
+            </div>
+            <div class="auto-last-date">
+              {{ automationRunResult.stocks_to_buy }} to buy &bull; {{ automationRunResult.trades_executed }} executed
+            </div>
+            <div class="auto-picks" *ngIf="automationRunResult.stocks_selected?.length">
+              <span class="auto-pick-chip" *ngFor="let s of automationRunResult.stocks_selected" [title]="getGearLabel(s.gear)">
+                {{ s.symbol }}<span class="auto-pick-gear">G{{ s.gear }}</span>
+              </span>
+            </div>
+            <div class="auto-skipped" *ngIf="automationRunResult.reason">{{ automationRunResult.reason }}</div>
+          </div>
+
+        </div>
+      </div>
+
     </aside>
+  </div>
+</div>
+
+<!-- Bulk Trade Modal -->
+<div class="trade-modal-overlay" *ngIf="showBulkTradeModal" (click)="closeBulkTradeModal()">
+  <div class="trade-modal-content" (click)="$event.stopPropagation()">
+    <div class="trade-modal-header">
+      <h2>Trade Staged Stocks</h2>
+      <button class="trade-modal-close" (click)="closeBulkTradeModal()">&times;</button>
+    </div>
+
+    <!-- Loading state -->
+    <div class="trade-modal-loading" *ngIf="bulkTradeLoading">
+      <div class="trade-spinner"></div>
+      <p>Fetching live prices...</p>
+    </div>
+
+    <!-- Trade details -->
+    <div class="trade-modal-body" *ngIf="!bulkTradeLoading && bulkTradeDetails">
+      <div class="trade-details-grid">
+        <div class="trade-detail-row">
+          <span class="trade-label">Available Funds</span>
+          <span class="trade-value">{{ formatCurrency(bulkTradeDetails.availableFunds) }}</span>
+        </div>
+        <div class="trade-detail-row">
+          <span class="trade-label">Stocks to Trade</span>
+          <span class="trade-value">{{ stagingList.length }}</span>
+        </div>
+        <div class="trade-detail-row">
+          <span class="trade-label">Allocation / Stock</span>
+          <span class="trade-value">{{ formatCurrency(bulkTradeDetails.perStockAllocation) }}</span>
+        </div>
+        <div class="trade-separator"></div>
+      </div>
+
+      <!-- Per-stock breakdown -->
+      <div class="bulk-stocks-list">
+        <div class="bulk-stock-item" *ngFor="let item of bulkTradeDetails.stocks">
+          <div class="bulk-stock-left">
+            <span class="bulk-symbol">{{ item.symbol }}</span>
+            <span class="bulk-qty-label">{{ item.quantity }} shares &#64; {{ formatCurrency(item.ltp) }}</span>
+          </div>
+          <span class="bulk-status-icon bulk-success" *ngIf="item.status === 'success'">&#10003;</span>
+          <span class="bulk-status-icon bulk-error" *ngIf="item.status === 'error'">&#10007;</span>
+        </div>
+      </div>
+
+      <!-- Progress during execution -->
+      <div class="bulk-progress-wrap" *ngIf="bulkTradeExecuting && bulkTradeProgress !== null">
+        <div class="bulk-progress-bar-track">
+          <div class="bulk-progress-bar-fill"
+            [style.width.%]="(bulkTradeProgress / bulkTradeDetails.stocks.length) * 100">
+          </div>
+        </div>
+        <span class="bulk-progress-label">{{ bulkTradeProgress }}/{{ bulkTradeDetails.stocks.length }} executed</span>
+      </div>
+
+      <div class="trade-modal-actions">
+        <button class="cancel-trade-btn" (click)="closeBulkTradeModal()" [disabled]="bulkTradeExecuting">Cancel</button>
+        <button class="confirm-trade-btn" (click)="confirmBulkTrade()" [disabled]="bulkTradeExecuting">
+          {{ bulkTradeExecuting ? 'Executing...' : 'Confirm All (Simulated)' }}
+        </button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -446,10 +1036,42 @@
 
       <div class="trade-modal-actions">
         <button class="cancel-trade-btn" (click)="closeTradeModal()">Cancel</button>
-        <button class="confirm-trade-btn" (click)="confirmTrade()" [disabled]="tradeConfirmLoading">
-          {{ tradeConfirmLoading ? 'Executing...' : 'Confirm (Simulated)' }}
+        <button class="confirm-trade-btn" [class.live-btn]="tradingMode === 'live'" (click)="confirmTrade()" [disabled]="tradeConfirmLoading">
+          {{ tradeConfirmLoading ? 'Executing...' : (tradingMode === 'live' ? '⚡ Place LIVE Order' : 'Confirm (Simulated)') }}
         </button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Live Mode Confirmation Dialog -->
+<div class="mode-confirm-overlay" *ngIf="showModeConfirmDialog" (click)="cancelModeSwitch()">
+  <div class="mode-confirm-dialog" (click)="$event.stopPropagation()">
+    <div class="mode-confirm-header">
+      <span class="live-warning-icon">⚠️</span>
+      <h3>Switch to Live Trading</h3>
+    </div>
+    <p class="mode-confirm-body">
+      Live mode places <strong>real orders</strong> via your Zerodha Kite account using real money.
+      Trailing stops and exits will also execute as real market orders.
+    </p>
+    <p class="mode-confirm-prompt">
+      To confirm, type: <code>{{ LIVE_CONFIRM_PHRASE }}</code>
+    </p>
+    <input
+      class="mode-confirm-input"
+      type="text"
+      [(ngModel)]="liveConfirmPhrase"
+      placeholder="Type the phrase above..."
+    />
+    <div class="mode-confirm-actions">
+      <button class="cancel-trade-btn" (click)="cancelModeSwitch()">Cancel</button>
+      <button
+        class="confirm-trade-btn live-btn"
+        (click)="confirmSwitchToLive()"
+        [disabled]="liveConfirmPhrase !== LIVE_CONFIRM_PHRASE">
+        Switch to LIVE
+      </button>
     </div>
   </div>
 </div>

@@ -1,43 +1,67 @@
 <div class="login-container">
+
+  <!-- Ambient glow background -->
+  <div class="bg-glow"></div>
+
   <div class="login-card">
+
+    <!-- Logo / Brand -->
     <div class="header">
+      <div class="brand-icon">
+        <span class="material-icons">candlestick_chart</span>
+      </div>
       <h1>CogniCap</h1>
-      <p class="subtitle">Trading Portfolio Dashboard</p>
+      <p class="subtitle">Intelligent Portfolio Dashboard</p>
     </div>
 
     <div class="login-content">
+
+      <!-- Step 1: get URL -->
       <div class="info-box" *ngIf="!showLoginUrl">
-        <p>Click below to get your Zerodha login URL</p>
+        <span class="material-icons info-icon">info</span>
+        <p>Connect your Zerodha account to get started</p>
       </div>
 
-      <button 
-        class="btn btn-primary" 
+      <button
+        class="btn btn-primary"
         (click)="getLoginUrl()"
         [disabled]="isLoading"
         *ngIf="!showLoginUrl">
-        <span *ngIf="!isLoading">Get Login URL</span>
-        <span *ngIf="isLoading">Loading...</span>
+        <span class="material-icons" *ngIf="!isLoading">link</span>
+        <span class="material-icons spin-icon" *ngIf="isLoading">refresh</span>
+        <span>{{ isLoading ? 'Opening...' : 'Get Login URL' }}</span>
       </button>
 
+      <!-- Step 2: paste token -->
       <div class="login-url-section" *ngIf="showLoginUrl">
+
         <div class="success-box">
-          <p>Login URL opened in new window</p>
-          <small>If it didn't open, <a [href]="loginUrl" target="_blank">click here</a></small>
+          <span class="material-icons">check_circle</span>
+          <div>
+            <p>Login URL opened in a new window</p>
+            <small>Didn't open? <a [href]="loginUrl" target="_blank">Click here</a></small>
+          </div>
         </div>
 
         <div class="instructions">
-          <h3>Next Steps:</h3>
+          <h3>
+            <span class="material-icons">list_alt</span>
+            Next Steps
+          </h3>
           <ol>
             <li>Login with your Zerodha credentials</li>
-            <li>After redirect, copy the <strong>request_token</strong> from URL</li>
+            <li>After redirect, copy the <strong>request_token</strong> from the URL</li>
             <li>Paste it below and click Login</li>
           </ol>
         </div>
 
         <div class="form-group">
-          <label for="requestToken">Request Token</label>
-          <input 
-            type="text" 
+          <label for="requestToken">
+            <span class="material-icons">vpn_key</span>
+            Request Token
+          </label>
+          <input
+            type="text"
             id="requestToken"
             [(ngModel)]="requestToken"
             placeholder="Paste your request token here"
@@ -45,22 +69,25 @@
             (keyup.enter)="login()">
         </div>
 
-        <button 
-          class="btn btn-success" 
+        <button
+          class="btn btn-success"
           (click)="login()"
           [disabled]="isLoading || !requestToken.trim()">
-          <span *ngIf="!isLoading">Login to Dashboard</span>
-          <span *ngIf="isLoading">Authenticating...</span>
+          <span class="material-icons" *ngIf="!isLoading">login</span>
+          <span class="material-icons spin-icon" *ngIf="isLoading">refresh</span>
+          <span>{{ isLoading ? 'Authenticating...' : 'Login to Dashboard' }}</span>
         </button>
       </div>
 
       <div class="error-box" *ngIf="error">
-        {{ error }}
+        <span class="material-icons">error_outline</span>
+        <span>{{ error }}</span>
       </div>
     </div>
 
     <div class="footer">
-      <small>Powered by Zerodha Kite API</small>
+      <span class="material-icons footer-icon">security</span>
+      <small>Secured by Zerodha Kite API</small>
     </div>
   </div>
 </div>

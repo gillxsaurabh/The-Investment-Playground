@@ -1,7 +1,6 @@
 """Portfolio endpoints — /api/portfolio/*"""
 
 import logging
-import random
 from datetime import datetime
 
 from flask import Blueprint, request, jsonify
@@ -140,15 +139,6 @@ def get_top_performers():
 
         if not holdings:
             return jsonify({"success": True, "top_gainers": [], "top_losers": []})
-
-        # Apply live price variations
-        for holding in holdings:
-            original_price = holding["last_price"]
-            price_variation = random.uniform(-0.003, 0.003)
-            holding["last_price"] = round(original_price * (1 + price_variation), 2)
-            current_value = holding["last_price"] * holding["quantity"]
-            investment = holding["average_price"] * holding["quantity"]
-            holding["pnl"] = round(current_value - investment, 2)
 
         sorted_holdings = sorted(holdings, key=lambda x: x["pnl"], reverse=True)
         top_gainers = sorted_holdings[:3]

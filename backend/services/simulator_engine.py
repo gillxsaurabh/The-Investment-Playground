@@ -17,15 +17,19 @@ from constants import (
     SPREAD_FACTOR,
     MAX_HISTORY_SECONDS,
     DEFAULT_TRAIL_MULTIPLIER,
-    STALL_EXIT_DAYS,
     DEFAULT_INITIAL_CAPITAL,
 )
+from services.trading_engine import TradingEngine
 
 logger = logging.getLogger(__name__)
 
 
-class PaperTradingSimulator:
+class PaperTradingSimulator(TradingEngine):
     """Paper trading engine that executes virtual trades and tracks P&L using live Kite prices."""
+
+    @property
+    def mode(self) -> str:
+        return "simulator"
 
     def __init__(self, kite, data_file=None, history_file=None):
         self.kite = kite
@@ -150,10 +154,20 @@ class PaperTradingSimulator:
         quotes = self.kite.quote(keys)
         return {s: quotes[f"NSE:{s}"]["last_price"] for s in symbols}
 
-    def execute_order(self, symbol, quantity, atr_at_entry, trail_multiplier=DEFAULT_TRAIL_MULTIPLIER, instrument_token=None):
-        """Execute a virtual buy order with spread simulation and trailing stop."""
+    def execute_order(self, symbol, quantity, atr_at_entry, trail_multiplier=DEFAULT_TRAIL_MULTIPLIER,
+                      instrument_token=None, ltp=None, automation_run_id=None, automation_gear=None):
+        """Execute a virtual buy order with spread simulation and trailing stop.
+
+        Args:
+            ltp: If provided, use this price instead of fetching live from Kite.
+                 Prevents race conditions where a price move between modal open
+                 and confirm causes "Insufficient Virtual Funds".
+            automation_run_id: Optional tag (e.g. "AUTO_20260223") for automation tracking.
+            automation_gear: Optional gear number (1-5) this trade was selected from.
+        """
         with self._lock:
-            ltp = self._fetch_ltp(symbol)
+            if ltp is None:
+                ltp = self._fetch_ltp(symbol)
             entry_price = round(ltp * (1 + SPREAD_FACTOR), 2)
             total_cost = entry_price * quantity
 
@@ -183,6 +197,8 @@ class PaperTradingSimulator:
                 "stop_loss": initial_sl,
                 "entry_time": now.strftime("%Y-%m-%d %H:%M:%S"),
                 "status": "OPEN",
+                "automation_run_id": automation_run_id,
+                "automation_gear": automation_gear,
             }
 
             self._data["account_summary"]["current_balance"] -= total_cost
@@ -191,6 +207,21 @@ class PaperTradingSimulator:
             )
             self._data["active_positions"].append(position)
             self._save_data()
+
+            # Secondary persistence: write to SQLite (fire-and-forget)
+            try:
+                from services.db import insert_trade
+                insert_trade({
+                    **position,
+                    "total_cost": total_cost,
+                    "initial_sl": initial_sl,
+                    "entry_status": "FILLED",
+                    "trading_mode": "simulator",
+                    "account_balance_before": self._data["account_summary"]["current_balance"] + total_cost,
+                    "account_balance_after": self._data["account_summary"]["current_balance"],
+                })
+            except Exception:
+                pass
 
             return {
                 "success": True,
@@ -250,6 +281,20 @@ class PaperTradingSimulator:
             self._data["trade_history"].insert(0, history_entry)
             self._save_data()
 
+            # Secondary persistence: update SQLite (fire-and-forget)
+            try:
+                from services.db import update_trade_exit
+                entry_dt = datetime.strptime(str(position["entry_time"]), "%Y-%m-%d %H:%M:%S")
+                holding_days = (datetime.now() - entry_dt).days
+                pnl_pct = round((exit_price - entry) / entry * 100, 2) if entry else 0
+                update_trade_exit(
+                    trade_id, exit_price,
+                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    reason, realized_pnl, pnl_pct, holding_days,
+                )
+            except Exception:
+                pass
+
             return {
                 "success": True,
                 "trade_id": trade_id,
@@ -296,55 +341,7 @@ class PaperTradingSimulator:
                 "trade_history": self._data["trade_history"],
             }
 
-    def update_exit_levels(self, position, ltp):
-        """Update trailing stop for a position based on current price.
-
-        Returns (updated_position, exit_signal or None).
-        """
-        today = datetime.now().date()
-
-        # Update high-water mark
-        if ltp > position.get("highest_price_seen", position["entry_price"]):
-            position["highest_price_seen"] = ltp
-            position["last_new_high_date"] = today.strftime("%Y-%m-%d")
-
-        # Ratchet trailing stop loss UP (never down)
-        atr = position.get("atr_at_entry", 0)
-        multiplier = position.get("trail_multiplier", DEFAULT_TRAIL_MULTIPLIER)
-        if atr > 0:
-            new_sl = round(position["highest_price_seen"] - (multiplier * atr), 2)
-            current_sl = position.get("current_sl", position.get("stop_loss", 0))
-            if new_sl > current_sl:
-                position["current_sl"] = new_sl
-                position["stop_loss"] = new_sl
-
-        # Check for stall
-        last_high_str = position.get("last_new_high_date")
-        if last_high_str:
-            try:
-                last_high_date = datetime.strptime(last_high_str, "%Y-%m-%d").date()
-                days_stalled = (today - last_high_date).days
-                if days_stalled >= STALL_EXIT_DAYS:
-                    exit_price = round(ltp * (1 - SPREAD_FACTOR), 2)
-                    return position, {
-                        "should_exit": True,
-                        "reason": f"Stall Exit - No new high in {STALL_EXIT_DAYS}+ days",
-                        "exit_price": exit_price,
-                    }
-            except ValueError:
-                pass
-
-        # Hard exit — trailing stop hit
-        current_sl = position.get("current_sl", position.get("stop_loss", 0))
-        if ltp <= current_sl:
-            exit_price = round(ltp * (1 - SPREAD_FACTOR), 2)
-            return position, {
-                "should_exit": True,
-                "reason": "Trailing Stop Hit",
-                "exit_price": exit_price,
-            }
-
-        return position, None
+    # update_exit_levels is inherited from TradingEngine base class
 
     def monitor_positions(self, ltps=None):
         """Background check: update trailing stops and auto-close when triggered.
@@ -436,12 +433,12 @@ class PaperTradingSimulator:
             return {**self._data["account_summary"]}
 
 
-def start_position_monitor(simulator, interval=1):
-    """Start a daemon thread that fetches prices every second.
+def start_position_monitor(engine, interval=1):
+    """Start a daemon thread that monitors positions for any TradingEngine.
 
     - Records a price snapshot every tick (1s) for smooth charting.
     - Checks SL/trailing stops every 5 ticks to manage exits.
-    - Persists price history to disk every 5 ticks to reduce I/O.
+    - For PaperTradingSimulator: also persists price history to disk every 5 ticks.
     """
 
     def _monitor_loop():
@@ -449,31 +446,21 @@ def start_position_monitor(simulator, interval=1):
         while True:
             time.sleep(interval)
             try:
-                # Single LTP fetch per tick — shared by snapshot + monitor
-                with simulator._lock:
-                    positions = simulator._data["active_positions"]
-                    symbols = [p["symbol"] for p in positions] if positions else []
-
-                if not symbols:
-                    tick += 1
-                    continue
-
-                ltps = simulator._fetch_ltps(symbols)
-
-                # Record snapshot every tick (1s)
-                simulator.record_price_snapshot(ltps=ltps)
-
+                engine.record_price_snapshot()
                 tick += 1
-
-                # SL monitoring + disk save every 5 ticks
                 if tick % 5 == 0:
-                    simulator.monitor_positions(ltps=ltps)
-                    with simulator._history_lock:
-                        simulator._save_price_history()
+                    engine.monitor_positions()
+                    # Simulator-specific: flush price history to disk
+                    if hasattr(engine, "_history_lock") and hasattr(engine, "_save_price_history"):
+                        with engine._history_lock:
+                            engine._save_price_history()
             except Exception as e:
                 logger.warning(f"Position monitor error: {e}")
                 tick += 1
 
     t = threading.Thread(target=_monitor_loop, daemon=True)
     t.start()
-    logger.info(f"Position monitor started (snapshot: {interval}s, SL check: {interval * 5}s)")
+    logger.info(
+        f"Position monitor started for {engine.mode} engine "
+        f"(snapshot: {interval}s, SL check: {interval * 5}s)"
+    )
