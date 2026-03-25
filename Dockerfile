@@ -10,7 +10,8 @@ RUN npx ng build --configuration=development
 FROM python:3.11-slim
 WORKDIR /app
 
-# Install Python dependencies
+# Install Python dependencies (bump DEPS_VER to bust Railway's layer cache)
+ARG DEPS_VER=2
 COPY backend/requirements.txt ./backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
