@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { KiteService, StockAnalysisResponse, MarketIndex, Stock } from '../../services/kite.service';
+import { DemoService } from '../../services/demo.service';
 import { ChatComponent } from '../chat/chat.component';
 import { HeaderBannerComponent } from '../shared/header-banner/header-banner.component';
 import { forkJoin, interval, Subscription } from 'rxjs';
@@ -91,6 +92,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   constructor(
     private kiteService: KiteService,
+    private demoService: DemoService,
     private router: Router,
     private ngZone: NgZone
   ) {}
@@ -289,7 +291,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   logout(): void {
     this.kiteService.logout();
-    this.router.navigate(['/login']);
+    this.demoService.exitDemo();
+    this.router.navigate(['/']);
   }
 
   navigateToTradingAgent(): void {

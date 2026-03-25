@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { KiteService } from '../../services/kite.service';
+import { DemoService } from '../../services/demo.service';
 
 @Component({
   selector: 'app-login',
@@ -20,6 +21,7 @@ export class LoginComponent {
 
   constructor(
     private kiteService: KiteService,
+    private demoService: DemoService,
     private router: Router
   ) {}
 
@@ -56,7 +58,7 @@ export class LoginComponent {
     this.kiteService.authenticate(this.requestToken).subscribe({
       next: (response) => {
         if (response.success) {
-          console.log('Login successful');
+          this.demoService.exitDemo();   // clear demo mode on real login
           this.router.navigate(['/dashboard']);
         } else {
           this.error = response.error || 'Authentication failed';

@@ -442,7 +442,8 @@ export class TradingAgentComponent implements OnInit, OnDestroy {
 
   goToLogin(): void {
     localStorage.removeItem('access_token');
-    this.router.navigate(['/login']);
+    this.demoService.exitDemo();
+    this.router.navigate(['/']);
   }
 
   async startPipeline(): Promise<void> {

@@ -382,3 +382,19 @@ $dimmer: #3a3a5a;
   background: $border;
   flex-shrink: 0;
 }
+
+// Hidden developer entry — bottom-right corner, nearly invisible
+.dev-link {
+  position: absolute;
+  bottom: 0.6rem;
+  right: 1rem;
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+  padding: 0.4rem;
+  line-height: 1;
+  transition: color 0.3s;
+  user-select: none;
+
+  &:hover { color: rgba(255, 255, 255, 0.18); }
+}
