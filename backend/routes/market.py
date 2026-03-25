@@ -1,15 +1,34 @@
 """Market data endpoints — /api/market/*"""
 
+import csv
 import logging
+from pathlib import Path
 
 from flask import Blueprint, request, jsonify
 
 from broker import get_broker
-from services.market_data import simulate_live_market_data, simulate_live_stock_data
 
 logger = logging.getLogger(__name__)
 
 market_bp = Blueprint("market", __name__, url_prefix="/api/market")
+
+# Path to nifty100 CSV — used for top gainers/losers
+_NIFTY100_CSV = Path(__file__).resolve().parents[1] / "data" / "nifty100.csv"
+
+
+def _load_nifty100_symbols() -> list[str]:
+    """Return list of NSE symbols from nifty100.csv."""
+    symbols = []
+    try:
+        with open(_NIFTY100_CSV, newline="") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                sym = row.get("symbol", "").strip()
+                if sym:
+                    symbols.append(sym)
+    except Exception as e:
+        logger.warning(f"Failed to load nifty100.csv: {e}")
+    return symbols
 
 
 @market_bp.route("/indices", methods=["POST"])
@@ -54,31 +73,64 @@ def get_market_indices():
         )
 
     except Exception as e:
-        market_data = simulate_live_market_data()
-        return jsonify(
-            {
-                "success": True,
-                "nifty": market_data["nifty"],
-                "sensex": market_data["sensex"],
-                "note": f"Live simulation - API Error: {str(e)}",
-            }
-        )
+        logger.error(f"Market indices API failed: {e}")
+        return jsonify({"success": False, "error": f"Failed to fetch market indices: {str(e)}"}), 503
 
 
-@market_bp.route("/top-stocks", methods=["GET"])
+@market_bp.route("/top-stocks", methods=["POST"])
 def get_top_stocks():
-    """Get top 10 gainers and losers with live simulation."""
+    """Get top gainers and losers from Nifty 100 using live Kite API quotes."""
     try:
-        stock_data = simulate_live_stock_data()
-        return jsonify(
-            {
-                "success": True,
-                "top_gainers": stock_data["top_gainers"],
-                "top_losers": stock_data["top_losers"],
-                "note": "Live market simulation",
-            }
-        )
+        data = request.json or {}
+        access_token = data.get("access_token")
+
+        if not access_token:
+            return jsonify({"success": False, "error": "access_token is required"}), 400
+
+        symbols = _load_nifty100_symbols()
+        if not symbols:
+            return jsonify({"success": False, "error": "Could not load Nifty 100 symbol list"}), 500
+
+        broker = get_broker(access_token)
+
+        # Kite quote API accepts up to 500 instruments per call
+        instrument_keys = [f"NSE:{sym}" for sym in symbols]
+        quotes = broker.get_quote(instrument_keys)
+
+        stocks = []
+        for key, quote in quotes.items():
+            sym = key.replace("NSE:", "")
+            last_price = quote.get("last_price", 0)
+            ohlc = quote.get("ohlc", {})
+            open_price = ohlc.get("open", last_price)
+
+            if open_price <= 0 or last_price <= 0:
+                continue
+
+            change = last_price - open_price
+            change_percent = (change / open_price) * 100
+
+            stocks.append({
+                "symbol": sym,
+                "name": sym,
+                "price": round(last_price, 2),
+                "change": round(change, 2),
+                "change_percent": round(change_percent, 2),
+                "high": round(ohlc.get("high", 0), 2),
+                "low": round(ohlc.get("low", 0), 2),
+                "volume": quote.get("volume", 0),
+            })
+
+        stocks.sort(key=lambda x: x["change_percent"], reverse=True)
+        top_gainers = stocks[:10]
+        top_losers = list(reversed(stocks[-10:]))
+
+        return jsonify({
+            "success": True,
+            "top_gainers": top_gainers,
+            "top_losers": top_losers,
+        })
+
     except Exception as e:
-        return jsonify(
-            {"success": False, "error": f"Failed to generate market data: {str(e)}"}
-        ), 500
+        logger.error(f"Top stocks API failed: {e}")
+        return jsonify({"success": False, "error": f"Failed to fetch top stocks: {str(e)}"}), 503

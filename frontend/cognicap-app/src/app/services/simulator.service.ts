@@ -1,7 +1,7 @@
 import { Injectable, OnDestroy } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, Subscription, interval, of } from 'rxjs';
-import { switchMap, catchError, tap } from 'rxjs/operators';
+import { switchMap, catchError, tap, map } from 'rxjs/operators';
 
 export interface SimulatorPosition {
   trade_id: string;
@@ -110,19 +110,59 @@ export interface SectorLeaderboardResponse {
   error?: string;
 }
 
+export interface AutomationStockSummary {
+  symbol: string;
+  gear: number;
+  gear_label: string;
+  final_rank: number;
+  composite_score: number;
+  ai_conviction: number;
+}
+
+export interface AutomationRunRecord {
+  run_id: string;
+  date: string;
+  started_at: string;
+  completed_at: string;
+  previous_positions_still_open: number;
+  stocks_to_buy: number;
+  stocks_selected: AutomationStockSummary[];
+  trades_executed: number;
+  trade_results: any[];
+  mode?: string;
+  status: 'completed' | 'skipped' | 'error' | 'dry_run';
+  reason?: string;
+  error?: string | null;
+}
+
+export interface AutomationStatus {
+  success: boolean;
+  enabled: boolean;
+  mode: 'simulator' | 'live';
+  scheduler_running: boolean;
+  next_run: string | null;
+  last_run: AutomationRunRecord | null;
+}
+
 @Injectable({
   providedIn: 'root'
 })
 export class SimulatorService implements OnDestroy {
   private apiUrl = 'http://localhost:5000/api/simulator';
+  private tradingApiUrl = 'http://localhost:5000/api/trading';
 
   private stateSubject = new BehaviorSubject<SimulatorState | null>(null);
   public state$ = this.stateSubject.asObservable();
 
+  private tradingModeSubject = new BehaviorSubject<'simulator' | 'live'>('simulator');
+  public tradingMode$ = this.tradingModeSubject.asObservable();
+
   private pollingSubscription: Subscription | null = null;
   private pollingActive = false;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient) {
+    this.loadTradingMode();
+  }
 
   ngOnDestroy(): void {
     this.stopPolling();
@@ -132,12 +172,37 @@ export class SimulatorService implements OnDestroy {
     return localStorage.getItem('access_token') || '';
   }
 
+  private loadTradingMode(): void {
+    this.http.get<{ success: boolean; mode: string }>(`${this.tradingApiUrl}/mode`)
+      .pipe(catchError(() => of({ success: false, mode: 'simulator' })))
+      .subscribe(res => {
+        if (res.success) {
+          this.tradingModeSubject.next(res.mode as 'simulator' | 'live');
+        }
+      });
+  }
+
+  getTradingMode(): 'simulator' | 'live' {
+    return this.tradingModeSubject.value;
+  }
+
+  setTradingMode(mode: 'simulator' | 'live', confirm = false): Observable<any> {
+    return this.http.post(`${this.tradingApiUrl}/mode`, { mode, confirm }).pipe(
+      tap((res: any) => {
+        if (res.success) {
+          this.tradingModeSubject.next(mode);
+        }
+      })
+    );
+  }
+
   executeOrder(
     symbol: string,
     quantity: number,
     atr: number,
     trailMultiplier: number = 1.5,
-    instrumentToken?: number
+    instrumentToken?: number,
+    ltp?: number
   ): Observable<ExecuteOrderResponse> {
     return this.http.post<ExecuteOrderResponse>(`${this.apiUrl}/execute`, {
       access_token: this.getToken(),
@@ -145,7 +210,8 @@ export class SimulatorService implements OnDestroy {
       quantity,
       atr,
       trail_multiplier: trailMultiplier,
-      instrument_token: instrumentToken
+      instrument_token: instrumentToken,
+      ltp
     }).pipe(
       tap(() => this.refreshPositions())
     );
@@ -237,6 +303,27 @@ export class SimulatorService implements OnDestroy {
   researchSectors(): Observable<SectorLeaderboardResponse> {
     return this.http.post<SectorLeaderboardResponse>(
       'http://localhost:5000/api/sector-research/top-sectors', {}
+    );
+  }
+
+  getAutomationStatus(): Observable<AutomationStatus> {
+    return this.http.get<AutomationStatus>('http://localhost:5000/api/automation/status');
+  }
+
+  enableAutomation(enabled: boolean, mode: 'simulator' | 'live' = 'simulator'): Observable<any> {
+    return this.http.post('http://localhost:5000/api/automation/enable', { enabled, mode });
+  }
+
+  runAutomationNow(accessToken: string, dryRun: boolean = true): Observable<any> {
+    return this.http.post('http://localhost:5000/api/automation/run-now', {
+      access_token: accessToken,
+      dry_run: dryRun,
+    });
+  }
+
+  getAutomationHistory(): Observable<{ success: boolean; history: AutomationRunRecord[] }> {
+    return this.http.get<{ success: boolean; history: AutomationRunRecord[] }>(
+      'http://localhost:5000/api/automation/history'
     );
   }
 

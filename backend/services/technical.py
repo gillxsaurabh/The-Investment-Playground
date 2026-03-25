@@ -51,10 +51,16 @@ def calculate_atr(df: pd.DataFrame, period: int = 14) -> float:
 
 
 def calculate_adx(df: pd.DataFrame, period: int = ADX_PERIOD) -> Optional[float]:
-    """Calculate Average Directional Index (ADX).
+    """Calculate Average Directional Index (ADX) using Wilder's method.
 
     Expects columns: 'High', 'Low', 'Close' (standard format).
     Returns the last ADX value or None on failure.
+
+    Fixes vs old implementation:
+    - +DM/-DM mutual exclusivity enforced (Wilder's rule: only the larger move
+      counts; if both are negative both are zero)
+    - Uses Wilder's exponential smoothing (alpha=1/period) instead of simple
+      rolling sum, which produces smoother, more accurate ADX values
     """
     try:
         high = df["High"]
@@ -63,30 +69,43 @@ def calculate_adx(df: pd.DataFrame, period: int = ADX_PERIOD) -> Optional[float]
 
         # True Range
         high_low = high - low
-        high_close = (high - close.shift()).abs()
-        low_close = (low - close.shift()).abs()
+        high_close = (high - close.shift(1)).abs()
+        low_close = (low - close.shift(1)).abs()
         tr = pd.concat([high_low, high_close, low_close], axis=1).max(axis=1)
 
-        # Directional Movement
-        plus_dm = high.diff()
-        minus_dm = -low.diff()
-        plus_dm[plus_dm < 0] = 0
-        minus_dm[minus_dm < 0] = 0
+        # Directional Movement — Wilder's mutual exclusivity rule:
+        # +DM = today's up-move, only when it exceeds today's down-move AND > 0
+        # -DM = today's down-move, only when it exceeds today's up-move AND > 0
+        up_move = high.diff()
+        down_move = -low.diff()
 
-        # Smooth
-        tr_smooth = tr.rolling(window=period).sum()
-        plus_dm_smooth = plus_dm.rolling(window=period).sum()
-        minus_dm_smooth = minus_dm.rolling(window=period).sum()
+        plus_dm = pd.Series(0.0, index=df.index)
+        minus_dm = pd.Series(0.0, index=df.index)
 
-        # Directional Indicators
-        plus_di = 100 * (plus_dm_smooth / tr_smooth)
-        minus_di = 100 * (minus_dm_smooth / tr_smooth)
+        plus_mask = (up_move > down_move) & (up_move > 0)
+        minus_mask = (down_move > up_move) & (down_move > 0)
 
-        # DX and ADX
-        dx = 100 * (plus_di - minus_di).abs() / (plus_di + minus_di)
-        adx = dx.rolling(window=period).mean()
+        plus_dm[plus_mask] = up_move[plus_mask]
+        minus_dm[minus_mask] = down_move[minus_mask]
 
-        return adx.iloc[-1] if not adx.empty else None
+        # Wilder's smoothing: EWM with alpha=1/period (equivalent to RMA)
+        # Multiply by period to get the Wilder cumulative sum, not the average
+        alpha = 1.0 / period
+        tr_smooth = tr.ewm(alpha=alpha, adjust=False).mean() * period
+        plus_dm_smooth = plus_dm.ewm(alpha=alpha, adjust=False).mean() * period
+        minus_dm_smooth = minus_dm.ewm(alpha=alpha, adjust=False).mean() * period
+
+        # Directional Indicators (+DI / -DI)
+        plus_di = 100.0 * plus_dm_smooth / tr_smooth.replace(0, float("nan"))
+        minus_di = 100.0 * minus_dm_smooth / tr_smooth.replace(0, float("nan"))
+
+        # DX then ADX (smooth DX with same Wilder method)
+        di_sum = (plus_di + minus_di).replace(0, float("nan"))
+        dx = 100.0 * (plus_di - minus_di).abs() / di_sum
+        adx = dx.ewm(alpha=alpha, adjust=False).mean()
+
+        val = adx.iloc[-1]
+        return float(val) if pd.notna(val) else None
     except Exception:
         return None
 

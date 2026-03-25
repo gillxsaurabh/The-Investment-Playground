@@ -28,23 +28,27 @@ def analyze_stock():
         access_token = data.get("access_token")
         symbol = data.get("symbol")
         instrument_token = data.get("instrument_token")
+        llm_provider = data.get("llm_provider", None)
 
         if not access_token:
             return jsonify({"success": False, "error": "Access token is required"}), 400
         if not symbol:
             return jsonify({"success": False, "error": "Symbol is required"}), 400
 
-        logger.info(f"Starting analysis for {symbol}")
+        logger.info(f"Starting analysis for {symbol} (provider={llm_provider or 'gemini'})")
 
         state = {
             "symbol": symbol,
             "access_token": access_token,
             "instrument_token": instrument_token,
+            "llm_provider": llm_provider,
             "stats_result": None,
             "company_health_result": None,
             "breaking_news_result": None,
             "overall_score": None,
             "verdict": None,
+            "risk_factors": None,
+            "conflict_summary": None,
             "analyzed_at": None,
         }
 
@@ -92,6 +96,8 @@ def analyze_stock():
             "symbol": symbol,
             "overall_score": state.get("overall_score"),
             "verdict": state.get("verdict"),
+            "risk_factors": state.get("risk_factors"),
+            "conflict_summary": state.get("conflict_summary"),
             "agents": {
                 "stats_agent": state.get("stats_result"),
                 "company_health_agent": state.get("company_health_result"),
@@ -123,13 +129,14 @@ def analyze_stock_stream():
         access_token = data.get("access_token")
         symbol = data.get("symbol")
         instrument_token = data.get("instrument_token")
+        llm_provider = data.get("llm_provider", None)
 
         if not access_token or not symbol:
             return jsonify({"success": False, "error": "access_token and symbol are required"}), 400
 
         def generate():
             final_data = None
-            for event in run_analysis_stream(symbol, access_token, instrument_token):
+            for event in run_analysis_stream(symbol, access_token, instrument_token, llm_provider=llm_provider):
                 yield event
                 if event.startswith("event: complete\n"):
                     try:
@@ -178,17 +185,22 @@ def analyze_all_stocks():
         results = []
         failed_stocks = []
 
+        llm_provider = data.get("llm_provider", None)
+
         def run_analysis(symbol, instrument_token):
             return analysis_graph.invoke(
                 {
                     "symbol": symbol,
                     "access_token": access_token,
                     "instrument_token": instrument_token,
+                    "llm_provider": llm_provider,
                     "stats_result": None,
                     "company_health_result": None,
                     "breaking_news_result": None,
                     "overall_score": None,
                     "verdict": None,
+                    "risk_factors": None,
+                    "conflict_summary": None,
                     "analyzed_at": None,
                 }
             )
@@ -210,6 +222,8 @@ def analyze_all_stocks():
                         "symbol": symbol,
                         "overall_score": result.get("overall_score"),
                         "verdict": result.get("verdict"),
+                        "risk_factors": result.get("risk_factors"),
+                        "conflict_summary": result.get("conflict_summary"),
                         "agents": {
                             "stats_agent": result.get("stats_result"),
                             "company_health_agent": result.get("company_health_result"),

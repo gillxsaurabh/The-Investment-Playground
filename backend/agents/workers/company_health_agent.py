@@ -1,7 +1,10 @@
-"""Company Health Agent — Fundamental analysis via screener.in scraping.
+"""Fundamentals Analyst Agent — Fundamental analysis via Screener.in scraping.
 
-Reuses StockAnalyzer._calculate_fundamental_score() for web scraping.
-Uses LLM to generate a rich text explanation of the results.
+Scrapes Screener.in for ROE, Debt/Equity and Sales Growth data, computes a
+fundamental health score, then generates an LLM explanation.
+
+Agent name: Fundamentals Analyst
+Agent role: Assesses balance-sheet quality — ROE, D/E ratio and revenue growth
 """
 
 import os
@@ -38,19 +41,33 @@ def company_health_agent_node(state: AnalysisState) -> dict:
         )
 
         # Generate explanation via LLM (best-effort)
+        provider = state.get("llm_provider")
         try:
-            llm = get_llm(temperature=0.2)
-            prompt = (
-                f"You are a fundamental analysis expert. Given these data points for {symbol} "
-                f"scraped from screener.in/company/{symbol}/consolidated/:\n\n"
-                f"- ROE (Return on Equity): {roe_str}\n"
-                f"- Debt/Equity ratio: {de_str}\n"
-                f"- Sales Growth: {sg_str}\n"
-                f"- Computed score: {score}/5\n\n"
-                "Write a 2-3 sentence explanation of what these fundamentals indicate about "
-                "the company's financial health. Mention the data source. "
-                "Explain the scoring logic (e.g., ROE > 15% with D/E < 1 is excellent)."
-            )
+            llm = get_llm(temperature=0.2, provider=provider)
+            if provider == "claude":
+                prompt = (
+                    f"You are a fundamental analysis expert specializing in Indian listed companies.\n\n"
+                    f"Given these data points for {symbol} from screener.in/company/{symbol}/consolidated/:\n\n"
+                    f"- ROE (Return on Equity): {roe_str}\n"
+                    f"- Debt/Equity ratio: {de_str}\n"
+                    f"- Sales Growth: {sg_str}\n"
+                    f"- Computed fundamental score: {score}/5\n\n"
+                    "Write 2-3 sentences covering: (1) whether the balance sheet quality is good, average, or poor "
+                    "with specific thresholds (ROE>15%, D/E<1), (2) the earnings quality and growth trajectory, "
+                    "(3) the key fundamental risk that could threaten the investment thesis."
+                )
+            else:
+                prompt = (
+                    f"You are a fundamental analysis expert. Given these data points for {symbol} "
+                    f"scraped from screener.in/company/{symbol}/consolidated/:\n\n"
+                    f"- ROE (Return on Equity): {roe_str}\n"
+                    f"- Debt/Equity ratio: {de_str}\n"
+                    f"- Sales Growth: {sg_str}\n"
+                    f"- Computed score: {score}/5\n\n"
+                    "Write a 2-3 sentence explanation of what these fundamentals indicate about "
+                    "the company's financial health. Mention the data source. "
+                    "Explain the scoring logic (e.g., ROE > 15% with D/E < 1 is excellent)."
+                )
             response = llm.invoke(prompt)
             explanation = response.content.strip()
         except Exception as llm_err:

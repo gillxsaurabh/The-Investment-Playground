@@ -41,6 +41,8 @@ TOKEN_FILE = STATE_DIR / "access_token.json"
 ANALYSIS_STORAGE_FILE = STATE_DIR / "analysis_storage.json"
 SIMULATOR_DATA_FILE = STATE_DIR / "simulator_data.json"
 SIMULATOR_PRICE_HISTORY_FILE = STATE_DIR / "simulator_price_history.json"
+AUTOMATION_STATE_FILE = STATE_DIR / "automation_state.json"
+DB_PATH = STATE_DIR / "cognicap.db"
 
 # --- Well-known instrument tokens ---
 NIFTY_50_TOKEN = 256265

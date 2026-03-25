@@ -1,7 +1,10 @@
-"""Stats Agent — Technical analysis (Recency + Trend).
+"""Quantitative Analyst Agent — Technical analysis (Recency + Trend).
 
-Reuses StockAnalyzer methods for Kite API data fetching and indicator computation.
-Uses LLM to generate a rich text explanation of the results.
+Computes relative-strength recency scores and ADX/EMA trend scores for a single stock
+using Kite API data, then generates an LLM explanation of the findings.
+
+Agent name: Quantitative Analyst
+Agent role: Evaluates price momentum, trend strength and relative performance vs Nifty 50
 """
 
 import os
@@ -49,16 +52,29 @@ def stats_agent_node(state: AnalysisState) -> dict:
         )
 
         # Generate explanation via LLM (best-effort)
+        provider = state.get("llm_provider")
         try:
-            llm = get_llm(temperature=0.2)
-            prompt = (
-                f"You are a technical analysis expert. Given these results for {symbol}:\n\n"
-                f"- Recency (Relative Strength vs Nifty 50, last 90 days): {recency_score}/5 — {recency.get('detail', 'N/A')}\n"
-                f"- Trend (ADX + EMA crossover): {trend_score}/5 — Strength: {trend.get('strength', 'N/A')}, Direction: {trend.get('direction', 'N/A')}\n"
-                f"- Combined stats score: {stats_score}/5\n\n"
-                "Write a 2-3 sentence explanation of what these technical indicators mean for this stock. "
-                "Be specific with numbers. Explain what was checked and how the score was derived."
-            )
+            llm = get_llm(temperature=0.2, provider=provider)
+            if provider == "claude":
+                prompt = (
+                    f"You are a technical analysis expert specializing in Indian equity markets.\n\n"
+                    f"Given these technical results for {symbol}:\n\n"
+                    f"- Recency (Relative Strength vs Nifty 50, last 90 days): {recency_score}/5 — {recency.get('detail', 'N/A')}\n"
+                    f"- Trend (ADX + EMA crossover): {trend_score}/5 — Strength: {trend.get('strength', 'N/A')}, Direction: {trend.get('direction', 'N/A')}\n"
+                    f"- Combined stats score: {stats_score}/5\n\n"
+                    "Write 2-3 sentences covering: (1) what the momentum and trend data tell you, "
+                    "(2) the entry implication — is now a good time to enter or wait, "
+                    "(3) the primary technical risk if the setup fails. Be specific with numbers."
+                )
+            else:
+                prompt = (
+                    f"You are a technical analysis expert. Given these results for {symbol}:\n\n"
+                    f"- Recency (Relative Strength vs Nifty 50, last 90 days): {recency_score}/5 — {recency.get('detail', 'N/A')}\n"
+                    f"- Trend (ADX + EMA crossover): {trend_score}/5 — Strength: {trend.get('strength', 'N/A')}, Direction: {trend.get('direction', 'N/A')}\n"
+                    f"- Combined stats score: {stats_score}/5\n\n"
+                    "Write a 2-3 sentence explanation of what these technical indicators mean for this stock. "
+                    "Be specific with numbers. Explain what was checked and how the score was derived."
+                )
             response = llm.invoke(prompt)
             explanation = response.content.strip()
         except Exception as llm_err:

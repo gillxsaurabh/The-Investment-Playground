@@ -28,6 +28,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.outputs import ChatResult, ChatGeneration
+from langchain_core.messages import AIMessage, HumanMessage
 
 # Map Gemini model names to comparable OpenAI models
 _FALLBACK_MODEL_MAP = {
@@ -101,13 +102,127 @@ class FallbackChatModel(BaseChatModel):
         )
 
 
-def get_llm(model_name: str = "gemini-2.5-flash", temperature: float = 0.1):
-    """Create an LLM instance with automatic Gemini → OpenAI fallback.
+class ClaudeChatModel(BaseChatModel):
+    """Anthropic Claude wrapper with optional extended thinking support.
 
-    If OPENAI_API_KEY is not set, returns Gemini-only (no fallback).
-    Uses a manual fallback wrapper that catches any exception from
-    the primary model and retries with the fallback.
+    Uses the direct ``anthropic`` SDK rather than ``langchain-anthropic`` because
+    extended thinking requires the ``thinking`` parameter which the LangChain
+    wrapper does not yet expose cleanly.
+
+    NOTE: When ``extended_thinking=True``, Anthropic's API requires
+    ``temperature=1.0`` regardless of the value passed to ``get_llm()``.
     """
+
+    model_name: str = "claude-sonnet-4-6"
+    temperature: float = 0.1
+    api_key: str = ""
+    extended_thinking: bool = False
+    thinking_budget: int = 8000
+
+    class Config:
+        arbitrary_types_allowed = True
+
+    @property
+    def _llm_type(self) -> str:
+        return "claude-chat-model"
+
+    def _format_messages(self, messages) -> list[dict]:
+        """Convert LangChain messages to Anthropic API format."""
+        result = []
+        for m in messages:
+            cls = m.__class__.__name__
+            if cls == "SystemMessage":
+                continue  # Anthropic system messages handled separately; skip here
+            role = "assistant" if cls == "AIMessage" else "user"
+            content = m.content if hasattr(m, "content") else str(m)
+            result.append({"role": role, "content": content})
+        if not result:
+            # Fallback: treat entire input as a user message
+            result = [{"role": "user", "content": str(messages)}]
+        return result
+
+    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
+        from anthropic import Anthropic
+        client = Anthropic(api_key=self.api_key)
+        formatted = self._format_messages(messages)
+
+        if self.extended_thinking:
+            # Extended thinking requires temperature=1.0 (Anthropic requirement)
+            resp = client.messages.create(
+                model=self.model_name,
+                max_tokens=16000,
+                thinking={"type": "enabled", "budget_tokens": self.thinking_budget},
+                messages=formatted,
+                temperature=1.0,
+            )
+        else:
+            resp = client.messages.create(
+                model=self.model_name,
+                max_tokens=4096,
+                messages=formatted,
+                temperature=self.temperature,
+            )
+
+        # Extract text content only (skip thinking blocks)
+        text = next((b.text for b in resp.content if b.type == "text"), "")
+        return ChatResult(generations=[ChatGeneration(message=AIMessage(content=text))])
+
+    def invoke(self, input, config=None, **kwargs):
+        msgs = [HumanMessage(content=input)] if isinstance(input, str) else input
+        return self._generate(msgs).generations[0].message
+
+    async def ainvoke(self, input, config=None, **kwargs):
+        # Sync fallback — sufficient for current usage patterns
+        return self.invoke(input, config=config, **kwargs)
+
+
+def get_llm(
+    model_name: str = "gemini-2.5-flash",
+    temperature: float = 0.1,
+    provider: str = None,
+    extended_thinking: bool = False,
+    thinking_budget: int = 8000,
+):
+    """Create an LLM instance.
+
+    Args:
+        model_name:        Gemini model name (used only when provider is None/"gemini").
+        temperature:       Sampling temperature. Ignored for Claude+extended_thinking
+                           (Anthropic forces temperature=1.0 in that mode).
+        provider:          "gemini" | "claude" | "openai" | None.
+                           None / "gemini" → existing Gemini+OpenAI fallback (unchanged).
+        extended_thinking: When True and provider="claude", activates Claude's extended
+                           thinking mode for deeper multi-step reasoning.
+        thinking_budget:   Token budget for the thinking phase (only used when
+                           extended_thinking=True).
+    """
+    from constants import LLM_PROVIDER_CLAUDE, LLM_PROVIDER_OPENAI, CLAUDE_MODEL_DEFAULT
+
+    if provider == LLM_PROVIDER_CLAUDE:
+        anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
+        if not anthropic_key:
+            print("[LLM] WARNING: ANTHROPIC_API_KEY not set — falling back to Gemini")
+        else:
+            print(
+                f"[LLM] Using Claude ({CLAUDE_MODEL_DEFAULT}), "
+                f"extended_thinking={extended_thinking}, budget={thinking_budget}"
+            )
+            return ClaudeChatModel(
+                model_name=CLAUDE_MODEL_DEFAULT,
+                temperature=temperature,
+                api_key=anthropic_key,
+                extended_thinking=extended_thinking,
+                thinking_budget=thinking_budget,
+            )
+
+    if provider == LLM_PROVIDER_OPENAI:
+        openai_key = os.getenv("OPENAI_API_KEY", "")
+        if not openai_key:
+            print("[LLM] WARNING: OPENAI_API_KEY not set — falling back to Gemini")
+        else:
+            return ChatOpenAI(model="gpt-4o-mini", api_key=openai_key, temperature=temperature)
+
+    # Default path: Gemini with automatic OpenAI fallback (original behaviour)
     gemini_key = os.getenv("GEMINI_API_KEY")
     openai_key = os.getenv("OPENAI_API_KEY")
 

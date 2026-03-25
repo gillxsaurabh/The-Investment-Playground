@@ -51,6 +51,7 @@ def simulator_execute():
             atr_at_entry=data["atr"],
             trail_multiplier=data.get("trail_multiplier", 1.5),
             instrument_token=data.get("instrument_token"),
+            ltp=data.get("ltp"),  # use modal price when provided
         )
         status = 200 if result.get("success") else 400
         return jsonify(result), status

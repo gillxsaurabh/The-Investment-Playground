@@ -15,7 +15,8 @@ def register_blueprints(app):
     from routes.simulator import simulator_bp
     from routes.decision_support import decision_support_bp
     from routes.health import health_bp
-    from routes.sector_research import sector_research_bp
+    from routes.automation import automation_bp
+    from routes.trading import trading_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(portfolio_bp)
@@ -26,4 +27,5 @@ def register_blueprints(app):
     app.register_blueprint(simulator_bp)
     app.register_blueprint(decision_support_bp)
     app.register_blueprint(health_bp)
-    app.register_blueprint(sector_research_bp)
+    app.register_blueprint(automation_bp)
+    app.register_blueprint(trading_bp)

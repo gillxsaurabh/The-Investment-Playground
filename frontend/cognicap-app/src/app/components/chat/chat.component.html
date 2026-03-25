@@ -1,23 +1,31 @@
 <div class="chat-container" [class.minimized]="!isChatOpen">
   <div class="chat-header">
     <div class="header-info">
-      <h3>AI Assistant</h3>
-      <span class="status">Online</span>
+      <div class="ai-avatar">
+        <span class="material-icons">smart_toy</span>
+      </div>
+      <div class="header-text">
+        <h3>AI Assistant</h3>
+        <span class="status">
+          <span class="status-dot"></span>
+          Online
+        </span>
+      </div>
     </div>
     <div class="header-actions">
       <button class="btn-icon" (click)="clearChat()" title="Clear chat">
-        <span>↻</span>
+        <span class="material-icons">restart_alt</span>
       </button>
-      <button class="btn-icon" (click)="toggleChat()" title="Toggle chat">
-        <span>{{ isChatOpen ? '−' : '+' }}</span>
+      <button class="btn-icon btn-toggle" (click)="toggleChat()" title="Toggle chat">
+        <span class="material-icons">{{ isChatOpen ? 'keyboard_arrow_down' : 'keyboard_arrow_up' }}</span>
       </button>
     </div>
   </div>
 
   <div class="chat-body" *ngIf="isChatOpen">
     <div class="messages-container" #messagesContainer>
-      <div 
-        *ngFor="let message of messages" 
+      <div
+        *ngFor="let message of messages"
         class="message"
         [class.user-message]="message.isUser"
         [class.ai-message]="!message.isUser">
@@ -26,7 +34,7 @@
           <span class="message-time">{{ formatTime(message.timestamp) }}</span>
         </div>
       </div>
-      
+
       <div class="message ai-message" *ngIf="isLoading">
         <div class="message-content">
           <div class="typing-indicator">
@@ -39,18 +47,18 @@
     </div>
 
     <div class="chat-input">
-      <input 
-        type="text" 
+      <input
+        type="text"
         [(ngModel)]="newMessage"
         (keyup.enter)="sendMessage()"
         [disabled]="isLoading"
-        placeholder="Ask me anything..."
+        placeholder="Ask me anything about your portfolio..."
         class="input-field">
-      <button 
-        class="btn-send" 
+      <button
+        class="btn-send"
         (click)="sendMessage()"
         [disabled]="!newMessage.trim() || isLoading">
-        <span>↑</span>
+        <span class="material-icons">send</span>
       </button>
     </div>
   </div>
