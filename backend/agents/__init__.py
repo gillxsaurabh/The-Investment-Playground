@@ -1,8 +1,18 @@
-from agents.supervisor import app_graph
 from langchain_core.messages import HumanMessage
 
 # Per-session conversation history
 _graph_sessions: dict[str, list] = {}
+
+# Graph is built lazily on first use so the app starts without API keys
+_app_graph = None
+
+
+def _get_graph():
+    global _app_graph
+    if _app_graph is None:
+        from agents.supervisor import build_graph
+        _app_graph = build_graph()
+    return _app_graph
 
 
 def run_agent(message: str, session_id: str, access_token: str = None) -> str:
@@ -19,7 +29,7 @@ def run_agent(message: str, session_id: str, access_token: str = None) -> str:
     history = _graph_sessions[session_id]
     history.append(HumanMessage(content=message))
 
-    result = app_graph.invoke({
+    result = _get_graph().invoke({
         "messages": list(history),
         "access_token": access_token,
         "session_id": session_id,

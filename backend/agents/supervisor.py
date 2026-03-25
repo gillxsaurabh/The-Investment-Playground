@@ -96,5 +96,4 @@ def build_graph():
     return graph.compile()
 
 
-# Compiled graph singleton
-app_graph = build_graph()
+# Graph is built lazily on first use — see agents/__init__.py
