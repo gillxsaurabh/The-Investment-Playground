@@ -31,7 +31,7 @@
 
   .refresh-btn {
     padding: 10px 20px;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #6c63ff 0%, #00d4aa 100%);
     color: white;
     border: none;
     border-radius: 8px;
@@ -49,7 +49,7 @@
 
     &:hover:not(:disabled) {
       transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+      box-shadow: 0 4px 12px rgba(108, 99, 255, 0.4);
     }
 
     &:disabled {
@@ -66,7 +66,7 @@
   margin-bottom: 25px;
 
   .stat-card {
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #6c63ff 0%, #00d4aa 100%);
     padding: 15px 20px;
     border-radius: 10px;
     display: flex;
@@ -101,7 +101,7 @@
     height: 50px;
     margin: 0 auto 20px;
     border: 4px solid #e5e7eb;
-    border-top-color: #667eea;
+    border-top-color: #6c63ff;
     border-radius: 50%;
     animation: spin 1s linear infinite;
   }
@@ -165,24 +165,24 @@
   border-radius: 12px;
   box-shadow: 
     0 2px 8px rgba(0, 0, 0, 0.3),
-    0 0 15px rgba(77, 171, 247, 0.25),
-    inset 0 0 1px rgba(77, 171, 247, 0.3);
+    0 0 15px rgba(108, 99, 255, 0.25),
+    inset 0 0 1px rgba(108, 99, 255, 0.3);
   overflow: hidden;
   transition: all 0.3s ease;
-  border: 1px solid rgba(77, 171, 247, 0.2);
+  border: 1px solid rgba(108, 99, 255, 0.2);
 
   &:hover {
     box-shadow: 
       0 4px 16px rgba(0, 0, 0, 0.12),
-      0 0 25px rgba(77, 171, 247, 0.4),
-      inset 0 0 2px rgba(77, 171, 247, 0.5);
+      0 0 25px rgba(108, 99, 255, 0.4),
+      inset 0 0 2px rgba(108, 99, 255, 0.5);
   }
 
   &.expanded {
     box-shadow: 
-      0 4px 16px rgba(102, 126, 234, 0.15),
-      0 0 30px rgba(77, 171, 247, 0.5),
-      inset 0 0 2px rgba(77, 171, 247, 0.6);
+      0 4px 16px rgba(108, 99, 255, 0.15),
+      0 0 30px rgba(108, 99, 255, 0.5),
+      inset 0 0 2px rgba(108, 99, 255, 0.6);
   }
 }
 
@@ -669,7 +669,7 @@
     width: 20px;
     height: 20px;
     border: 3px solid #4a5568;
-    border-top-color: #667eea;
+    border-top-color: #6c63ff;
     border-radius: 50%;
     animation: spin 0.8s linear infinite;
   }

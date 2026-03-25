@@ -15,10 +15,10 @@ $green: #22c55e;
 $green-dim: rgba(34, 197, 94, 0.15);
 $red: #ef4444;
 $red-dim: rgba(239, 68, 68, 0.15);
-$accent: #f97316;
-$accent-dim: rgba(249, 115, 22, 0.12);
-$orange: #f97316;
-$orange-dim: rgba(249, 115, 22, 0.12);
+$accent: #6c63ff;
+$accent-dim: rgba(108, 99, 255, 0.12);
+$orange: #6c63ff;
+$orange-dim: rgba(108, 99, 255, 0.12);
 
 // ============================================================
 // Mode Indicator (inline beside Live Positions header)
@@ -1222,7 +1222,7 @@ $orange-dim: rgba(249, 115, 22, 0.12);
   letter-spacing: 0.3px;
 
   &.reason-sl { background: $red-dim; color: $red; }
-  &.reason-tsl { background: rgba(249, 115, 22, 0.1); color: #f97316; }
+  &.reason-tsl { background: rgba(108, 99, 255, 0.1); color: #6c63ff; }
   &.reason-tp { background: $green-dim; color: $green; }
   &.reason-stall { background: rgba(234, 179, 8, 0.1); color: #eab308; }
   &.reason-manual { background: $accent-dim; color: $accent; }
@@ -2477,7 +2477,7 @@ $orange-dim: rgba(249, 115, 22, 0.12);
   transition: all 0.2s ease;
 
   &:hover:not(:disabled) {
-    border-color: rgba(249, 115, 22, 0.3);
+    border-color: rgba(108, 99, 255, 0.3);
     color: $text-primary;
   }
 
@@ -2523,8 +2523,8 @@ $orange-dim: rgba(249, 115, 22, 0.12);
   margin-top: 6px;
   padding: 3px 8px;
   border-radius: 4px;
-  background: rgba(249, 115, 22, 0.12);
-  border: 1px solid rgba(249, 115, 22, 0.3);
+  background: rgba(108, 99, 255, 0.12);
+  border: 1px solid rgba(108, 99, 255, 0.3);
   color: $accent;
   font-size: 10px;
   font-weight: 600;
@@ -2539,8 +2539,8 @@ $orange-dim: rgba(249, 115, 22, 0.12);
   margin-top: 8px;
   padding: 8px 10px;
   border-radius: 6px;
-  background: rgba(249, 115, 22, 0.05);
-  border: 1px solid rgba(249, 115, 22, 0.15);
+  background: rgba(108, 99, 255, 0.05);
+  border: 1px solid rgba(108, 99, 255, 0.15);
 }
 
 .claude-insights-header {
@@ -2591,7 +2591,7 @@ $orange-dim: rgba(249, 115, 22, 0.12);
   &.note-corr {
     background: $orange-dim;
     color: $orange;
-    border-color: rgba(249, 115, 22, 0.2);
+    border-color: rgba(108, 99, 255, 0.2);
   }
 }
 
@@ -2718,9 +2718,9 @@ $orange-dim: rgba(249, 115, 22, 0.12);
     color: #ef4444;
   }
   &.sell {
-    background: rgba(249, 115, 22, 0.15);
-    border-color: rgba(249, 115, 22, 0.3);
-    color: #f97316;
+    background: rgba(108, 99, 255, 0.15);
+    border-color: rgba(108, 99, 255, 0.3);
+    color: #6c63ff;
   }
   &.watch {
     background: rgba(234, 179, 8, 0.15);
@@ -2752,9 +2752,9 @@ $orange-dim: rgba(249, 115, 22, 0.12);
     border: 1px solid rgba(239, 68, 68, 0.4);
   }
   &.urgency-sell {
-    background: rgba(249, 115, 22, 0.15);
-    color: #f97316;
-    border: 1px solid rgba(249, 115, 22, 0.3);
+    background: rgba(108, 99, 255, 0.15);
+    color: #6c63ff;
+    border: 1px solid rgba(108, 99, 255, 0.3);
   }
   &.urgency-watch {
     background: rgba(234, 179, 8, 0.12);
@@ -2774,7 +2774,7 @@ $orange-dim: rgba(249, 115, 22, 0.12);
   letter-spacing: 0.6px;
 
   &.urgency-strong-sell { color: #ef4444; }
-  &.urgency-sell { color: #f97316; }
+  &.urgency-sell { color: #6c63ff; }
   &.urgency-watch { color: #eab308; }
   &.urgency-hold { color: #6b7280; }
 }
@@ -2800,8 +2800,8 @@ $orange-dim: rgba(249, 115, 22, 0.12);
     background: rgba(239, 68, 68, 0.04);
   }
   &.urgency-sell-card {
-    border-color: rgba(249, 115, 22, 0.15);
-    background: rgba(249, 115, 22, 0.03);
+    border-color: rgba(108, 99, 255, 0.15);
+    background: rgba(108, 99, 255, 0.03);
   }
   &.urgency-watch-card {
     border-color: rgba(234, 179, 8, 0.12);
@@ -2886,7 +2886,7 @@ $orange-dim: rgba(249, 115, 22, 0.12);
 // Score bars (sell variant colors)
 .score-bar-fill {
   &.sell-tech { background: #ef4444; }
-  &.sell-rs   { background: #f97316; }
+  &.sell-rs   { background: #6c63ff; }
   &.sell-fund { background: #eab308; }
   &.sell-pnl  { background: #6b7280; }
 }

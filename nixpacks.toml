@@ -1,0 +1,17 @@
+# Railway build configuration
+# Installs Python + Node, builds Angular, then serves via Flask
+
+[phases.setup]
+nixPkgs = ["python311", "nodejs_20"]
+
+[phases.install]
+cmds = [
+  "pip install -r backend/requirements.txt",
+  "cd frontend/cognicap-app && npm ci"
+]
+
+[phases.build]
+cmds = ["cd frontend/cognicap-app && npx ng build --configuration=development"]
+
+[start]
+cmd = "cd backend && python app.py"

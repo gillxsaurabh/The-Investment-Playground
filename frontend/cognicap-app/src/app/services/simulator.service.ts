@@ -148,8 +148,8 @@ export interface AutomationStatus {
   providedIn: 'root'
 })
 export class SimulatorService implements OnDestroy {
-  private apiUrl = 'http://localhost:5000/api/simulator';
-  private tradingApiUrl = 'http://localhost:5000/api/trading';
+  private apiUrl = '/api/simulator';
+  private tradingApiUrl = '/api/trading';
 
   private stateSubject = new BehaviorSubject<SimulatorState | null>(null);
   public state$ = this.stateSubject.asObservable();
@@ -302,20 +302,20 @@ export class SimulatorService implements OnDestroy {
 
   researchSectors(): Observable<SectorLeaderboardResponse> {
     return this.http.post<SectorLeaderboardResponse>(
-      'http://localhost:5000/api/sector-research/top-sectors', {}
+      '/api/sector-research/top-sectors', {}
     );
   }
 
   getAutomationStatus(): Observable<AutomationStatus> {
-    return this.http.get<AutomationStatus>('http://localhost:5000/api/automation/status');
+    return this.http.get<AutomationStatus>('/api/automation/status');
   }
 
   enableAutomation(enabled: boolean, mode: 'simulator' | 'live' = 'simulator'): Observable<any> {
-    return this.http.post('http://localhost:5000/api/automation/enable', { enabled, mode });
+    return this.http.post('/api/automation/enable', { enabled, mode });
   }
 
   runAutomationNow(accessToken: string, dryRun: boolean = true): Observable<any> {
-    return this.http.post('http://localhost:5000/api/automation/run-now', {
+    return this.http.post('/api/automation/run-now', {
       access_token: accessToken,
       dry_run: dryRun,
     });
@@ -323,7 +323,7 @@ export class SimulatorService implements OnDestroy {
 
   getAutomationHistory(): Observable<{ success: boolean; history: AutomationRunRecord[] }> {
     return this.http.get<{ success: boolean; history: AutomationRunRecord[] }>(
-      'http://localhost:5000/api/automation/history'
+      '/api/automation/history'
     );
   }
 

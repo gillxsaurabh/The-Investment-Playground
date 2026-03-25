@@ -167,7 +167,7 @@ export interface StockAnalysisResponse {
   providedIn: 'root'
 })
 export class KiteService {
-  private apiUrl = 'http://localhost:5000/api';
+  private apiUrl = '/api';
   private accessTokenSubject = new BehaviorSubject<string | null>(this.getStoredToken());
   public accessToken$ = this.accessTokenSubject.asObservable();
   private userSubject = new BehaviorSubject<any>(this.getStoredUser());

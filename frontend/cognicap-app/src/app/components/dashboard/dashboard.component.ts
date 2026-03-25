@@ -391,7 +391,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
         holding.agentStatus = undefined;
       }, STREAM_TIMEOUT);
 
-      const response = await fetch('http://localhost:5000/api/analyze-stock-stream', {
+      const response = await fetch('/api/analyze-stock-stream', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

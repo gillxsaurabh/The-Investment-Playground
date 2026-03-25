@@ -471,7 +471,7 @@ export class TradingAgentComponent implements OnInit, OnDestroy {
     const accessToken = localStorage.getItem('access_token') || '';
 
     try {
-      const response = await fetch('http://localhost:5000/api/decision-support/run', {
+      const response = await fetch('/api/decision-support/run', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -923,7 +923,7 @@ export class TradingAgentComponent implements OnInit, OnDestroy {
     const accessToken = localStorage.getItem('access_token') || '';
 
     try {
-      const response = await fetch('http://localhost:5000/api/decision-support/sell', {
+      const response = await fetch('/api/decision-support/sell', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: tip-app
+    runtime: python
+    buildCommand: pip install -r backend/requirements.txt && cd frontend/cognicap-app && npm ci && npx ng build --configuration=development
+    startCommand: cd backend && python app.py
+    envVars:
+      - key: FLASK_DEBUG
+        value: "false"

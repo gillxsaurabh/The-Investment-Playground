@@ -1,5 +1,5 @@
 // ============================================================
-// Login — Dark Orange Theme
+// Login — Dark Purple Theme
 // ============================================================
 
 $bg-primary:   #0d0d0d;
@@ -7,9 +7,9 @@ $bg-card:      #161616;
 $bg-elevated:  #1e1e1e;
 $border-subtle:  rgba(255, 255, 255, 0.06);
 $border-default: rgba(255, 255, 255, 0.12);
-$accent:       #f97316;
-$accent-dim:   rgba(249, 115, 22, 0.12);
-$accent-glow:  rgba(249, 115, 22, 0.28);
+$accent:       #6c63ff;
+$accent-dim:   rgba(108, 99, 255, 0.12);
+$accent-glow:  rgba(108, 99, 255, 0.28);
 $text-primary:   #f5f5f5;
 $text-secondary: #a1a1aa;
 $text-muted:     #52525b;
@@ -38,7 +38,7 @@ $red-dim: rgba(239, 68, 68, 0.12);
   width: 500px;
   height: 500px;
   border-radius: 50%;
-  background: radial-gradient(circle, rgba(249, 115, 22, 0.06) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(108, 99, 255, 0.06) 0%, transparent 70%);
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -61,10 +61,10 @@ $red-dim: rgba(239, 68, 68, 0.12);
   padding: 48px 40px;
   max-width: 440px;
   width: 100%;
-  border: 1px solid rgba(249, 115, 22, 0.15);
+  border: 1px solid rgba(108, 99, 255, 0.15);
   box-shadow:
     0 4px 32px rgba(0, 0, 0, 0.6),
-    0 0 40px rgba(249, 115, 22, 0.06);
+    0 0 40px rgba(108, 99, 255, 0.06);
   animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
   position: relative;
   z-index: 1;

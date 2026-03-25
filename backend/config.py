@@ -36,6 +36,7 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 _BACKEND_DIR = Path(__file__).resolve().parent
 DATA_DIR = _BACKEND_DIR / "data"
 STATE_DIR = DATA_DIR / "state"
+STATE_DIR.mkdir(parents=True, exist_ok=True)  # ensure dir exists on fresh deploys
 
 TOKEN_FILE = STATE_DIR / "access_token.json"
 ANALYSIS_STORAGE_FILE = STATE_DIR / "analysis_storage.json"
@@ -49,7 +50,7 @@ NIFTY_50_TOKEN = 256265
 SENSEX_TOKEN = 265
 
 # --- Flask ---
-FLASK_PORT = int(os.getenv("FLASK_PORT", "5000"))
+FLASK_PORT = int(os.getenv("PORT", os.getenv("FLASK_PORT", "5000")))  # PORT is injected by Railway/Render
 FLASK_DEBUG = os.getenv("FLASK_DEBUG", "false").lower() == "true"
 
 
