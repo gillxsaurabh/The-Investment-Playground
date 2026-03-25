@@ -16,7 +16,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   messages: ChatMessage[] = [];
   newMessage: string = '';
   isLoading: boolean = false;
-  isChatOpen: boolean = true;
+  isChatOpen: boolean = false;
 
   constructor(private chatService: ChatService) {}
 

@@ -59,7 +59,7 @@ export class LoginComponent {
       next: (response) => {
         if (response.success) {
           this.demoService.exitDemo();   // clear demo mode on real login
-          this.router.navigate(['/dashboard']);
+          this.router.navigate(['/trading-agent']);
         } else {
           this.error = response.error || 'Authentication failed';
         }

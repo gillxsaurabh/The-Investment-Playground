@@ -19,7 +19,7 @@ export class HomeComponent {
 
   enterDemo(): void {
     this.demoService.enterDemo();
-    this.router.navigate(['/dashboard']);
+    this.router.navigate(['/trading-agent']);
   }
 
   goToKiteLogin(): void {

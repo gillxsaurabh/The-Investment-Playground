@@ -18,14 +18,22 @@
   </div>
 </header>
 
-<!-- Navigation Bar (dashboard only) -->
-<nav class="tip-nav" *ngIf="activePage === 'dashboard'">
+<!-- Navigation Bar -->
+<nav class="tip-nav">
   <div class="nav-content">
     <button
-      class="nav-btn active"
+      class="nav-btn"
+      [class.active]="activePage === 'trading-agent'"
+      (click)="navigateTo('trading-agent')">
+      <span class="material-icons">show_chart</span>
+      Trading Arena
+    </button>
+    <button
+      class="nav-btn"
+      [class.active]="activePage === 'dashboard'"
       (click)="navigateTo('dashboard')">
-      <span class="material-icons">dashboard</span>
-      Dashboard
+      <span class="material-icons">account_balance_wallet</span>
+      Portfolio
     </button>
   </div>
 </nav>
