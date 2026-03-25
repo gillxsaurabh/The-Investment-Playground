@@ -1,0 +1,384 @@
+// ── Variables ────────────────────────────────────────────────────────────────
+$bg: #07070e;
+$surface: #10101a;
+$border: rgba(255, 255, 255, 0.07);
+$accent: #6c63ff;
+$teal: #00d4aa;
+$yellow: #ffd93d;
+$red: #ff6b6b;
+$text: #e8e8f0;
+$dim: #7777a0;
+$dimmer: #3a3a5a;
+
+// ── Root ─────────────────────────────────────────────────────────────────────
+.home-root {
+  min-height: 100vh;
+  background: $bg;
+  color: $text;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  position: relative;
+}
+
+// ── Background ───────────────────────────────────────────────────────────────
+.bg-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(100px);
+  opacity: 0.1;
+  animation: float 8s ease-in-out infinite;
+}
+
+.orb-1 {
+  width: 600px;
+  height: 600px;
+  background: $accent;
+  top: -200px;
+  right: -100px;
+  animation-delay: 0s;
+}
+
+.orb-2 {
+  width: 500px;
+  height: 500px;
+  background: $teal;
+  bottom: -150px;
+  left: -100px;
+  animation-delay: 4s;
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%       { transform: translateY(-30px); }
+}
+
+.grid-lines {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.015) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.015) 1px, transparent 1px);
+  background-size: 60px 60px;
+}
+
+// ── Top bar ──────────────────────────────────────────────────────────────────
+.top-bar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.2rem 3rem;
+  border-bottom: 1px solid $border;
+}
+
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  background: linear-gradient(135deg, $accent, $teal);
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.brand-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.brand-sub {
+  font-size: 0.78rem;
+  color: $dim;
+  border-left: 1px solid $border;
+  padding-left: 0.7rem;
+  margin-left: 0.2rem;
+}
+
+.top-badge {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: $dim;
+  background: $surface;
+  border: 1px solid $border;
+  border-radius: 100px;
+  padding: 0.3rem 0.85rem;
+}
+
+// ── Hero ─────────────────────────────────────────────────────────────────────
+.hero {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 2rem 1.5rem;
+  position: relative;
+  z-index: 1;
+}
+
+.hero-tag {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: $accent;
+  background: rgba(108, 99, 255, 0.1);
+  border: 1px solid rgba(108, 99, 255, 0.25);
+  border-radius: 100px;
+  padding: 0.3rem 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.hero-title {
+  font-size: clamp(2.2rem, 5vw, 4rem);
+  font-weight: 800;
+  line-height: 1.08;
+  letter-spacing: -0.035em;
+  margin: 0 0 1.2rem;
+
+  .grad {
+    background: linear-gradient(135deg, #6c63ff 20%, #00d4aa 80%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+}
+
+.hero-sub {
+  font-size: 1rem;
+  color: $dim;
+  line-height: 1.7;
+  max-width: 600px;
+  margin: 0 auto 2.5rem;
+}
+
+// ── CTA Cards ────────────────────────────────────────────────────────────────
+.cta-row {
+  display: flex;
+  gap: 1.2rem;
+  margin-bottom: 2.5rem;
+  width: 100%;
+  max-width: 740px;
+
+  @media (max-width: 600px) {
+    flex-direction: column;
+  }
+}
+
+.cta-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.4rem 1.6rem;
+  border-radius: 16px;
+  border: 1px solid $border;
+  background: $surface;
+  cursor: pointer;
+  text-align: left;
+  transition: transform 0.2s, box-shadow 0.2s, border-color 0.2s;
+  color: $text;
+
+  &:not(:disabled):hover {
+    transform: translateY(-2px);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.5;
+  }
+}
+
+.cta-demo {
+  border-color: rgba(0, 212, 170, 0.3);
+  background: linear-gradient(135deg, rgba(0, 212, 170, 0.06), rgba(108, 99, 255, 0.04));
+
+  &:hover {
+    border-color: rgba(0, 212, 170, 0.6);
+    box-shadow: 0 0 30px rgba(0, 212, 170, 0.12);
+  }
+}
+
+.cta-kite {
+  border-color: rgba(255, 255, 255, 0.08);
+
+  &:not(:disabled):hover {
+    border-color: rgba(255, 255, 255, 0.18);
+  }
+}
+
+.cta-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.cta-icon-demo {
+  background: rgba(0, 212, 170, 0.15);
+  color: $teal;
+  border: 1px solid rgba(0, 212, 170, 0.3);
+}
+
+.cta-icon-kite {
+  background: rgba(255, 255, 255, 0.05);
+  color: $dim;
+  border: 1px solid $border;
+}
+
+.cta-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.cta-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  margin-bottom: 0.2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.cta-desc {
+  font-size: 0.78rem;
+  color: $dim;
+  line-height: 1.4;
+}
+
+.cta-arrow {
+  font-size: 1.1rem;
+  color: $teal;
+  flex-shrink: 0;
+  transition: transform 0.2s;
+
+  .cta-demo:hover & {
+    transform: translateX(4px);
+  }
+}
+
+.cta-arrow-dim {
+  color: $dimmer;
+}
+
+.soon-badge {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(255, 217, 61, 0.1);
+  color: $yellow;
+  border: 1px solid rgba(255, 217, 61, 0.25);
+  border-radius: 4px;
+  padding: 0.15rem 0.4rem;
+}
+
+// ── Feature strip ────────────────────────────────────────────────────────────
+.feature-strip {
+  display: flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 0.78rem;
+  color: $dim;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.feature-sep {
+  color: $dimmer;
+}
+
+.feature-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-purple { background: $accent; }
+.dot-teal   { background: $teal; }
+.dot-yellow { background: $yellow; }
+.dot-red    { background: $red; }
+
+// ── Stats bar ────────────────────────────────────────────────────────────────
+.stats-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  padding: 1.8rem 2rem;
+  border-top: 1px solid $border;
+  background: rgba(255, 255, 255, 0.015);
+  position: relative;
+  z-index: 1;
+}
+
+.stat {
+  flex: 1;
+  text-align: center;
+  padding: 0 1.5rem;
+
+  &:first-child { padding-left: 0; }
+  &:last-child  { padding-right: 0; }
+}
+
+.stat-num {
+  font-size: 2rem;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  background: linear-gradient(135deg, #ffffff, #9b94ff);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+
+.stat-plus {
+  font-size: 1.2rem;
+}
+
+.stat-lbl {
+  font-size: 0.72rem;
+  color: $dim;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.stat-div {
+  width: 1px;
+  height: 40px;
+  background: $border;
+  flex-shrink: 0;
+}

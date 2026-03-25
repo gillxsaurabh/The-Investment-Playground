@@ -308,6 +308,6 @@ export class KiteService {
   }
 
   isAuthenticated(): boolean {
-    return !!this.getStoredToken();
+    return !!this.getStoredToken() || localStorage.getItem('demo_mode') === 'true';
   }
 }

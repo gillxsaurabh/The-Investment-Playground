@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { KiteService, MarketIndex, Stock } from '../../services/kite.service';
 import { SimulatorService, SimulatorState, SimulatorPosition, SimulatorTradeHistory, AutomationStatus, AutomationRunRecord } from '../../services/simulator.service';
+import { DemoService } from '../../services/demo.service';
 import { HeaderBannerComponent } from '../shared/header-banner/header-banner.component';
 import { forkJoin, of, interval, Subscription } from 'rxjs';
 import { PositionsChartComponent } from './positions-chart.component';
@@ -373,7 +374,8 @@ export class TradingAgentComponent implements OnInit, OnDestroy {
     private router: Router,
     private ngZone: NgZone,
     private kiteService: KiteService,
-    private simulatorService: SimulatorService
+    private simulatorService: SimulatorService,
+    private demoService: DemoService
   ) {}
 
   private static readonly RESULTS_STORAGE_KEY = 'cognicap_pipeline_results';
@@ -444,6 +446,7 @@ export class TradingAgentComponent implements OnInit, OnDestroy {
   }
 
   async startPipeline(): Promise<void> {
+    if (this.demoService.isDemo) { this.demoService.showKitePrompt(); return; }
     // Reset state
     this.leftTab = 'setup';
     this.isRunning = true;
@@ -894,6 +897,7 @@ export class TradingAgentComponent implements OnInit, OnDestroy {
   }
 
   async startSellPipeline(): Promise<void> {
+    if (this.demoService.isDemo) { this.demoService.showKitePrompt(); return; }
     this.leftTab = 'setup';
     this.isRunning = true;
     this.isCompleted = false;
