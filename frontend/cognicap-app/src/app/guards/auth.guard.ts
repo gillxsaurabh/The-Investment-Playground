@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
-import { KiteService } from '../services/kite.service';
+import { AuthService } from '../services/auth.service';
 import { DemoService } from '../services/demo.service';
 
 @Injectable({
@@ -8,17 +8,17 @@ import { DemoService } from '../services/demo.service';
 })
 export class AuthGuard {
   constructor(
-    private kiteService: KiteService,
+    private authService: AuthService,
     private demoService: DemoService,
     private router: Router
   ) {}
 
   canActivate(): boolean {
-    if (this.demoService.isDemo || this.kiteService.isAuthenticated()) {
+    if (this.demoService.isDemo || this.authService.isAuthenticated()) {
       return true;
     }
 
-    this.router.navigate(['/']);
+    this.router.navigate(['/login']);
     return false;
   }
 }

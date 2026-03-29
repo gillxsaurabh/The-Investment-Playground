@@ -56,8 +56,11 @@ backend/
 │   ├── kite_adapter.py     # KiteConnect implementation
 │   └── __init__.py         # get_broker(access_token) factory
 │
+├── middleware/              # Request middleware
+│   └── auth.py             # @require_auth, @require_broker decorators
+│
 ├── routes/                 # Flask Blueprints (one per domain)
-│   ├── auth.py             # /api/auth/* (login, authenticate, verify)
+│   ├── auth.py             # /api/auth/* (register, login, refresh, me, logout, broker/link)
 │   ├── portfolio.py        # /api/portfolio/* (holdings, positions, summary, top-performers, health-report)
 │   ├── market.py           # /api/market/* (indices, top-stocks)
 │   ├── analysis.py         # /api/analyze-* (stock, stock-stream, all)
@@ -69,6 +72,7 @@ backend/
 │   └── health.py           # /health
 │
 ├── services/               # Business logic (no Flask, no HTTP)
+│   ├── auth_service.py     # JWT creation/validation, password hashing, user CRUD, refresh tokens
 │   ├── technical.py        # Pure functions: ADX, EMA, RSI, ATR calculations
 │   ├── fundamentals.py     # Screener.in scraping and scoring
 │   ├── analysis_storage.py # JSON-based analysis cache CRUD
@@ -114,7 +118,14 @@ backend/
 
 **Frontend:** Angular 18 with standalone components, Angular Material, SCSS. Communicates with backend via `HttpClient` in `kite.service.ts`, `chat.service.ts`, and `simulator.service.ts`.
 
-**Auth flow:** OAuth via Zerodha → user copies `request_token` → backend exchanges for `access_token` → token saved to `backend/data/state/access_token.json` (valid one trading day). Route protection via `auth.guard.ts`.
+**Auth flow (v2 — JWT-based):**
+1. User registers/logs in with email + password → backend issues JWT access token (15min) + refresh token (7 days)
+2. Frontend stores tokens in localStorage (`jwt_access_token`, `jwt_refresh_token`)
+3. `auth.interceptor.ts` auto-injects `Authorization: Bearer <jwt>` on every request
+4. On 401, interceptor auto-refreshes via `/api/auth/refresh` (token rotation)
+5. Users optionally link their Zerodha Kite account via `/api/auth/broker/link` → broker token stored per-user in `user_broker_tokens` table
+6. Route protection via `AuthGuard` → checks `AuthService.isAuthenticated()`
+7. Backend `@require_auth` decorator validates JWT and populates `g.current_user`; `@require_broker` ensures broker is linked
 
 **Data persistence:** JSON files + SQLite in `backend/data/state/` (gitignored). See `db.md` for the full SQLite schema (6 tables: scans, scan_candidates, stock_analyses, trades, position_snapshots, account_snapshots).
 
@@ -163,10 +174,12 @@ Runs every Monday at 9AM IST via APScheduler. Runs buy pipeline across multiple 
 ## Environment Variables
 
 Required in `.env` at project root (or `backend/.env` — backend's takes priority for Kite keys):
+- `JWT_SECRET` — **Required.** Random 64+ char secret for signing JWTs. Generate: `python -c "import secrets; print(secrets.token_hex(32))"`
 - `KITE_API_KEY` / `KITE_API_SECRET` — Zerodha API credentials
 - `ANTHROPIC_API_KEY` — Claude API key (required for sell pipeline + conviction scoring)
 - `GEMINI_API_KEY` — Google Gemini API key (buy pipeline, chat agents)
 - `OPENAI_API_KEY` — (optional) fallback when Gemini hits rate limits
+- `CORS_ORIGINS` — (optional) Comma-separated allowed origins (default: `http://localhost:4200`)
 
 ## Key Conventions
 - Angular uses standalone components (no NgModules); TypeScript strict mode enabled
@@ -178,3 +191,8 @@ Required in `.env` at project root (or `backend/.env` — backend's takes priori
 - Claude is the default LLM for sell pipeline AI ranking; Gemini for buy pipeline and chat
 - `agents/config.py:get_llm()` is the single entry point for all LLM instantiation — never instantiate LLMs directly in route/service files
 - SQLite DB (`cognicap.db`) tracks the full trade lifecycle for retrospective analysis; use `PRAGMA foreign_keys = ON` and `WAL` journal mode (see `db.md` for schema)
+- All protected routes use `@require_auth` decorator (JWT via `Authorization: Bearer` header); broker-dependent routes also use `@require_broker`
+- User data stored in `users`, `user_broker_tokens`, and `refresh_tokens` tables (migration `002_users.sql`)
+- Frontend uses `AuthService` for all auth state and `authInterceptor` for automatic JWT injection
+- Security headers (CSP, HSTS, X-Frame-Options) set via Flask `@after_request` middleware in `app.py`
+- Rate limiting via `Flask-Limiter` (200 req/min default, in-memory)

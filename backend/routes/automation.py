@@ -9,8 +9,9 @@ Provides endpoints to:
 
 import logging
 import threading
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 
+from middleware.auth import require_auth
 from automation.weekly_trader import run_weekly_automation, _load_state, _save_state
 from automation.scheduler import get_next_run_time, is_running
 
@@ -24,6 +25,7 @@ _run_now_active = False
 
 
 @automation_bp.route("/status", methods=["GET"])
+@require_auth
 def automation_status():
     """Return current automation configuration and last run summary."""
     state = _load_state()
@@ -38,11 +40,9 @@ def automation_status():
 
 
 @automation_bp.route("/enable", methods=["POST"])
+@require_auth
 def automation_enable():
-    """Enable or disable automation and optionally set the execution mode.
-
-    Body: { "enabled": true/false, "mode": "simulator" | "live" }
-    """
+    """Enable or disable automation and optionally set the execution mode."""
     data = request.get_json(silent=True) or {}
     enabled = data.get("enabled")
     mode = data.get("mode")
@@ -71,23 +71,16 @@ def automation_enable():
 
 
 @automation_bp.route("/run-now", methods=["POST"])
+@require_auth
 def automation_run_now():
-    """Trigger the automation immediately (for testing / manual runs).
-
-    Body: { "access_token": "...", "dry_run": true/false }
-
-    If dry_run=true, runs discovery only without executing trades.
-    This endpoint runs synchronously and may take 30+ minutes.
-    Use with care.
-    """
+    """Trigger the automation immediately (for testing / manual runs)."""
     global _run_now_active
 
     data = request.get_json(silent=True) or {}
     dry_run = bool(data.get("dry_run", True))
-    access_token = data.get("access_token", "")
 
-    # If an access_token is provided, temporarily persist it so the automation
-    # job can read it from the state file (the scheduler reads from TOKEN_FILE)
+    # Use broker token if available
+    access_token = getattr(g, "broker_token", "") or ""
     if access_token:
         import json
         from config import TOKEN_FILE
@@ -111,13 +104,14 @@ def automation_run_now():
         return jsonify({"success": True, **result})
     except Exception as e:
         logger.error(f"[Automation] run-now failed: {e}", exc_info=True)
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Automation run failed"}), 500
     finally:
         with _run_now_lock:
             _run_now_active = False
 
 
 @automation_bp.route("/history", methods=["GET"])
+@require_auth
 def automation_history():
     """Return the last 10 automation run records."""
     state = _load_state()

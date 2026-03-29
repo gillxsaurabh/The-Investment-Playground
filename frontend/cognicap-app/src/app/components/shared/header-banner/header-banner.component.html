@@ -2,13 +2,15 @@
 <header class="tip-banner">
   <div class="banner-content">
     <div class="banner-left">
-      <span class="platform-name">TIP</span>
-      <span class="platform-tagline">The Investment Playground</span>
+      <span class="platform-name">The Investment Playground</span>
+      <span class="platform-tagline">Intelligent Portfolio</span>
     </div>
     <div class="banner-right">
-      <span class="user-name" *ngIf="userName">
+      <span class="user-name" *ngIf="userName" (click)="navigateTo('account')" title="Account settings">
         <span class="material-icons">person</span>
         {{ userName }}
+        <span class="broker-dot" [class.linked]="brokerLinked" [class.unlinked]="!brokerLinked"
+              [title]="brokerLinked ? 'Kite linked' : 'Kite not linked'"></span>
       </span>
       <button class="logout-btn" (click)="logout()">
         <span class="material-icons">logout</span>
@@ -23,17 +25,34 @@
   <div class="nav-content">
     <button
       class="nav-btn"
-      [class.active]="activePage === 'trading-agent'"
-      (click)="navigateTo('trading-agent')">
-      <span class="material-icons">show_chart</span>
-      Trading Arena
+      [class.active]="activePage === 'dashboard'"
+      (click)="navigateTo('dashboard')">
+      <span class="material-icons">dashboard</span>
+      Dashboard
     </button>
     <button
       class="nav-btn"
-      [class.active]="activePage === 'dashboard'"
-      (click)="navigateTo('dashboard')">
-      <span class="material-icons">account_balance_wallet</span>
-      Portfolio
+      [class.active]="activePage === 'discover'"
+      (click)="navigateTo('discover')">
+      <span class="material-icons">search</span>
+      Discover
+    </button>
+    <button
+      class="nav-btn"
+      [class.active]="activePage === 'positions'"
+      (click)="navigateTo('positions')">
+      <span class="material-icons">candlestick_chart</span>
+      Positions
+    </button>
+    <button
+      class="nav-btn"
+      [class.active]="activePage === 'account'"
+      (click)="navigateTo('account')">
+      <span class="material-icons">settings</span>
+      Account
+      <span class="kite-status-badge" *ngIf="!brokerLinked" title="Kite not linked">
+        <span class="material-icons">link_off</span>
+      </span>
     </button>
   </div>
 </nav>

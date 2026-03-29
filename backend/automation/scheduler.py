@@ -13,6 +13,7 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.cron import CronTrigger
 
 from automation.weekly_trader import run_weekly_automation
+from scripts.backup_db import run_backup
 
 logger = logging.getLogger(__name__)
 
@@ -35,6 +36,16 @@ def start_scheduler() -> BackgroundScheduler:
         replace_existing=True,
         misfire_grace_time=300,  # 5-minute grace window if server briefly restarts
         kwargs={"dry_run": False},
+    )
+
+    # Daily DB backup at 11:30 PM IST
+    scheduler.add_job(
+        func=run_backup,
+        trigger=CronTrigger(hour=23, minute=30, timezone=IST),
+        id="daily_backup",
+        name="Daily SQLite Backup 11:30PM IST",
+        replace_existing=True,
+        misfire_grace_time=600,
     )
 
     scheduler.start()

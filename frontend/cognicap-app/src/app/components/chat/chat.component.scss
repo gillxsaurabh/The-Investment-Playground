@@ -1,20 +1,8 @@
+@use '../../styles/tokens' as *;
+
 // ============================================================
 // AI Chat — Dark Purple Theme
 // ============================================================
-
-$bg-card:      #161616;
-$bg-elevated:  #1e1e1e;
-$bg-hover:     #252525;
-$border-subtle:  rgba(255, 255, 255, 0.06);
-$border-default: rgba(255, 255, 255, 0.1);
-$accent:       #6c63ff;
-$accent-dim:   rgba(108, 99, 255, 0.12);
-$accent-glow:  rgba(108, 99, 255, 0.3);
-$text-primary:   #f5f5f5;
-$text-secondary: #a1a1aa;
-$text-muted:     #52525b;
-$green:  #22c55e;
-$red:    #ef4444;
 
 // ============================================================
 // Container

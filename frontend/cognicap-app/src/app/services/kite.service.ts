@@ -1,18 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, of } from 'rxjs';
-import { map, tap, catchError } from 'rxjs/operators';
-
-export interface AuthResponse {
-  success: boolean;
-  access_token?: string;
-  user?: {
-    name: string;
-    email: string;
-    user_id: string;
-  };
-  error?: string;
-}
+import { Observable, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 export interface Holdings {
   success: boolean;
@@ -31,7 +20,7 @@ export interface PortfolioSummary {
     positions_count: number;
   };
   error?: string;
-  note?: string; // Optional note for simulation/debug info
+  note?: string;
 }
 
 export interface TopPerformer {
@@ -103,6 +92,65 @@ export interface FundsResponse {
   error?: string;
 }
 
+// ── Stock Audit interfaces ────────────────────────────────────────────────
+
+export interface AuditHealthComponents {
+  technical: number;
+  fundamental: number;
+  relative_strength: number;
+  news: number;
+  position: number;
+}
+
+export interface AuditHolding {
+  symbol: string;
+  quantity: number;
+  average_price: number;
+  last_price: number;
+  pnl: number;
+  pnl_percentage: number;
+  health_score: number;
+  health_label: 'HEALTHY' | 'STABLE' | 'WATCH' | 'CRITICAL';
+  health_components: AuditHealthComponents;
+  audit_verdict: 'HOLD' | 'MONITOR' | 'CONSIDER_EXIT' | 'EXIT';
+  key_risks: string[];
+  key_positives: string[];
+  ai_reasoning: string;
+  news_score: number;
+  news_headlines: string[];
+  rsi: number | null;
+  adx: number | null;
+  ema_20: number | null;
+  ema_50: number | null;
+  ema_200: number | null;
+  stock_3m_return: number | null;
+  nifty_3m_return: number | null;
+  sector_3m_return: number | null;
+  sector_5d_change: number | null;
+  roe: number | null;
+  debt_to_equity: number | null;
+  profit_declining_quarters: number;
+  sector: string;
+  saved_at?: string;
+}
+
+export interface AuditSummary {
+  total: number;
+  healthy: number;
+  stable: number;
+  watch: number;
+  critical: number;
+  avg_score: number;
+}
+
+export interface AuditResultsResponse {
+  success: boolean;
+  results: Array<{ symbol: string; saved_at: string; data: AuditHolding }>;
+  total: number;
+}
+
+// ── Legacy health report interface (kept for backward compat) ─────────────
+
 export interface HealthReport {
   symbol: string;
   company_name: string;
@@ -168,146 +216,74 @@ export interface StockAnalysisResponse {
 })
 export class KiteService {
   private apiUrl = '/api';
-  private accessTokenSubject = new BehaviorSubject<string | null>(this.getStoredToken());
-  public accessToken$ = this.accessTokenSubject.asObservable();
-  private userSubject = new BehaviorSubject<any>(this.getStoredUser());
-  public user$ = this.userSubject.asObservable();
 
   constructor(private http: HttpClient) {}
 
-  private getStoredToken(): string | null {
-    return localStorage.getItem('access_token');
-  }
-
-  private getStoredUser(): any {
-    const userStr = localStorage.getItem('user');
-    return userStr ? JSON.parse(userStr) : null;
-  }
-
-  getLoginUrl(): Observable<any> {
-    return this.http.get(`${this.apiUrl}/auth/login-url`);
-  }
-
-  authenticate(requestToken: string): Observable<AuthResponse> {
-    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/authenticate`, {
-      request_token: requestToken
-    }).pipe(
-      tap(response => {
-        if (response.success && response.access_token) {
-          localStorage.setItem('access_token', response.access_token);
-          localStorage.setItem('user', JSON.stringify(response.user));
-          this.accessTokenSubject.next(response.access_token);
-          this.userSubject.next(response.user);
-        }
-      })
-    );
-  }
-
-  verifyToken(): Observable<boolean> {
-    const token = this.getStoredToken();
-    if (!token) {
-      return new Observable(observer => {
-        observer.next(false);
-        observer.complete();
-      });
-    }
-
-    return this.http.post<AuthResponse>(`${this.apiUrl}/auth/verify`, {
-      access_token: token
-    }).pipe(
-      map(response => {
-        if (response.success && response.user) {
-          this.userSubject.next(response.user);
-          return true;
-        }
-        return false;
-      })
-    );
-  }
+  // --- Portfolio ---
 
   getHoldings(): Observable<Holdings> {
-    const token = this.getStoredToken();
-    return this.http.post<Holdings>(`${this.apiUrl}/portfolio/holdings`, {
-      access_token: token
-    });
+    return this.http.get<Holdings>(`${this.apiUrl}/portfolio/holdings`);
   }
 
   getPortfolioSummary(): Observable<PortfolioSummary> {
-    const token = this.getStoredToken();
-    return this.http.post<PortfolioSummary>(`${this.apiUrl}/portfolio/summary`, {
-      access_token: token
-    });
+    return this.http.get<PortfolioSummary>(`${this.apiUrl}/portfolio/summary`);
   }
 
   getTopPerformers(): Observable<TopPerformers> {
-    const token = this.getStoredToken();
-    return this.http.post<TopPerformers>(`${this.apiUrl}/portfolio/top-performers`, {
-      access_token: token
-    });
-  }
-
-  getMarketIndices(): Observable<MarketIndices> {
-    const token = this.getStoredToken();
-    return this.http.post<MarketIndices>(`${this.apiUrl}/market/indices`, {
-      access_token: token
-    }).pipe(catchError(() => of({ success: false } as MarketIndices)));
-  }
-
-  getTopStocks(): Observable<TopStocks> {
-    const token = this.getStoredToken();
-    return this.http.post<TopStocks>(`${this.apiUrl}/market/top-stocks`, {
-      access_token: token
-    }).pipe(catchError(() => of({ success: false, top_gainers: [], top_losers: [] } as TopStocks)));
+    return this.http.get<TopPerformers>(`${this.apiUrl}/portfolio/top-performers`);
   }
 
   getHealthReport(): Observable<HealthReportResponse> {
-    const token = this.getStoredToken();
-    return this.http.post<HealthReportResponse>(`${this.apiUrl}/portfolio/health-report`, {
-      access_token: token
-    });
+    return this.http.get<HealthReportResponse>(`${this.apiUrl}/portfolio/health-report`);
   }
 
+  // --- Market ---
+
+  getMarketIndices(): Observable<MarketIndices> {
+    return this.http.get<MarketIndices>(`${this.apiUrl}/market/indices`).pipe(
+      catchError(() => of({ success: false } as MarketIndices))
+    );
+  }
+
+  getTopStocks(): Observable<TopStocks> {
+    return this.http.get<TopStocks>(`${this.apiUrl}/market/top-stocks`).pipe(
+      catchError(() => of({ success: false, top_gainers: [], top_losers: [] } as TopStocks))
+    );
+  }
+
+  // --- Analysis ---
+
   analyzeStock(symbol: string, instrumentToken?: number): Observable<StockAnalysisResponse> {
-    const token = this.getStoredToken();
     return this.http.post<StockAnalysisResponse>(`${this.apiUrl}/analyze-stock`, {
-      access_token: token,
-      symbol: symbol,
+      symbol,
       instrument_token: instrumentToken
     });
   }
 
   analyzeAllStocks(): Observable<any> {
-    const token = this.getStoredToken();
-    return this.http.post<any>(`${this.apiUrl}/analyze-all`, {
-      access_token: token
-    });
+    return this.http.post<any>(`${this.apiUrl}/analyze-all`, {});
   }
 
+  // --- Stock Audit ---
+
+  getAuditResults(): Observable<AuditResultsResponse> {
+    return this.http.get<AuditResultsResponse>(`${this.apiUrl}/audit/results`);
+  }
+
+  // Note: /api/audit/run uses SSE — not a standard Observable.
+  // The dashboard component calls fetch() directly for SSE streaming.
+
+  // --- Trade ---
+
   getAvailableFunds(): Observable<FundsResponse> {
-    const token = this.getStoredToken();
-    return this.http.post<FundsResponse>(`${this.apiUrl}/trade/funds`, {
-      access_token: token
-    });
+    return this.http.get<FundsResponse>(`${this.apiUrl}/trade/funds`);
   }
 
   calculateExits(symbol: string, instrumentToken: number, ltp: number): Observable<TradeExitResponse> {
-    const token = this.getStoredToken();
     return this.http.post<TradeExitResponse>(`${this.apiUrl}/trade/calculate-exits`, {
-      access_token: token,
       symbol,
       instrument_token: instrumentToken,
       ltp
     });
-  }
-
-  logout(): void {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('user');
-    this.accessTokenSubject.next(null);
-    this.userSubject.next(null);
-  }
-
-  isAuthenticated(): boolean {
-    return !!this.getStoredToken() || localStorage.getItem('demo_mode') === 'true';
   }
 }

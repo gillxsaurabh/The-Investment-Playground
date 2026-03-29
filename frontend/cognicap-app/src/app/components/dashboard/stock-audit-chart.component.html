@@ -1,0 +1,119 @@
+<div class="audit-chart-card">
+
+  <!-- Header -->
+  <div class="audit-header">
+    <div class="audit-title-row">
+      <span class="audit-icon material-icons">health_and_safety</span>
+      <h3 class="audit-title">Stock Audit</h3>
+      <span *ngIf="lastRunAt" class="audit-last-run">Last run: {{ formatDate(lastRunAt) }}</span>
+    </div>
+    <button class="btn-run-audit" [disabled]="isRunning" (click)="onRunAudit.emit()">
+      <span class="material-icons">{{ isRunning ? 'hourglass_empty' : 'play_circle' }}</span>
+      {{ isRunning ? 'Running…' : 'Run Audit' }}
+    </button>
+  </div>
+
+  <!-- Pipeline progress -->
+  <div *ngIf="isRunning || pipelineMessage" class="pipeline-progress">
+    <div class="pipeline-steps">
+      <div
+        *ngFor="let s of steps"
+        class="pipeline-step"
+        [class.step-running]="s.status === 'running'"
+        [class.step-done]="s.status === 'completed'"
+        [class.step-pending]="s.status === 'pending'"
+      >
+        <span class="step-dot">
+          <span *ngIf="s.status === 'running'" class="material-icons spin">sync</span>
+          <span *ngIf="s.status === 'completed'" class="material-icons">check_circle</span>
+          <span *ngIf="s.status === 'pending'" class="material-icons">radio_button_unchecked</span>
+        </span>
+        <span class="step-label">{{ s.role }}</span>
+        <span *ngIf="s.duration_ms" class="step-dur">{{ s.duration_ms }}ms</span>
+      </div>
+    </div>
+    <p *ngIf="pipelineMessage" class="pipeline-msg">{{ pipelineMessage }}</p>
+  </div>
+
+  <!-- Summary pills -->
+  <div *ngIf="summary && holdings.length > 0" class="summary-pills">
+    <span class="pill pill-healthy">
+      <span class="material-icons">check_circle</span>
+      {{ summary.healthy }} Healthy
+    </span>
+    <span class="pill pill-stable">
+      <span class="material-icons">trending_flat</span>
+      {{ summary.stable }} Stable
+    </span>
+    <span class="pill pill-watch">
+      <span class="material-icons">warning</span>
+      {{ summary.watch }} Watch
+    </span>
+    <span class="pill pill-critical">
+      <span class="material-icons">dangerous</span>
+      {{ summary.critical }} Critical
+    </span>
+    <span class="pill pill-avg">
+      Avg {{ summary.avg_score | number:'1.1-1' }}/10
+    </span>
+  </div>
+
+  <!-- Chart -->
+  <div *ngIf="holdings.length > 0" class="chart-wrapper" [style.height.px]="chartHeight">
+    <canvas #chartCanvas></canvas>
+  </div>
+
+  <!-- Empty state -->
+  <div *ngIf="!isRunning && holdings.length === 0" class="empty-state">
+    <span class="material-icons empty-icon">analytics</span>
+    <p>No audit results yet.</p>
+    <p class="empty-sub">Click <strong>Run Audit</strong> to analyse your portfolio.</p>
+  </div>
+
+  <!-- Holdings table (below chart) -->
+  <div *ngIf="holdings.length > 0" class="holdings-table">
+    <table>
+      <thead>
+        <tr>
+          <th>Stock</th>
+          <th>Score</th>
+          <th>Label</th>
+          <th>Verdict</th>
+          <th>P&amp;L</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr
+          *ngFor="let h of holdings; trackBy: trackBySymbol"
+          class="holding-row"
+          (click)="onSelectStock.emit(h)"
+        >
+          <td class="sym-cell">{{ h.symbol }}</td>
+          <td class="score-cell">
+            <span class="score-badge" [class]="getLabelClass(h.health_label)">
+              {{ h.health_score | number:'1.1-1' }}
+            </span>
+          </td>
+          <td>
+            <span class="label-chip" [class]="getLabelClass(h.health_label)">
+              {{ h.health_label }}
+            </span>
+          </td>
+          <td>
+            <span class="verdict-chip" [class]="getVerdictClass(h.audit_verdict)">
+              {{ h.audit_verdict | titlecase }}
+            </span>
+          </td>
+          <td class="pnl-cell" [class.pnl-pos]="h.pnl >= 0" [class.pnl-neg]="h.pnl < 0">
+            {{ h.pnl >= 0 ? '+' : '' }}{{ h.pnl_percentage | number:'1.1-1' }}%
+          </td>
+          <td class="arrow-cell">
+            <span class="material-icons">chevron_right</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</div>

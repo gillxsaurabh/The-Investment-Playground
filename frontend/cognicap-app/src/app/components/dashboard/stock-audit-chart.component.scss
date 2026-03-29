@@ -1,0 +1,260 @@
+@use '../../styles/tokens' as *;
+
+// Local aliases for semantic clarity
+$healthy:  $green;
+$stable:   $yellow;
+$watch:    $orange;
+$critical: $red;
+$blue:     $accent;
+$border:   $border-subtle;
+$bg-surface: $bg-elevated;
+$text-dim:   $text-muted;
+
+// ── Card shell ─────────────────────────────────────────────────────────────
+
+.audit-chart-card {
+  background: $bg-card;
+  border: 1px solid $border;
+  border-radius: 16px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+// ── Header ─────────────────────────────────────────────────────────────────
+
+.audit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.audit-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.audit-icon {
+  color: $blue;
+  font-size: 22px;
+}
+
+.audit-title {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: $text-primary;
+}
+
+.audit-last-run {
+  font-size: 12px;
+  color: $text-dim;
+  margin-left: 4px;
+}
+
+.btn-run-audit {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  border-radius: 8px;
+  border: none;
+  background: $blue;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.1s;
+
+  .material-icons { font-size: 18px; }
+
+  &:hover:not(:disabled) { opacity: 0.85; transform: translateY(-1px); }
+  &:disabled { opacity: 0.45; cursor: not-allowed; }
+}
+
+// ── Pipeline progress ───────────────────────────────────────────────────────
+
+.pipeline-progress {
+  background: $bg-surface;
+  border: 1px solid $border;
+  border-radius: 10px;
+  padding: 16px;
+}
+
+.pipeline-steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 20px;
+}
+
+.pipeline-step {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: $text-dim;
+
+  &.step-running  { color: $blue; }
+  &.step-done     { color: $healthy; }
+
+  .step-dot .material-icons { font-size: 14px; }
+  .step-dur { color: $text-dim; font-size: 11px; }
+}
+
+.spin { animation: spin 1.2s linear infinite; }
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.pipeline-msg {
+  margin: 10px 0 0;
+  font-size: 12px;
+  color: $text-secondary;
+}
+
+// ── Summary pills ───────────────────────────────────────────────────────────
+
+.summary-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  border: 1px solid transparent;
+
+  .material-icons { font-size: 14px; }
+
+  &.pill-healthy  { color: $healthy;  border-color: rgba($healthy, 0.35);  background: rgba($healthy, 0.08); }
+  &.pill-stable   { color: $stable;   border-color: rgba($stable, 0.35);   background: rgba($stable, 0.08); }
+  &.pill-watch    { color: $watch;    border-color: rgba($watch, 0.35);    background: rgba($watch, 0.08); }
+  &.pill-critical { color: $critical; border-color: rgba($critical, 0.35); background: rgba($critical, 0.08); }
+  &.pill-avg      { color: $text-secondary; border-color: $border; background: $bg-surface; }
+}
+
+// ── Chart wrapper ───────────────────────────────────────────────────────────
+
+.chart-wrapper {
+  position: relative;
+  width: 100%;
+  min-height: 180px;
+
+  canvas {
+    display: block;
+    width: 100% !important;
+    height: 100% !important;
+  }
+}
+
+// ── Empty state ─────────────────────────────────────────────────────────────
+
+.empty-state {
+  text-align: center;
+  padding: 40px 20px;
+  color: $text-secondary;
+
+  .empty-icon {
+    font-size: 48px;
+    color: $text-dim;
+    display: block;
+    margin-bottom: 12px;
+  }
+
+  p { margin: 4px 0; font-size: 14px; }
+  .empty-sub { font-size: 13px; color: $text-dim; }
+}
+
+// ── Holdings table ──────────────────────────────────────────────────────────
+
+.holdings-table {
+  overflow-x: auto;
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  thead th {
+    text-align: left;
+    color: $text-dim;
+    font-weight: 500;
+    padding: 6px 10px;
+    border-bottom: 1px solid $border;
+  }
+
+  .holding-row {
+    cursor: pointer;
+    transition: background 0.15s;
+
+    td { padding: 8px 10px; color: $text-secondary; border-bottom: 1px solid rgba(255,255,255,0.04); }
+
+    &:hover td { background: $bg-hover; }
+  }
+}
+
+.sym-cell {
+  font-weight: 600;
+  color: $text-primary !important;
+}
+
+.score-badge {
+  font-weight: 700;
+  font-size: 14px;
+
+  &.label-healthy  { color: $healthy; }
+  &.label-stable   { color: $stable; }
+  &.label-watch    { color: $watch; }
+  &.label-critical { color: $critical; }
+}
+
+.label-chip,
+.verdict-chip {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  border: 1px solid transparent;
+}
+
+// Label chip colours
+.label-chip {
+  &.label-healthy  { color: $healthy;  border-color: rgba($healthy, 0.4);  background: rgba($healthy, 0.1); }
+  &.label-stable   { color: $stable;   border-color: rgba($stable, 0.4);   background: rgba($stable, 0.1); }
+  &.label-watch    { color: $watch;    border-color: rgba($watch, 0.4);    background: rgba($watch, 0.1); }
+  &.label-critical { color: $critical; border-color: rgba($critical, 0.4); background: rgba($critical, 0.1); }
+}
+
+// Verdict chip colours
+.verdict-chip {
+  &.verdict-hold     { color: #60a5fa; border-color: rgba(96,165,250,0.35); background: rgba(96,165,250,0.08); }
+  &.verdict-monitor  { color: $stable; border-color: rgba($stable, 0.35);   background: rgba($stable, 0.08); }
+  &.verdict-consider { color: $watch;  border-color: rgba($watch, 0.35);    background: rgba($watch, 0.08); }
+  &.verdict-exit     { color: $critical; border-color: rgba($critical,0.35); background: rgba($critical,0.08); }
+}
+
+.pnl-cell {
+  font-weight: 600;
+  &.pnl-pos { color: $healthy; }
+  &.pnl-neg { color: $critical; }
+}
+
+.arrow-cell .material-icons {
+  font-size: 18px;
+  color: $text-dim;
+  vertical-align: middle;
+}

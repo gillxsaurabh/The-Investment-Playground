@@ -4,7 +4,6 @@ Moved from backend/simulator.py to services/simulator_engine.py.
 Uses config.py for file paths and constants.py for magic numbers.
 """
 
-import json
 import logging
 import random
 import threading
@@ -13,6 +12,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 from config import SIMULATOR_DATA_FILE, SIMULATOR_PRICE_HISTORY_FILE
+from services.file_lock import locked_json_read, atomic_json_write
 from constants import (
     SPREAD_FACTOR,
     MAX_HISTORY_SECONDS,
@@ -31,8 +31,9 @@ class PaperTradingSimulator(TradingEngine):
     def mode(self) -> str:
         return "simulator"
 
-    def __init__(self, kite, data_file=None, history_file=None):
+    def __init__(self, kite, data_file=None, history_file=None, user_id=None):
         self.kite = kite
+        self.user_id = user_id
         self.data_file = str(data_file or SIMULATOR_DATA_FILE)
         self.history_file = str(history_file or SIMULATOR_PRICE_HISTORY_FILE)
         self._lock = threading.Lock()
@@ -42,48 +43,35 @@ class PaperTradingSimulator(TradingEngine):
 
     def _load_data(self):
         path = Path(self.data_file)
-        if path.exists():
-            with open(path, "r") as f:
-                self._data = json.load(f)
-            # Migrate old-format positions to trailing stop format
-            migrated = False
-            for i, p in enumerate(self._data["active_positions"]):
-                if "current_sl" not in p:
-                    self._data["active_positions"][i] = self._migrate_position_to_trailing(p)
-                    migrated = True
-            if migrated:
-                self._save_data()
-        else:
-            self._data = {
-                "account_summary": {
-                    "initial_capital": DEFAULT_INITIAL_CAPITAL,
-                    "current_balance": DEFAULT_INITIAL_CAPITAL,
-                    "total_pnl": 0.0,
-                },
-                "active_positions": [],
-                "trade_history": [],
-            }
-            path.parent.mkdir(parents=True, exist_ok=True)
+        default = {
+            "account_summary": {
+                "initial_capital": DEFAULT_INITIAL_CAPITAL,
+                "current_balance": DEFAULT_INITIAL_CAPITAL,
+                "total_pnl": 0.0,
+            },
+            "active_positions": [],
+            "trade_history": [],
+        }
+        self._data = locked_json_read(path, default=default)
+        # Migrate old-format positions to trailing stop format
+        migrated = False
+        for i, p in enumerate(self._data["active_positions"]):
+            if "current_sl" not in p:
+                self._data["active_positions"][i] = self._migrate_position_to_trailing(p)
+                migrated = True
+        if migrated or not path.exists():
             self._save_data()
 
     def _save_data(self):
-        with open(self.data_file, "w") as f:
-            json.dump(self._data, f, indent=2, default=str)
+        atomic_json_write(self.data_file, self._data, indent=2, default=str)
 
     def _load_price_history(self):
         """Load price history from file, pruning entries older than 1 hour."""
-        path = Path(self.history_file)
-        if path.exists():
-            with open(path, "r") as f:
-                self._price_history = json.load(f)
-        else:
-            self._price_history = []
+        self._price_history = locked_json_read(self.history_file, default=[])
         self._prune_history()
 
     def _save_price_history(self):
-        Path(self.history_file).parent.mkdir(parents=True, exist_ok=True)
-        with open(self.history_file, "w") as f:
-            json.dump(self._price_history, f, default=str)
+        atomic_json_write(self.history_file, self._price_history, default=str)
 
     def _prune_history(self):
         """Remove snapshots older than MAX_HISTORY_SECONDS."""
@@ -219,7 +207,7 @@ class PaperTradingSimulator(TradingEngine):
                     "trading_mode": "simulator",
                     "account_balance_before": self._data["account_summary"]["current_balance"] + total_cost,
                     "account_balance_after": self._data["account_summary"]["current_balance"],
-                })
+                }, user_id=self.user_id)
             except Exception:
                 pass
 

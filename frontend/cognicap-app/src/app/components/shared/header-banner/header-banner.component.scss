@@ -1,19 +1,8 @@
+@use '../../../styles/tokens' as *;
+
 // ============================================================
 // Header Banner — Dark Purple Theme
 // ============================================================
-
-$bg-primary:   #0d0d0d;
-$bg-card:      #161616;
-$bg-elevated:  #1e1e1e;
-$border-subtle:  rgba(255, 255, 255, 0.06);
-$border-default: rgba(255, 255, 255, 0.1);
-$accent:       #6c63ff;
-$accent-dim:   rgba(108, 99, 255, 0.12);
-$text-primary:   #f5f5f5;
-$text-secondary: #a1a1aa;
-$text-muted:     #52525b;
-$red: #ef4444;
-$red-dim: rgba(239, 68, 68, 0.12);
 
 // ============================================================
 // Top Banner
@@ -79,11 +68,25 @@ $red-dim: rgba(239, 68, 68, 0.12);
   font-size: 13px;
   font-weight: 500;
   border: 1px solid $border-default;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+
+  &:hover { border-color: rgba($accent, 0.4); }
 
   .material-icons {
     font-size: 15px;
     color: $accent;
   }
+}
+
+.broker-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+
+  &.linked { background: #22c55e; box-shadow: 0 0 4px rgba(34, 197, 94, 0.6); }
+  &.unlinked { background: #f97316; }
 }
 
 .logout-btn {
@@ -161,6 +164,17 @@ $red-dim: rgba(239, 68, 68, 0.12);
     font-weight: 600;
 
     .material-icons { color: $accent; }
+  }
+}
+
+.kite-status-badge {
+  display: inline-flex;
+  align-items: center;
+  margin-left: 2px;
+
+  .material-icons {
+    font-size: 13px;
+    color: #f97316;
   }
 }
 

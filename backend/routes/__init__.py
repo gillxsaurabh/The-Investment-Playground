@@ -17,6 +17,7 @@ def register_blueprints(app):
     from routes.health import health_bp
     from routes.automation import automation_bp
     from routes.trading import trading_bp
+    from routes.audit import audit_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(portfolio_bp)
@@ -29,3 +30,4 @@ def register_blueprints(app):
     app.register_blueprint(health_bp)
     app.register_blueprint(automation_bp)
     app.register_blueprint(trading_bp)
+    app.register_blueprint(audit_bp)

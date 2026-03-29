@@ -24,6 +24,21 @@ _backend_env = _BACKEND_ROOT / ".env"
 if _backend_env.exists():
     load_dotenv(_backend_env, override=True)
 
+# --- Environment ---
+ENVIRONMENT = os.getenv("ENVIRONMENT", "development")  # development | staging | production
+
+# --- App Security ---
+JWT_SECRET = os.getenv("JWT_SECRET", "")
+JWT_ACCESS_EXPIRY_MINUTES = int(os.getenv("JWT_ACCESS_EXPIRY_MINUTES", "15"))
+JWT_REFRESH_EXPIRY_DAYS = int(os.getenv("JWT_REFRESH_EXPIRY_DAYS", "7"))
+
+# --- CORS ---
+CORS_ORIGINS = [
+    o.strip()
+    for o in os.getenv("CORS_ORIGINS", "http://localhost:4200").split(",")
+    if o.strip()
+]
+
 # --- Broker credentials ---
 KITE_API_KEY = os.getenv("KITE_API_KEY", "")
 KITE_API_SECRET = os.getenv("KITE_API_SECRET", "")
@@ -31,6 +46,9 @@ KITE_API_SECRET = os.getenv("KITE_API_SECRET", "")
 # --- AI API keys ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+
+# --- Observability ---
+SENTRY_DSN = os.getenv("SENTRY_DSN", "")
 
 # --- File paths ---
 _BACKEND_DIR = Path(__file__).resolve().parent
@@ -56,11 +74,31 @@ FLASK_DEBUG = os.getenv("FLASK_DEBUG", "false").lower() == "true"
 
 def validate_config():
     """Validate that required environment variables are set. Call at startup."""
-    missing = []
+    # --- JWT_SECRET is mandatory — refuse to start without it ---
+    if not JWT_SECRET:
+        print("[Config] FATAL: JWT_SECRET is not set. The application cannot start.")
+        print("[Config] Generate one: python -c \"import secrets; print(secrets.token_hex(32))\"")
+        sys.exit(1)
+    if len(JWT_SECRET) < 32:
+        print("[Config] FATAL: JWT_SECRET must be at least 32 characters for security.")
+        print(f"[Config] Current length: {len(JWT_SECRET)}. Generate a longer one.")
+        sys.exit(1)
+
+    # --- Production-specific checks ---
+    if ENVIRONMENT == "production":
+        if FLASK_DEBUG:
+            print("[Config] WARNING: FLASK_DEBUG is enabled in production. This is not recommended.")
+        if not SENTRY_DSN:
+            print("[Config] WARNING: SENTRY_DSN is not set in production. Error monitoring is disabled.")
+
+    # --- Optional broker credentials (only needed for Kite features) ---
+    optional_missing = []
     if not KITE_API_KEY:
-        missing.append("KITE_API_KEY")
+        optional_missing.append("KITE_API_KEY")
     if not KITE_API_SECRET:
-        missing.append("KITE_API_SECRET")
-    if missing:
-        print(f"[Config] WARNING: Missing environment variables: {', '.join(missing)}")
-        print("[Config] Some features will be unavailable. Set them in .env at project root.")
+        optional_missing.append("KITE_API_SECRET")
+    if optional_missing:
+        print(f"[Config] WARNING: Missing optional variables: {', '.join(optional_missing)}")
+        print("[Config] Broker features will be unavailable. Set them in .env at project root.")
+
+    print(f"[Config] Environment: {ENVIRONMENT}")

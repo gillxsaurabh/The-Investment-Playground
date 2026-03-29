@@ -1,0 +1,314 @@
+<!-- Header -->
+<app-header-banner
+  [userName]="user?.name || ''"
+  [activePage]="'discover'"
+  [brokerLinked]="brokerLinked"
+  [nifty]="nifty"
+  [sensex]="sensex"
+  [marketGainers]="marketGainers"
+  [marketLosers]="marketLosers"
+  [isMarketLoading]="isMarketLoading"
+  [marketError]="marketError"
+  (onLogout)="goToLogin()">
+</app-header-banner>
+
+<div class="discover-container">
+  <div class="discover-layout">
+
+    <!-- LEFT: Pipeline Controls + Results -->
+    <div class="pipeline-panel">
+
+      <!-- Mode Toggle -->
+      <div class="mode-bar">
+        <div class="mode-pills">
+          <button class="mode-pill" [class.active-buy]="pipelineMode === 'buy'" [disabled]="isRunning" (click)="togglePipelineMode('buy')">&#9650; BUY</button>
+          <button class="mode-pill" [class.active-sell]="pipelineMode === 'sell'" [disabled]="isRunning" (click)="togglePipelineMode('sell')">&#9660; SELL</button>
+        </div>
+        <span class="mode-desc" *ngIf="pipelineMode === 'buy'">Find new stocks to enter</span>
+        <span class="mode-desc sell-desc" *ngIf="pipelineMode === 'sell'">Audit portfolio for exits</span>
+      </div>
+
+      <!-- Gear Slider (buy only) -->
+      <div class="gear-section" *ngIf="pipelineMode === 'buy'"
+        [class.turbo]="selectedGear === 5"
+        [style.--gear-color]="getSliderColor()">
+        <div class="gear-icon" [class.shake]="selectedGear === 5">{{ GEAR_ICONS[selectedGear] }}</div>
+        <div class="gear-slider-wrap">
+          <input type="range" class="gear-slider" min="1" max="5" step="1"
+            [(ngModel)]="selectedGear" [disabled]="isRunning"
+            [style.--slider-color]="getSliderColor()">
+          <div class="gear-labels">
+            <span *ngFor="let g of [1,2,3,4,5]" class="gear-label"
+              [class.active]="g === selectedGear"
+              [style.color]="g === selectedGear ? getSliderColor() : ''"
+              (click)="selectedGear = g">
+              {{ GEAR_INFO[g].label }}
+            </span>
+          </div>
+        </div>
+        <p class="gear-desc" [style.color]="getSliderColor()">Level {{ selectedGear }} — {{ GEAR_INFO[selectedGear].description }}</p>
+      </div>
+
+      <!-- AI Provider -->
+      <div class="provider-row">
+        <span class="provider-label"><span class="material-icons">smart_toy</span> AI Provider</span>
+        <div class="provider-chips">
+          <button *ngFor="let p of ['gemini', 'claude', 'openai']"
+            class="provider-chip" [class.active]="selectedProvider === p"
+            [disabled]="isRunning" (click)="selectedProvider = $any(p)">
+            {{ p === 'gemini' ? 'Gemini' : p === 'claude' ? 'Claude' : 'GPT-4o' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Run Button -->
+      <div class="run-row">
+        <button class="btn-run" *ngIf="!isRunning" (click)="startPipeline()">
+          <span class="material-icons">{{ pipelineMode === 'buy' ? 'search' : 'assessment' }}</span>
+          {{ pipelineMode === 'buy' ? 'Discover Stocks' : 'Audit Portfolio' }}
+        </button>
+        <button class="btn-cancel" *ngIf="isRunning" (click)="cancelPipeline()">
+          <span class="material-icons">stop</span> Cancel
+        </button>
+      </div>
+
+      <!-- Pipeline Stepper -->
+      <div class="stepper" *ngIf="isRunning || isCompleted">
+        <div *ngFor="let step of activePipelineSteps; let i = index" class="step"
+          [class.running]="step.status === 'running'"
+          [class.completed]="step.status === 'completed'"
+          [class.error]="step.status === 'error'">
+          <div class="step-indicator">
+            <div class="step-dot">
+              <span class="material-icons" *ngIf="step.status === 'completed'">check</span>
+              <span class="material-icons spin-sm" *ngIf="step.status === 'running'">refresh</span>
+              <span class="material-icons" *ngIf="step.status === 'error'">error</span>
+              <span *ngIf="step.status === 'pending'" class="step-num">{{ i + 1 }}</span>
+            </div>
+            <div class="step-line" *ngIf="i < activePipelineSteps.length - 1"></div>
+          </div>
+          <div class="step-info">
+            <div class="step-name">{{ step.agentName }}</div>
+            <div class="step-counts" *ngIf="step.stocksRemaining !== null">
+              <span *ngIf="step.previousCount">{{ step.previousCount }}</span>
+              <span class="material-icons arrow-sm" *ngIf="step.previousCount">arrow_forward</span>
+              <span class="count-badge">{{ step.stocksRemaining }}</span>
+            </div>
+            <div class="step-dur" *ngIf="step.durationMs">{{ (step.durationMs / 1000).toFixed(1) }}s</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pipeline message -->
+      <div class="pipeline-msg" *ngIf="pipelineMessage">{{ pipelineMessage }}</div>
+
+      <!-- BUY Results -->
+      <div class="results-section" *ngIf="pipelineMode === 'buy' && stockResults.length > 0">
+        <div class="results-header">
+          <span class="results-title">{{ stockResults.length }} Stocks Found</span>
+        </div>
+        <div class="stock-cards">
+          <div *ngFor="let stock of stockResults" class="stock-card"
+            [class.expanded]="expandedStock === stock.symbol"
+            (click)="toggleStock(stock.symbol)">
+            <div class="card-top">
+              <div class="rank-badge" *ngIf="stock.final_rank">
+                <span [class]="stock.final_rank === 1 ? 'rank-gold' : stock.final_rank === 2 ? 'rank-silver' : 'rank-bronze'">
+                  #{{ stock.final_rank }}
+                </span>
+              </div>
+              <div class="stock-identity">
+                <span class="stock-sym">{{ stock.symbol }}</span>
+                <span class="stock-sector">{{ stock.sector }}</span>
+              </div>
+              <div class="score-badge" *ngIf="stock.composite_score">
+                {{ stock.composite_score.toFixed(1) }}
+              </div>
+              <div class="news-dot" [class.warning]="stock.news_flag === 'warning'" [class.clear]="stock.news_flag === 'clear'" [title]="stock.news_flag === 'warning' ? 'News warning' : 'News clear'"></div>
+              <button class="btn-add" [class.btn-staged]="isStaged(stock.symbol)"
+                (click)="$event.stopPropagation(); isStaged(stock.symbol) ? removeFromStaging(stock.symbol) : addToStaging(stock)">
+                <span class="material-icons">{{ isStaged(stock.symbol) ? 'check' : 'add' }}</span>
+              </button>
+            </div>
+            <div class="card-expanded" *ngIf="expandedStock === stock.symbol">
+              <div class="detail-row"><span>Price</span><span>&#8377;{{ stock.current_price.toFixed(2) }}</span></div>
+              <div class="detail-row"><span>RSI</span><span>{{ stock.rsi?.toFixed(1) || '—' }}</span></div>
+              <div class="detail-row"><span>Sector 5d</span><span [class.pos]="(stock.sector_5d_change ?? 0) > 0" [class.neg]="(stock.sector_5d_change ?? 0) < 0">{{ stock.sector_5d_change?.toFixed(2) }}%</span></div>
+              <div class="detail-row" *ngIf="stock.ai_conviction"><span>AI Conviction</span><span>{{ stock.ai_conviction.toFixed(1) }}</span></div>
+              <div class="why-selected" *ngIf="stock.why_selected">{{ stock.why_selected }}</div>
+              <button class="btn-trade" (click)="$event.stopPropagation(); openTradeModal(stock)">
+                <span class="material-icons">show_chart</span> Trade
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SELL Results -->
+      <div class="results-section" *ngIf="pipelineMode === 'sell' && sellResults.length > 0">
+        <div class="results-header">
+          <span class="results-title">{{ sellResults.length }} Holdings Audited</span>
+        </div>
+        <div class="sell-cards">
+          <div *ngFor="let result of sellResults" class="sell-card">
+            <div class="sell-top">
+              <span class="sell-sym">{{ result.symbol }}</span>
+              <span class="urgency-badge" [class]="getUrgencyClass(result.sell_urgency_label)">
+                {{ result.sell_urgency_label }}
+              </span>
+              <span class="pnl" [class.pos]="result.pnl >= 0" [class.neg]="result.pnl < 0">
+                {{ result.pnl >= 0 ? '+' : '' }}{{ result.pnl_percentage?.toFixed(1) }}%
+              </span>
+            </div>
+            <div class="sell-signals" *ngIf="result.sell_signals?.length">
+              <span *ngFor="let sig of result.sell_signals.slice(0, 2)" class="signal-tag">{{ sig }}</span>
+            </div>
+            <div class="sell-reason" *ngIf="result.sell_reason">{{ result.sell_reason }}</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT: Staging Sidebar -->
+    <aside class="staging-panel">
+      <div class="staging-header">
+        <span class="material-icons">queue</span>
+        Staging Queue
+        <span class="staging-count" *ngIf="stagingList.length">{{ stagingList.length }}</span>
+      </div>
+
+      <!-- Trading mode toggle -->
+      <div class="mode-row">
+        <span class="mode-label">Mode</span>
+        <div class="mode-chips">
+          <button class="mode-chip-sm" [class.active-sim]="tradingMode === 'simulator'" (click)="switchToSimulator()">
+            Simulator
+          </button>
+          <button class="mode-chip-sm" [class.active-live]="tradingMode === 'live'" (click)="showLiveModeConfirm = true">
+            Live
+          </button>
+        </div>
+        <span class="live-dot" [class.live]="tradingMode === 'live'" [title]="tradingMode === 'live' ? 'Live — real money' : 'Simulator'"></span>
+      </div>
+
+      <div class="staging-empty" *ngIf="stagingList.length === 0">
+        <span class="material-icons">add_circle_outline</span>
+        <p>Add stocks from results to stage trades</p>
+      </div>
+
+      <div class="staging-list" *ngIf="stagingList.length > 0">
+        <div *ngFor="let s of stagingList" class="staging-item">
+          <div class="staging-sym">{{ s.symbol }}</div>
+          <div class="staging-price">&#8377;{{ s.current_price?.toFixed(2) }}</div>
+          <button class="btn-stage-trade" (click)="openTradeModal(s)">Trade</button>
+          <button class="btn-remove" (click)="removeFromStaging(s.symbol)">
+            <span class="material-icons">close</span>
+          </button>
+        </div>
+
+        <button class="btn-bulk" *ngIf="stagingList.length > 1" (click)="openBulkTradeModal()">
+          <span class="material-icons">bolt</span>
+          Trade All ({{ stagingList.length }})
+        </button>
+      </div>
+    </aside>
+
+  </div>
+</div>
+
+<!-- Trade Modal -->
+<div class="modal-overlay" *ngIf="showTradeModal" (click)="closeTradeModal()">
+  <div class="modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Trade {{ tradeDetails?.symbol || tradingStock?.symbol }}</h3>
+      <button class="modal-close" (click)="closeTradeModal()"><span class="material-icons">close</span></button>
+    </div>
+    <div class="modal-body" *ngIf="isLoadingTrade">
+      <span class="material-icons spin-lg">refresh</span>
+      <p>Calculating trade parameters...</p>
+    </div>
+    <div class="modal-body" *ngIf="!isLoadingTrade && tradeDetails">
+      <div class="trade-grid">
+        <div class="trow"><span>Entry Price</span><span>&#8377;{{ tradeDetails.ltp.toFixed(2) }}</span></div>
+        <div class="trow"><span>ATR</span><span>{{ tradeDetails.atr.toFixed(2) }}</span></div>
+        <div class="trow"><span>Initial SL</span><span>&#8377;{{ tradeDetails.initialSl.toFixed(2) }}</span></div>
+        <div class="trow"><span>Risk/Share</span><span>&#8377;{{ tradeDetails.riskPerShare.toFixed(2) }}</span></div>
+        <div class="trow"><span>Quantity</span><span class="qty">{{ tradeDetails.quantity }}</span></div>
+        <div class="trow"><span>Investment</span><span>&#8377;{{ tradeDetails.investmentAmount.toFixed(0) }}</span></div>
+        <div class="trow"><span>Funds Available</span><span>&#8377;{{ tradeDetails.availableFunds.toFixed(0) }}</span></div>
+      </div>
+      <div class="error-box" *ngIf="tradeError">{{ tradeError }}</div>
+      <button class="btn-execute" (click)="executeTrade()" [disabled]="tradeDetails.quantity === 0">
+        <span class="material-icons">flash_on</span>
+        Execute Trade
+      </button>
+    </div>
+    <div class="modal-body error-state" *ngIf="!isLoadingTrade && tradeError && !tradeDetails">
+      <p>{{ tradeError }}</p>
+    </div>
+  </div>
+</div>
+
+<!-- Bulk Trade Modal -->
+<div class="modal-overlay" *ngIf="showBulkTradeModal" (click)="closeBulkModal()">
+  <div class="modal bulk-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3><span class="material-icons">bolt</span> Trade All ({{ stagingList.length }})</h3>
+      <button class="modal-close" (click)="closeBulkModal()" [disabled]="bulkTradeExecuting">
+        <span class="material-icons">close</span>
+      </button>
+    </div>
+    <div class="modal-body loading-body" *ngIf="bulkTradeLoading">
+      <span class="material-icons spin-lg">refresh</span>
+      <p>Calculating parameters for {{ stagingList.length }} stocks...</p>
+    </div>
+    <div class="modal-body" *ngIf="!bulkTradeLoading && bulkTradeDetails">
+      <div class="bulk-summary">
+        <div class="bulk-stat"><span>Available Funds</span><strong>&#8377;{{ bulkTradeDetails.availableFunds.toFixed(0) }}</strong></div>
+        <div class="bulk-stat"><span>Risk Budget / Stock</span><strong>&#8377;{{ bulkTradeDetails.perStockAllocation.toFixed(0) }}</strong></div>
+      </div>
+      <div class="bulk-stocks">
+        <div *ngFor="let s of bulkTradeDetails.stocks" class="bulk-row" [class.bulk-success]="s.status === 'success'" [class.bulk-error]="s.status === 'error'">
+          <span class="bulk-sym">{{ s.symbol }}</span>
+          <span class="bulk-qty">{{ s.quantity }} shares &#64; &#8377;{{ s.ltp.toFixed(2) }}</span>
+          <span class="bulk-status-icon">
+            <span class="material-icons" *ngIf="s.status === 'success'">check_circle</span>
+            <span class="material-icons" *ngIf="s.status === 'error'">cancel</span>
+            <span class="material-icons spin-sm" *ngIf="s.status === 'pending' && bulkTradeExecuting && bulkTradeProgress === bulkTradeDetails.stocks.indexOf(s)">refresh</span>
+          </span>
+        </div>
+      </div>
+      <div class="bulk-progress" *ngIf="bulkTradeExecuting">
+        <div class="progress-bar">
+          <div class="progress-fill" [style.width.%]="(bulkTradeProgress! / bulkTradeDetails.stocks.length) * 100"></div>
+        </div>
+        <span>{{ bulkTradeProgress }} / {{ bulkTradeDetails.stocks.length }} executed</span>
+      </div>
+      <button class="btn-execute" *ngIf="!bulkTradeExecuting" (click)="executeAllTrades()"
+        [disabled]="bulkTradeDetails.stocks.length === 0">
+        <span class="material-icons">flash_on</span>
+        Execute All {{ bulkTradeDetails.stocks.length }} Trades
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Live mode confirmation -->
+<div class="modal-overlay" *ngIf="showLiveModeConfirm" (click)="showLiveModeConfirm = false">
+  <div class="modal confirm-modal" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h3>Switch to Live Trading</h3>
+      <button class="modal-close" (click)="showLiveModeConfirm = false"><span class="material-icons">close</span></button>
+    </div>
+    <div class="modal-body">
+      <p class="confirm-warning">All trades executed from the Discover page will use <strong>real money</strong> via your connected Kite account.</p>
+      <div class="confirm-actions">
+        <button class="btn-cancel-confirm" (click)="showLiveModeConfirm = false">Cancel</button>
+        <button class="btn-confirm-live" (click)="switchToLive()">
+          <span class="material-icons">warning</span> Switch to Live
+        </button>
+      </div>
+    </div>
+  </div>
+</div>

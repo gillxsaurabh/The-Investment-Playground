@@ -68,7 +68,7 @@ export interface PriceSnapshotValue {
   pct: number;
   ltp: number;
   entry_price: number;
-  stop_loss: number;  // current trailing SL value
+  stop_loss: number;
   highest_price_seen: number;
   unrealized_pnl: number;
   quantity: number;
@@ -168,10 +168,6 @@ export class SimulatorService implements OnDestroy {
     this.stopPolling();
   }
 
-  private getToken(): string {
-    return localStorage.getItem('access_token') || '';
-  }
-
   private loadTradingMode(): void {
     this.http.get<{ success: boolean; mode: string }>(`${this.tradingApiUrl}/mode`)
       .pipe(catchError(() => of({ success: false, mode: 'simulator' })))
@@ -205,7 +201,6 @@ export class SimulatorService implements OnDestroy {
     ltp?: number
   ): Observable<ExecuteOrderResponse> {
     return this.http.post<ExecuteOrderResponse>(`${this.apiUrl}/execute`, {
-      access_token: this.getToken(),
       symbol,
       quantity,
       atr,
@@ -224,7 +219,6 @@ export class SimulatorService implements OnDestroy {
     const pnlPct = entry > 0 ? ((ltp - entry) / entry) * 100 : 0;
     const distToSlPct = ltp > 0 ? ((ltp - sl) / ltp) * 100 : 0;
 
-    // Check days since last high for stall
     if (position.last_new_high_date) {
       const lastHighDate = new Date(position.last_new_high_date);
       const now = new Date();
@@ -232,30 +226,20 @@ export class SimulatorService implements OnDestroy {
       if (daysSinceHigh > 5) return 'STALLED';
     }
 
-    // Critical: dangerously close to stop loss
     if (distToSlPct <= 0.5) return 'CRITICAL';
-
-    // Runaway: in profit with healthy distance
     if (pnlPct > 0 && distToSlPct > 2.0) return 'RUNAWAY';
-
-    // Holding: in loss but still has buffer
     if (pnlPct < 0 && distToSlPct > 0.5) return 'HOLDING';
-
-    // Default: in profit but tight, or break-even
     return 'RUNAWAY';
   }
 
   getPositions(): Observable<SimulatorState> {
-    return this.http.post<SimulatorState>(`${this.apiUrl}/positions`, {
-      access_token: this.getToken()
-    }).pipe(
+    return this.http.get<SimulatorState>(`${this.apiUrl}/positions`).pipe(
       tap(state => this.stateSubject.next(state))
     );
   }
 
   closePosition(tradeId: string): Observable<ClosePositionResponse> {
     return this.http.post<ClosePositionResponse>(`${this.apiUrl}/close`, {
-      access_token: this.getToken(),
       trade_id: tradeId
     }).pipe(
       tap(() => this.refreshPositions())
@@ -264,7 +248,6 @@ export class SimulatorService implements OnDestroy {
 
   resetSimulator(initialCapital: number = 100000): Observable<any> {
     return this.http.post(`${this.apiUrl}/reset`, {
-      access_token: this.getToken(),
       initial_capital: initialCapital
     }).pipe(
       tap(() => this.refreshPositions())
@@ -272,9 +255,8 @@ export class SimulatorService implements OnDestroy {
   }
 
   getPriceHistory(minutes: number = 60): Observable<PriceHistoryResponse> {
-    return this.http.post<PriceHistoryResponse>(`${this.apiUrl}/price-history`, {
-      access_token: this.getToken(),
-      minutes,
+    return this.http.get<PriceHistoryResponse>(`${this.apiUrl}/price-history`, {
+      params: { minutes: minutes.toString() }
     });
   }
 
@@ -282,7 +264,6 @@ export class SimulatorService implements OnDestroy {
     if (this.pollingActive) return;
     this.pollingActive = true;
 
-    // Initial fetch
     this.refreshPositions();
 
     this.pollingSubscription = interval(intervalMs).pipe(
@@ -314,11 +295,8 @@ export class SimulatorService implements OnDestroy {
     return this.http.post('/api/automation/enable', { enabled, mode });
   }
 
-  runAutomationNow(accessToken: string, dryRun: boolean = true): Observable<any> {
-    return this.http.post('/api/automation/run-now', {
-      access_token: accessToken,
-      dry_run: dryRun,
-    });
+  runAutomationNow(dryRun: boolean = true): Observable<any> {
+    return this.http.post('/api/automation/run-now', { dry_run: dryRun });
   }
 
   getAutomationHistory(): Observable<{ success: boolean; history: AutomationRunRecord[] }> {

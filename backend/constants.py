@@ -131,6 +131,22 @@ SELL_URGENCY_SELL = 40     # Score >= this → SELL
 SELL_URGENCY_WATCH = 20    # Score >= this → WATCH
                            # Score < 20 → HOLD
 
+# --- Unified Stock Audit: health score weights (sum = 10.0) ---
+AUDIT_WEIGHT_TECHNICAL    = 3.0   # RSI, ADX, EMA alignment, volume
+AUDIT_WEIGHT_FUNDAMENTAL  = 2.5   # ROE, D/E, profit trend
+AUDIT_WEIGHT_RS           = 2.0   # 3M relative strength vs Nifty + sector
+AUDIT_WEIGHT_NEWS         = 1.5   # AI-analyzed news sentiment
+AUDIT_WEIGHT_POSITION     = 1.0   # Current unrealized P&L health
+
+# --- Audit health label thresholds ---
+AUDIT_HEALTHY  = 7.5   # Score >= this → HEALTHY
+AUDIT_STABLE   = 5.0   # Score >= this → STABLE
+AUDIT_WATCH    = 3.0   # Score >= this → WATCH
+               # Score < 3.0 → CRITICAL
+
+# --- Claude thinking budget for audit AI enrichment ---
+AUDIT_AI_THINKING_BUDGET = 10000
+
 # --- Live trading risk controls ---
 LIVE_MAX_POSITION_SIZE = 0.20      # Single position cannot exceed 20% of equity
 LIVE_MAX_DAILY_LOSS = 0.05         # Halt if daily realized loss > 5% of equity

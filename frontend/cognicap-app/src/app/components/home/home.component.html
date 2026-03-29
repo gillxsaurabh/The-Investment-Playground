@@ -1,134 +1,325 @@
-<div class="home-root">
+<div class="landing">
 
-  <!-- Ambient background -->
-  <div class="bg-layer">
-    <div class="orb orb-1"></div>
-    <div class="orb orb-2"></div>
-    <div class="grid-lines"></div>
-  </div>
+  <!-- Hero particle network canvas -->
+  <canvas #heroCanvas class="hero-canvas"></canvas>
 
-  <!-- Top bar -->
-  <header class="top-bar">
-    <div class="brand" (click)="onLogoClick()" style="cursor:default;user-select:none;">
-      <div class="brand-icon">
-        <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
+  <!-- ── NAVIGATION ─────────────────────────────────────────── -->
+  <header class="nav" [class.scrolled]="isScrolled">
+    <div class="nav-brand" (click)="onLogoClick()" title="">
+      <div class="logo-mark">
+        <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
           <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
           <polyline points="16 7 22 7 22 13" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
-      <span class="brand-name">TIP</span>
-      <span class="brand-sub">The Investment Playground</span>
+      <span class="logo-text">TIP</span>
     </div>
-    <div class="top-badge">Indian Equity Markets</div>
+
+    <nav class="nav-center">
+      <a (click)="scrollTo('agents')">Agents</a>
+      <a (click)="scrollTo('modes')">Risk Modes</a>
+      <a (click)="scrollTo('simulator')">Simulator</a>
+    </nav>
+
+    <div class="nav-actions">
+      <button class="btn-ghost" (click)="goToLogin()">Login</button>
+      <button class="btn-glow btn-sm" (click)="goToSignup()">Sign Up</button>
+    </div>
   </header>
 
-  <!-- Hero -->
-  <main class="hero">
-    <div class="hero-tag">AI-Native Trading Terminal</div>
+  <!-- ── HERO — split layout ──────────────────────────────────── -->
+  <section class="hero" id="hero">
+    <div class="hero-split">
 
-    <h1 class="hero-title">
-      Institutional intelligence.<br>
-      <span class="grad">Built for every investor.</span>
-    </h1>
-
-    <p class="hero-sub">
-      Five AI agents. Three intelligent pipelines. Autonomous weekly execution.
-      TIP brings hedge-fund-grade stock discovery and portfolio intelligence
-      to Indian retail investors — directly connected to Zerodha Kite.
-    </p>
-
-    <!-- CTA cards -->
-    <div class="cta-row">
-
-      <!-- Demo CTA -->
-      <button class="cta-card cta-demo" (click)="enterDemo()">
-        <div class="cta-icon cta-icon-demo">
-          <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
-            <polyline points="10 8 16 12 10 16" fill="currentColor"/>
-          </svg>
-        </div>
-        <div class="cta-body">
-          <div class="cta-title">Explore Demo</div>
-          <div class="cta-desc">Full walkthrough with live-looking demo data. No login required.</div>
-        </div>
-        <div class="cta-arrow">→</div>
-      </button>
-
-      <!-- Kite CTA (dummy) -->
-      <button class="cta-card cta-kite" (click)="goToKiteLogin()" disabled>
-        <div class="cta-icon cta-icon-kite">
-          <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
-            <rect x="3" y="11" width="18" height="11" rx="2" stroke="currentColor" stroke-width="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
-          </svg>
-        </div>
-        <div class="cta-body">
-          <div class="cta-title">
-            Connect Kite Account
-            <span class="soon-badge">Coming soon</span>
+      <!-- LEFT: Feature highlight cards -->
+      <div class="hero-left">
+        <div class="feature-card glass">
+          <div class="fc-icon"><span class="material-icons">radar</span></div>
+          <div class="fc-body">
+            <div class="fc-num">500+</div>
+            <div class="fc-label">Stocks scanned every run</div>
           </div>
-          <div class="cta-desc">Link your Zerodha account for live portfolio tracking and real order execution.</div>
         </div>
-        <div class="cta-arrow cta-arrow-dim">→</div>
-      </button>
-
-    </div>
-
-    <!-- Feature strip -->
-    <div class="feature-strip">
-      <div class="feature-item">
-        <span class="feature-dot dot-purple"></span>
-        <span>5-Agent Stock Discovery</span>
+        <div class="feature-card glass">
+          <div class="fc-icon"><span class="material-icons">smart_toy</span></div>
+          <div class="fc-body">
+            <div class="fc-num">12</div>
+            <div class="fc-label">AI agents across 3 pipelines</div>
+          </div>
+        </div>
+        <div class="feature-card glass">
+          <div class="fc-icon"><span class="material-icons">tune</span></div>
+          <div class="fc-body">
+            <div class="fc-num">5</div>
+            <div class="fc-label">Risk gears — Safe to Turbo</div>
+          </div>
+        </div>
+        <div class="feature-card glass">
+          <div class="fc-icon"><span class="material-icons">bolt</span></div>
+          <div class="fc-body">
+            <div class="fc-num">0</div>
+            <div class="fc-label">Clicks for weekly automation</div>
+          </div>
+        </div>
       </div>
-      <div class="feature-sep">·</div>
-      <div class="feature-item">
-        <span class="feature-dot dot-teal"></span>
-        <span>AI Sell Audit Pipeline</span>
+
+      <!-- RIGHT: Headline + CTAs -->
+      <div class="hero-right">
+        <div class="hero-badge">AI-POWERED TRADING INTELLIGENCE</div>
+        <h1 class="hero-h1">
+          YOUR PORTFOLIO.<br>
+          <span class="gradient-text">ON AUTOPILOT.</span>
+        </h1>
+        <p class="hero-sub">
+          12 AI agents scan 500+ stocks every week, score opportunities across
+          fundamentals, technicals, and news — then execute trades automatically
+          while you sleep.
+        </p>
+        <div class="hero-ctas">
+          <button class="btn-glow btn-lg" (click)="goToSignup()">
+            Get Started <span class="arrow">&rarr;</span>
+          </button>
+          <button class="btn-outline btn-lg" (click)="enterDemo()">
+            <svg class="play-svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21"/></svg>
+            View Demo
+          </button>
+        </div>
       </div>
-      <div class="feature-sep">·</div>
-      <div class="feature-item">
-        <span class="feature-dot dot-yellow"></span>
-        <span>Live P&L Tracking</span>
-      </div>
-      <div class="feature-sep">·</div>
-      <div class="feature-item">
-        <span class="feature-dot dot-red"></span>
-        <span>ATR Trailing Stops</span>
-      </div>
-      <div class="feature-sep">·</div>
-      <div class="feature-item">
-        <span class="feature-dot dot-purple"></span>
-        <span>Monday Auto-Execution</span>
-      </div>
+
     </div>
 
-  </main>
+    <!-- Scroll indicator -->
+    <div class="scroll-hint" (click)="scrollTo('integration')">
+      <span class="scroll-label">Explore</span>
+      <span class="material-icons bounce-arrow">expand_more</span>
+    </div>
+  </section>
 
-  <!-- Stats row -->
-  <div class="stats-bar" style="position:relative;">
-    <div class="stat">
-      <div class="stat-num">500<span class="stat-plus">+</span></div>
-      <div class="stat-lbl">Stocks scanned per run</div>
-    </div>
-    <div class="stat-div"></div>
-    <div class="stat">
-      <div class="stat-num">12</div>
-      <div class="stat-lbl">AI agents across 3 pipelines</div>
-    </div>
-    <div class="stat-div"></div>
-    <div class="stat">
-      <div class="stat-num">5</div>
-      <div class="stat-lbl">Risk gears — Fortress to Turbo</div>
-    </div>
-    <div class="stat-div"></div>
-    <div class="stat">
-      <div class="stat-num">0</div>
-      <div class="stat-lbl">Clicks needed for weekly automation</div>
-    </div>
+  <!-- ── INTEGRATION (Kite API) ─────────────────────────────── -->
+  <section class="section section-alt" id="integration">
+    <div class="section-inner">
+      <span class="section-badge reveal">SEAMLESS INTEGRATION</span>
+      <h2 class="reveal">Plug &amp; <span class="gradient-text">Play.</span></h2>
+      <p class="section-sub reveal">
+        Connect your Kite account in seconds via secure API.
+        Instantly view your portfolio's health, positions, and P&amp;L.
+      </p>
 
-    <!-- Hidden dev entry point — barely visible, bottom-right corner -->
-    <span class="dev-link" (click)="openDevLogin()" title="">·</span>
-  </div>
+      <div class="integration-flow reveal">
+        <div class="flow-endpoint">
+          <div class="endpoint-icon tip-icon">
+            <svg width="22" height="22" fill="none" viewBox="0 0 24 24">
+              <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <polyline points="16 7 22 7 22 13" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <span class="endpoint-label">Your Portfolio</span>
+        </div>
 
+        <div class="flow-bridge">
+          <div class="bridge-line"></div>
+          <div class="bridge-dot bd-1"></div>
+          <div class="bridge-dot bd-2"></div>
+          <div class="bridge-dot bd-3"></div>
+          <span class="bridge-label">Secure API</span>
+        </div>
+
+        <div class="flow-endpoint">
+          <div class="endpoint-icon kite-icon">K</div>
+          <span class="endpoint-label">Kite by Zerodha</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── AGENT ECOSYSTEM ────────────────────────────────────── -->
+  <section class="section" id="agents">
+    <div class="section-inner">
+      <span class="section-badge reveal">THE AGENT ECOSYSTEM</span>
+      <h2 class="reveal">Your AI-Powered<br><span class="gradient-text">Analyst Army.</span></h2>
+      <p class="section-sub reveal">
+        Four specialist AI agents analyse every stock across fundamentals, technicals,
+        news, and sector dynamics — then collectively score and rank.
+      </p>
+
+      <div class="agents-grid">
+        <div
+          class="agent-card glass reveal"
+          *ngFor="let agent of agents; let i = index"
+          [style.transition-delay.ms]="i * 120">
+          <div class="agent-icon-wrap" [style.--agent-color]="agent.color">
+            <span class="material-icons">{{ agent.icon }}</span>
+          </div>
+          <h3>{{ agent.name }}</h3>
+          <p>{{ agent.desc }}</p>
+        </div>
+      </div>
+
+      <!-- AI pipeline flow -->
+      <div class="score-pipeline reveal">
+        <div class="pipe-step" *ngFor="let a of agents; let last = last">
+          <div class="pipe-dot" [style.background]="a.color"></div>
+          <span class="pipe-name">{{ a.name.split(' ')[0] }}</span>
+          <span class="pipe-arrow" *ngIf="!last">&rarr;</span>
+        </div>
+        <span class="pipe-arrow">&rarr;</span>
+        <div class="pipe-result">
+          <span class="pipe-label">AI Conviction</span>
+          <span class="pipe-score gradient-text">87/100</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── AUTOMATE & PROTECT ─────────────────────────────────── -->
+  <section class="section section-alt" id="execution">
+    <div class="section-inner">
+      <span class="section-badge reveal">AUTOMATE &amp; PROTECT</span>
+      <h2 class="reveal">Full Control.<br><span class="gradient-text">Full Automation.</span></h2>
+      <p class="section-sub reveal">
+        Trade manually on AI insights, or flip the switch to full automation.
+        Your capital is guarded by algorithmic stop-loss shields.
+      </p>
+
+      <div class="exec-grid">
+        <div class="exec-card glass reveal">
+          <div class="exec-icon-wrap auto-glow">
+            <span class="material-icons">smart_toy</span>
+          </div>
+          <h3>Autonomous Execution</h3>
+          <p>Every Monday at 9 AM IST, the system runs the full discovery pipeline — scanning, filtering, ranking, and executing trades automatically.</p>
+          <div class="exec-indicator">
+            <span class="auto-dot pulse"></span>
+            <span>SYSTEM ACTIVE</span>
+          </div>
+        </div>
+
+        <div class="exec-card glass reveal" style="transition-delay:150ms">
+          <div class="exec-icon-wrap shield-glow">
+            <span class="material-icons">shield</span>
+          </div>
+          <h3>Algorithmic Stop-Loss</h3>
+          <p>Every position is guarded by ATR-based trailing stops that ratchet upward with gains and protect your capital even while you sleep.</p>
+          <div class="exec-indicator shield-ind">
+            <span class="material-icons shield-pulse">verified_user</span>
+            <span>CAPITAL PROTECTED</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── RISK MODES ─────────────────────────────────────────── -->
+  <section class="section" id="modes">
+    <div class="section-inner">
+      <span class="section-badge reveal">PERSONALIZED RISK</span>
+      <h2 class="reveal">Choose Your<br><span class="gradient-text">Risk Profile.</span></h2>
+      <p class="section-sub reveal">
+        Five calibrated risk modes let you control how aggressively the AI scans
+        and trades — from blue-chip safety to full-universe hunting.
+      </p>
+
+      <div class="gear-selector reveal">
+        <button
+          *ngFor="let g of gears; let i = index"
+          class="gear-btn"
+          [class.active]="activeGear === i"
+          [style.--g-color]="g.color"
+          (click)="selectGear(i)">
+          {{ g.name }}
+        </button>
+      </div>
+
+      <div class="gear-preview glass reveal">
+        <div class="gear-info">
+          <h3 [style.color]="gears[activeGear].color">{{ gears[activeGear].name }} Mode</h3>
+          <p class="gear-desc">{{ gears[activeGear].desc }}</p>
+          <div class="gear-meta">
+            <div class="meta-row">
+              <span class="meta-label">Universe</span>
+              <span class="meta-val">{{ gears[activeGear].universe }}</span>
+            </div>
+            <div class="meta-row">
+              <span class="meta-label">Risk Level</span>
+              <div class="risk-bar-track">
+                <div
+                  class="risk-bar-fill"
+                  [style.width.%]="gears[activeGear].riskPct"
+                  [style.background]="gears[activeGear].color">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="gear-chart-wrap">
+          <canvas #gearCanvas class="gear-canvas"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── SIMULATOR ──────────────────────────────────────────── -->
+  <section class="section section-alt" id="simulator">
+    <div class="section-inner">
+      <span class="section-badge reveal">ZERO-RISK SANDBOX</span>
+      <h2 class="reveal">Test Your Theories.<br><span class="gradient-text">Risk Nothing.</span></h2>
+      <p class="section-sub reveal">
+        Run the full AI pipeline in Simulator Mode with &#8377;5,00,000 virtual capital.
+        See exactly how the system performs before committing real money.
+      </p>
+
+      <div class="sim-preview reveal">
+        <div class="sim-frame glass wireframe">
+          <div class="sim-titlebar">
+            <span class="sim-dot sd-r"></span>
+            <span class="sim-dot sd-y"></span>
+            <span class="sim-dot sd-g"></span>
+            <span class="sim-titlebar-text">Simulator Dashboard</span>
+          </div>
+          <div class="sim-body">
+            <div class="sim-chart-area">
+              <div class="sim-bar" *ngFor="let h of [35,55,45,70,60,80,50,65,75,40,90,55]" [style.height.%]="h"></div>
+            </div>
+            <div class="sim-sidebar">
+              <div class="sim-line" *ngFor="let w of [80,60,90,45,70]" [style.width.%]="w"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="reveal" style="text-align:center;margin-top:2.5rem;">
+        <button class="btn-glow btn-lg" (click)="enterDemo()">
+          Start Your Demo <span class="arrow">&rarr;</span>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────── -->
+  <footer class="footer">
+    <div class="footer-gradient"></div>
+    <div class="footer-cta reveal">
+      <h2>THE FUTURE OF TRADING<br><span class="gradient-text">IS AUTONOMOUS.</span></h2>
+      <button class="btn-glow btn-lg" (click)="goToSignup()">Create Account</button>
+    </div>
+    <div class="footer-bottom">
+      <div class="footer-brand">
+        <div class="logo-mark small">
+          <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
+            <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <polyline points="16 7 22 7 22 13" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+        </div>
+        <span>The Investment Playground</span>
+      </div>
+      <div class="footer-links">
+        <span>Terms &amp; Conditions</span>
+        <span>Privacy Policy</span>
+        <span>Support</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Hidden dev entry -->
+  <span class="dev-link" (click)="openDevLogin()">·</span>
 </div>

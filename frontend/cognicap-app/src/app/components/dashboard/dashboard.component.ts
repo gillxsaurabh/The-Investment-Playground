@@ -1,10 +1,13 @@
 import { Component, OnInit, OnDestroy, NgZone } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { KiteService, StockAnalysisResponse, MarketIndex, Stock } from '../../services/kite.service';
+import { KiteService, StockAnalysisResponse, MarketIndex, Stock, AuditHolding, AuditSummary } from '../../services/kite.service';
+import { SimulatorService, SimulatorState } from '../../services/simulator.service';
+import { AuthService } from '../../services/auth.service';
 import { DemoService } from '../../services/demo.service';
 import { ChatComponent } from '../chat/chat.component';
 import { HeaderBannerComponent } from '../shared/header-banner/header-banner.component';
+import { StockAuditChartComponent, AuditStep } from './stock-audit-chart.component';
 import { forkJoin, interval, Subscription } from 'rxjs';
 
 interface Holding {
@@ -50,12 +53,13 @@ interface HoldingWithAnalysis extends Holding {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ChatComponent, HeaderBannerComponent],
+  imports: [CommonModule, ChatComponent, HeaderBannerComponent, StockAuditChartComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss', './portfolio-live.scss']
 })
 export class DashboardComponent implements OnInit, OnDestroy {
   user: any = null;
+  brokerLinked = false;
   holdings: HoldingWithAnalysis[] = [];
   summary: any = null;
   topGainers: TopPerformer[] = [];
@@ -84,6 +88,20 @@ export class DashboardComponent implements OnInit, OnDestroy {
   analyzeAllProgress: string = '';
   private analyzeAllAbort: AbortController | null = null;
   
+  // Open positions widget
+  simulatorState: SimulatorState | null = null;
+  private simulatorSub: Subscription | null = null;
+
+  // Stock Audit
+  auditHoldings: AuditHolding[] = [];
+  auditSummary: AuditSummary | null = null;
+  auditIsRunning = false;
+  auditSteps: AuditStep[] = [];
+  auditLastRunAt: string | null = null;
+  auditPipelineMessage = '';
+  auditSelectedStock: AuditHolding | null = null;
+  private auditAbort: AbortController | null = null;
+
   // Auto refresh subscriptions
   private marketRefreshSubscription: Subscription | null = null;
   private portfolioRefreshSubscription: Subscription | null = null;
@@ -92,6 +110,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   constructor(
     private kiteService: KiteService,
+    private simulatorService: SimulatorService,
+    private authService: AuthService,
     private demoService: DemoService,
     private router: Router,
     private ngZone: NgZone
@@ -101,13 +121,33 @@ export class DashboardComponent implements OnInit, OnDestroy {
     this.loadUserData();
     this.loadPortfolioData();
     this.loadMarketData();
+    this.loadAuditResults();
     this.startMarketDataAutoRefresh();
     this.startPortfolioDataAutoRefresh();
+    this.simulatorService.startPolling(5000);
+    this.simulatorSub = this.simulatorService.state$.subscribe(state => {
+      if (state) this.simulatorState = state;
+    });
   }
 
   ngOnDestroy(): void {
     this.stopMarketDataAutoRefresh();
     this.stopPortfolioDataAutoRefresh();
+    this.simulatorService.stopPolling();
+    this.simulatorSub?.unsubscribe();
+    this.auditAbort?.abort();
+  }
+
+  get openPositionsCount(): number {
+    return this.simulatorState?.positions?.length ?? 0;
+  }
+
+  get totalUnrealizedPnl(): number {
+    return this.simulatorState?.positions?.reduce((s, p) => s + (p.unrealized_pnl ?? 0), 0) ?? 0;
+  }
+
+  get recentTrades(): any[] {
+    return (this.simulatorState?.trade_history ?? []).slice(0, 5);
   }
 
   private startMarketDataAutoRefresh(): void {
@@ -148,9 +188,8 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   loadUserData(): void {
-    this.kiteService.user$.subscribe(user => {
-      this.user = user;
-    });
+    this.authService.user$.subscribe(user => { this.user = user; });
+    this.authService.brokerLinked$.subscribe(linked => { this.brokerLinked = linked; });
   }
 
   loadPortfolioData(): void {
@@ -290,13 +329,24 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   logout(): void {
-    this.kiteService.logout();
+    this.authService.logout();
     this.demoService.exitDemo();
-    this.router.navigate(['/']);
   }
 
-  navigateToTradingAgent(): void {
-    this.router.navigate(['/trading-agent']);
+  navigateToDiscover(): void {
+    this.router.navigate(['/discover']);
+  }
+
+  navigateToSellAudit(): void {
+    this.router.navigate(['/discover'], { queryParams: { mode: 'sell' } });
+  }
+
+  navigateToPositions(): void {
+    this.router.navigate(['/positions']);
+  }
+
+  navigateToAutomation(): void {
+    this.router.navigate(['/automation']);
   }
 
   getPnlClass(pnl: number): string {
@@ -381,9 +431,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
     const STREAM_TIMEOUT = 120000; // 2 minutes timeout
 
     try {
-      const accessToken = localStorage.getItem('access_token') || '';
-      
-      // Set up timeout  
+      const jwtToken = localStorage.getItem('jwt_access_token') || '';
+
+      // Set up timeout
       timeoutId = setTimeout(() => {
         console.error('Stream timeout after 2 minutes');
         holding.analysisState = 'error';
@@ -393,9 +443,11 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
       const response = await fetch('/api/analyze-stock-stream', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${jwtToken}`,
+        },
         body: JSON.stringify({
-          access_token: accessToken,
           symbol: holding.tradingsymbol,
           instrument_token: holding.instrument_token,
         }),
@@ -525,6 +577,125 @@ export class DashboardComponent implements OnInit, OnDestroy {
       hour: '2-digit',
       minute: '2-digit'
     });
+  }
+
+  // ── Stock Audit ───────────────────────────────────────────────────────────
+
+  loadAuditResults(): void {
+    this.kiteService.getAuditResults().subscribe({
+      next: (resp) => {
+        if (resp.success && resp.results.length > 0) {
+          this.auditHoldings = resp.results.map(r => ({ ...r.data, saved_at: r.saved_at }));
+          this.auditLastRunAt = resp.results[0]?.saved_at ?? null;
+          this.auditSummary = this.computeAuditSummary(this.auditHoldings);
+        }
+      },
+      error: () => { /* no cached results — silent */ },
+    });
+  }
+
+  private computeAuditSummary(holdings: AuditHolding[]): AuditSummary {
+    const summary: AuditSummary = { total: holdings.length, healthy: 0, stable: 0, watch: 0, critical: 0, avg_score: 0 };
+    let scoreSum = 0;
+    for (const h of holdings) {
+      if (h.health_label === 'HEALTHY')  summary.healthy++;
+      else if (h.health_label === 'STABLE')   summary.stable++;
+      else if (h.health_label === 'WATCH')    summary.watch++;
+      else if (h.health_label === 'CRITICAL') summary.critical++;
+      scoreSum += h.health_score;
+    }
+    summary.avg_score = holdings.length > 0 ? +(scoreSum / holdings.length).toFixed(1) : 0;
+    return summary;
+  }
+
+  runAudit(): void {
+    if (this.auditIsRunning) return;
+    this.auditIsRunning = true;
+    this.auditSteps = [];
+    this.auditPipelineMessage = 'Starting audit…';
+    this.auditAbort = new AbortController();
+
+    const jwt = localStorage.getItem('jwt_access_token') || '';
+
+    fetch('/api/audit/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
+      body: JSON.stringify({}),
+      signal: this.auditAbort.signal,
+    }).then(resp => {
+      if (!resp.ok || !resp.body) throw new Error('Audit request failed');
+      const reader = resp.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let currentEvent = '';
+
+      const pump = (): Promise<void> =>
+        reader.read().then(({ done, value }) => {
+          if (done) {
+            if (buffer.trim()) this.processAuditLines(buffer.split('\n'), currentEvent);
+            this.ngZone.run(() => { this.auditIsRunning = false; this.auditPipelineMessage = ''; });
+            return;
+          }
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+          for (const line of lines) {
+            if (line.startsWith('event: ')) { currentEvent = line.slice(7).trim(); }
+            else if (line.startsWith('data: ') && currentEvent) {
+              try {
+                const data = JSON.parse(line.slice(6));
+                const evt = currentEvent;
+                this.ngZone.run(() => this.handleAuditEvent(evt, data));
+              } catch {}
+              currentEvent = '';
+            }
+          }
+          return pump();
+        });
+
+      return pump();
+    }).catch((err: any) => {
+      if (err?.name !== 'AbortError') console.error('Audit SSE error', err);
+      this.ngZone.run(() => { this.auditIsRunning = false; this.auditPipelineMessage = ''; });
+    });
+  }
+
+  private processAuditLines(lines: string[], currentEvent: string): void {
+    for (const line of lines) {
+      if (line.startsWith('event: ')) { currentEvent = line.slice(7).trim(); }
+      else if (line.startsWith('data: ') && currentEvent) {
+        try { const data = JSON.parse(line.slice(6)); this.ngZone.run(() => this.handleAuditEvent(currentEvent, data)); } catch {}
+        currentEvent = '';
+      }
+    }
+  }
+
+  private handleAuditEvent(event: string, data: any): void {
+    if (event === 'step_start') {
+      this.auditPipelineMessage = data.role || '';
+      const existing = this.auditSteps.find(s => s.step === data.step);
+      if (existing) { existing.status = 'running'; }
+      else { this.auditSteps.push({ step: data.step, agent: data.agent, role: data.role, status: 'running' }); }
+    } else if (event === 'step_log') {
+      this.auditPipelineMessage = data.message || '';
+    } else if (event === 'step_complete') {
+      const s = this.auditSteps.find(st => st.step === data.step);
+      if (s) { s.status = 'completed'; s.duration_ms = data.duration_ms; }
+    } else if (event === 'final_result') {
+      this.auditHoldings = (data.holdings || []).map((h: AuditHolding) => ({ ...h, saved_at: data.saved_at }));
+      this.auditLastRunAt = data.saved_at ?? new Date().toISOString();
+      this.auditSummary = this.computeAuditSummary(this.auditHoldings);
+      this.auditIsRunning = false;
+      this.auditPipelineMessage = '';
+    }
+  }
+
+  openAuditStockModal(holding: AuditHolding): void {
+    this.auditSelectedStock = holding;
+  }
+
+  closeAuditStockModal(): void {
+    this.auditSelectedStock = null;
   }
 
   // Market helper methods

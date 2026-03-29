@@ -4,9 +4,10 @@ import csv
 import logging
 from pathlib import Path
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 
 from broker import get_broker
+from middleware.auth import require_auth, require_broker
 
 logger = logging.getLogger(__name__)
 
@@ -31,17 +32,13 @@ def _load_nifty100_symbols() -> list[str]:
     return symbols
 
 
-@market_bp.route("/indices", methods=["POST"])
+@market_bp.route("/indices", methods=["GET"])
+@require_auth
+@require_broker
 def get_market_indices():
     """Get Nifty 50 and Sensex indices data using Kite API."""
     try:
-        data = request.json
-        access_token = data.get("access_token")
-
-        if not access_token:
-            return jsonify({"success": False, "error": "Access token is required"}), 400
-
-        broker = get_broker(access_token)
+        broker = get_broker(g.broker_token)
         quotes = broker.get_quote(["NSE:NIFTY 50", "BSE:SENSEX"])
 
         nifty_quote = quotes.get("NSE:NIFTY 50", {})
@@ -64,36 +61,29 @@ def get_market_indices():
                 "volume": quote.get("volume", 0),
             }
 
-        return jsonify(
-            {
-                "success": True,
-                "nifty": format_index_data(nifty_quote, "NIFTY 50"),
-                "sensex": format_index_data(sensex_quote, "SENSEX"),
-            }
-        )
+        return jsonify({
+            "success": True,
+            "nifty": format_index_data(nifty_quote, "NIFTY 50"),
+            "sensex": format_index_data(sensex_quote, "SENSEX"),
+        })
 
     except Exception as e:
         logger.error(f"Market indices API failed: {e}")
-        return jsonify({"success": False, "error": f"Failed to fetch market indices: {str(e)}"}), 503
+        return jsonify({"success": False, "error": "Failed to fetch market indices"}), 503
 
 
-@market_bp.route("/top-stocks", methods=["POST"])
+@market_bp.route("/top-stocks", methods=["GET"])
+@require_auth
+@require_broker
 def get_top_stocks():
     """Get top gainers and losers from Nifty 100 using live Kite API quotes."""
     try:
-        data = request.json or {}
-        access_token = data.get("access_token")
-
-        if not access_token:
-            return jsonify({"success": False, "error": "access_token is required"}), 400
-
         symbols = _load_nifty100_symbols()
         if not symbols:
             return jsonify({"success": False, "error": "Could not load Nifty 100 symbol list"}), 500
 
-        broker = get_broker(access_token)
+        broker = get_broker(g.broker_token)
 
-        # Kite quote API accepts up to 500 instruments per call
         instrument_keys = [f"NSE:{sym}" for sym in symbols]
         quotes = broker.get_quote(instrument_keys)
 
@@ -133,4 +123,4 @@ def get_top_stocks():
 
     except Exception as e:
         logger.error(f"Top stocks API failed: {e}")
-        return jsonify({"success": False, "error": f"Failed to fetch top stocks: {str(e)}"}), 503
+        return jsonify({"success": False, "error": "Failed to fetch top stocks"}), 503

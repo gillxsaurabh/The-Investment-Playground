@@ -1,0 +1,388 @@
+<app-header-banner
+  [userName]="user?.name || ''"
+  [activePage]="'account'"
+  [brokerLinked]="brokerLinked"
+  [nifty]="nifty"
+  [sensex]="sensex"
+  [marketGainers]="marketGainers"
+  [marketLosers]="marketLosers"
+  [isMarketLoading]="isMarketLoading"
+  [marketError]="marketError"
+  (onLogout)="logout()">
+</app-header-banner>
+
+<div class="account-container">
+  <div class="account-content" [class.wide]="activeTab === 'automation'">
+
+    <!-- ─── Page Title ─────────────────────── -->
+    <div class="page-header">
+      <h1 class="page-title">
+        <span class="material-icons">manage_accounts</span>
+        Account Settings
+      </h1>
+    </div>
+
+    <!-- ─── Tab Bar ───────────────────────── -->
+    <div class="tab-bar">
+      <button class="tab-btn" [class.active]="activeTab === 'profile'" (click)="selectTab('profile')">
+        <span class="material-icons">person</span>
+        Profile
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'broker'" (click)="selectTab('broker')">
+        <span class="material-icons">link</span>
+        Broker
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'security'" (click)="selectTab('security')">
+        <span class="material-icons">lock</span>
+        Security
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'automation'" (click)="selectTab('automation')">
+        <span class="material-icons">schedule</span>
+        Automation
+        <span class="tab-auto-badge" [class.enabled]="automationStatus?.enabled" *ngIf="automationStatus !== null">
+          {{ automationStatus?.enabled ? 'ON' : 'OFF' }}
+        </span>
+      </button>
+    </div>
+
+    <!-- ─── Profile Tab ────────────────────── -->
+    <section class="settings-card" *ngIf="activeTab === 'profile'">
+      <h2 class="card-title">
+        <span class="material-icons">person</span>
+        Profile
+      </h2>
+      <div class="profile-row">
+        <div class="profile-avatar">{{ user?.name?.charAt(0)?.toUpperCase() || '?' }}</div>
+        <div class="profile-info">
+          <div class="profile-name">{{ user?.name || 'Unknown' }}</div>
+          <div class="profile-email">{{ user?.email || '' }}</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Broker Tab ────────────────────── -->
+    <section class="settings-card" *ngIf="activeTab === 'broker'">
+      <h2 class="card-title">
+        <span class="material-icons">link</span>
+        Zerodha Kite Integration
+      </h2>
+
+      <!-- Already linked -->
+      <div *ngIf="brokerLinked" class="broker-linked-state">
+        <div class="linked-badge">
+          <span class="material-icons">check_circle</span>
+          Kite account linked
+        </div>
+
+        <div class="broker-details" *ngIf="brokerInfo">
+          <div class="detail-row">
+            <span class="detail-label">User ID</span>
+            <span class="detail-value">{{ brokerInfo.broker_user_id }}</span>
+          </div>
+          <div class="detail-row" *ngIf="brokerInfo.broker_user_name">
+            <span class="detail-label">Name</span>
+            <span class="detail-value">{{ brokerInfo.broker_user_name }}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">Linked at</span>
+            <span class="detail-value">{{ brokerInfo.linked_at | date:'medium' }}</span>
+          </div>
+        </div>
+
+        <div class="broker-actions">
+          <button class="btn-secondary" (click)="checkBrokerStatus()" [disabled]="brokerStatusChecking">
+            <span class="material-icons">wifi_tethering</span>
+            {{ brokerStatusChecking ? 'Checking...' : 'Check Session' }}
+          </button>
+          <button class="btn-outline" (click)="brokerLinked = false">
+            <span class="material-icons">link_off</span>
+            Re-link Account
+          </button>
+        </div>
+
+        <div *ngIf="brokerStatusMsg" class="status-msg" [class.success]="brokerStatusMsg.includes('active')" [class.warn]="!brokerStatusMsg.includes('active')">
+          {{ brokerStatusMsg }}
+        </div>
+      </div>
+
+      <!-- Not linked -->
+      <div *ngIf="!brokerLinked" class="broker-link-flow">
+        <p class="broker-description">
+          Link your Zerodha Kite account to enable live portfolio data, stock analysis, and AI-powered trading insights.
+        </p>
+
+        <div class="step-list">
+          <div class="step">
+            <span class="step-num">1</span>
+            <div class="step-content">
+              <strong>Open Kite OAuth login</strong>
+              <p>Click the button below to open the Zerodha login page in a new tab.</p>
+              <button class="btn-primary" (click)="getKiteLoginUrl()">
+                <span class="material-icons">open_in_new</span>
+                Open Kite Login
+              </button>
+            </div>
+          </div>
+
+          <div class="step">
+            <span class="step-num">2</span>
+            <div class="step-content">
+              <strong>Copy the request_token</strong>
+              <p>After logging in, Kite will redirect you to a URL containing <code>request_token=...</code>. Copy that token value.</p>
+            </div>
+          </div>
+
+          <div class="step">
+            <span class="step-num">3</span>
+            <div class="step-content">
+              <strong>Paste and link</strong>
+              <input
+                class="token-input"
+                type="text"
+                [(ngModel)]="requestToken"
+                placeholder="Paste request_token here"
+                (keyup.enter)="linkBroker()"
+              />
+              <button
+                class="btn-primary"
+                (click)="linkBroker()"
+                [disabled]="!requestToken.trim() || linkStatus === 'loading'">
+                <span class="material-icons">{{ linkStatus === 'loading' ? 'hourglass_empty' : 'link' }}</span>
+                {{ linkStatus === 'loading' ? 'Linking...' : 'Link Kite Account' }}
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div *ngIf="linkStatus === 'success'" class="alert alert-success">
+          <span class="material-icons">check_circle</span>
+          Kite account linked successfully!
+        </div>
+        <div *ngIf="linkStatus === 'error'" class="alert alert-error">
+          <span class="material-icons">error</span>
+          {{ linkError }}
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── Security Tab ────────────────────── -->
+    <section class="settings-card" *ngIf="activeTab === 'security'">
+      <h2 class="card-title">
+        <span class="material-icons">lock</span>
+        Change Password
+      </h2>
+
+      <div class="change-pw-form">
+        <div class="form-group">
+          <label>Current Password</label>
+          <input type="password" [(ngModel)]="currentPassword" placeholder="Enter current password"
+            [disabled]="passwordChangeStatus === 'loading'" autocomplete="current-password">
+        </div>
+        <div class="form-group">
+          <label>New Password</label>
+          <input type="password" [(ngModel)]="newPassword" placeholder="Minimum 8 characters"
+            [disabled]="passwordChangeStatus === 'loading'" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label>Confirm New Password</label>
+          <input type="password" [(ngModel)]="confirmNewPassword" placeholder="Confirm new password"
+            [disabled]="passwordChangeStatus === 'loading'" autocomplete="new-password">
+        </div>
+
+        <div class="success-msg" *ngIf="passwordChangeSuccess">
+          <span class="material-icons">check_circle</span>
+          {{ passwordChangeSuccess }}
+        </div>
+        <div class="error-msg" *ngIf="passwordChangeError">
+          <span class="material-icons">error_outline</span>
+          {{ passwordChangeError }}
+        </div>
+
+        <button class="btn-change-pw" (click)="changePassword()"
+          [disabled]="passwordChangeStatus === 'loading'">
+          <span class="material-icons" *ngIf="passwordChangeStatus !== 'loading'">lock_reset</span>
+          <span class="material-icons spin" *ngIf="passwordChangeStatus === 'loading'">refresh</span>
+          {{ passwordChangeStatus === 'loading' ? 'Changing...' : 'Change Password' }}
+        </button>
+      </div>
+    </section>
+
+    <!-- ─── Automation Tab ─────────────────── -->
+    <div *ngIf="activeTab === 'automation'" class="automation-section">
+      <div class="two-col">
+
+        <!-- LEFT: Config + Run Now -->
+        <div class="left-col">
+
+          <!-- Config Card -->
+          <section class="settings-card">
+            <h2 class="card-title">
+              <span class="material-icons">settings</span>
+              Configuration
+              <span class="auto-badge" [class.enabled]="automationStatus?.enabled" *ngIf="automationStatus">
+                {{ automationStatus?.enabled ? 'Enabled' : 'Disabled' }}
+              </span>
+            </h2>
+
+            <div class="status-loading" *ngIf="isLoadingStatus">
+              <span class="material-icons spin">refresh</span> Loading...
+            </div>
+
+            <div class="config-body" *ngIf="!isLoadingStatus && automationStatus">
+              <!-- Enable toggle -->
+              <div class="config-row">
+                <div class="config-label-group">
+                  <span class="config-label">Weekly Automation</span>
+                  <span class="config-desc">Runs every Monday 9:00 AM IST</span>
+                </div>
+                <button class="toggle-btn" [class.on]="automationStatus.enabled" (click)="toggleAutomation()">
+                  <span class="toggle-knob"></span>
+                </button>
+              </div>
+
+              <!-- Mode selector -->
+              <div class="config-row">
+                <div class="config-label-group">
+                  <span class="config-label">Execution Mode</span>
+                  <span class="config-desc">Where to place trades</span>
+                </div>
+                <div class="mode-chips">
+                  <button class="mode-chip" [class.active]="automationMode === 'simulator'"
+                    (click)="automationMode = 'simulator'">Simulator</button>
+                  <button class="mode-chip live" [class.active]="automationMode === 'live'"
+                    (click)="automationMode = 'live'">Live</button>
+                </div>
+              </div>
+
+              <!-- Next run -->
+              <div class="info-row" *ngIf="automationStatus.next_run">
+                <span class="info-label"><span class="material-icons">event</span> Next Run</span>
+                <span class="info-val">{{ automationStatus.next_run | date:'dd MMM yyyy, h:mm a' }}</span>
+              </div>
+
+              <!-- Last run summary -->
+              <div class="info-row" *ngIf="automationStatus.last_run">
+                <span class="info-label"><span class="material-icons">history</span> Last Run</span>
+                <span class="info-val">{{ formatDate(automationStatus.last_run.date) }}</span>
+              </div>
+              <div class="last-run-detail" *ngIf="automationStatus.last_run">
+                <span class="status-tag" [class]="getStatusClass(automationStatus.last_run)">
+                  {{ getStatusLabel(automationStatus.last_run) }}
+                </span>
+                <span class="last-run-stocks" *ngIf="automationStatus.last_run.trades_executed > 0">
+                  {{ automationStatus.last_run.trades_executed }} trade(s) executed
+                </span>
+                <span class="last-run-stocks" *ngIf="automationStatus.last_run.trades_executed === 0">
+                  No trades executed
+                </span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Run Now Card -->
+          <section class="settings-card">
+            <h2 class="card-title">
+              <span class="material-icons">play_circle</span>
+              Manual Run
+            </h2>
+            <div class="run-config">
+              <div class="config-row">
+                <div class="config-label-group">
+                  <span class="config-label">Dry Run Mode</span>
+                  <span class="config-desc">Simulate without executing trades</span>
+                </div>
+                <button class="toggle-btn" [class.on]="isDryRun" (click)="isDryRun = !isDryRun">
+                  <span class="toggle-knob"></span>
+                </button>
+              </div>
+              <button class="btn-run-now" (click)="runNow()" [disabled]="isRunning">
+                <span class="material-icons" *ngIf="!isRunning">bolt</span>
+                <span class="material-icons spin" *ngIf="isRunning">refresh</span>
+                {{ isRunning ? 'Running...' : isDryRun ? 'Dry Run Now' : 'Run Now (Live)' }}
+              </button>
+
+              <div class="run-error" *ngIf="runError">
+                <span class="material-icons">error_outline</span>
+                {{ runError }}
+              </div>
+
+              <div class="run-result" *ngIf="runResult">
+                <div class="result-header">
+                  <span class="status-tag" [class]="getStatusClass(runResult)">{{ getStatusLabel(runResult) }}</span>
+                  <span class="result-date">{{ formatDate(runResult.date) }}</span>
+                </div>
+                <div class="result-row" *ngIf="(runResult.stocks_selected?.length || 0) > 0">
+                  <span class="result-label">Stocks Selected</span>
+                  <div class="result-stocks">
+                    <span *ngFor="let s of runResult.stocks_selected" class="result-stock-tag">
+                      {{ s.symbol }}
+                      <small>G{{ s.gear }}</small>
+                    </span>
+                  </div>
+                </div>
+                <div class="result-row">
+                  <span class="result-label">Trades Executed</span>
+                  <span class="result-val">{{ runResult.trades_executed }}</span>
+                </div>
+                <div class="result-row" *ngIf="runResult.reason">
+                  <span class="result-label">Reason</span>
+                  <span class="result-val muted">{{ runResult.reason }}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+
+        </div>
+
+        <!-- RIGHT: History -->
+        <div class="right-col">
+          <section class="settings-card history-card-full">
+            <h2 class="card-title">
+              <span class="material-icons">history</span>
+              Run History
+              <span class="history-count" *ngIf="automationHistory.length">{{ automationHistory.length }}</span>
+            </h2>
+
+            <div class="status-loading" *ngIf="isLoadingHistory">
+              <span class="material-icons spin">refresh</span> Loading history...
+            </div>
+
+            <div class="history-empty" *ngIf="!isLoadingHistory && automationHistory.length === 0">
+              <span class="material-icons">inbox</span>
+              <p>No automation runs yet.</p>
+            </div>
+
+            <div class="history-list" *ngIf="!isLoadingHistory && automationHistory.length > 0">
+              <div *ngFor="let run of automationHistory" class="history-item">
+                <div class="history-item-header">
+                  <span class="history-date">{{ formatDate(run.date) }}</span>
+                  <span class="status-tag" [class]="getStatusClass(run)">{{ getStatusLabel(run) }}</span>
+                  <span class="history-mode" *ngIf="run.mode">{{ run.mode }}</span>
+                </div>
+
+                <div class="history-item-body" *ngIf="(run.stocks_selected?.length || 0) > 0">
+                  <div class="history-stocks">
+                    <span *ngFor="let s of run.stocks_selected" class="history-stock-chip">
+                      {{ s.symbol }}
+                      <span class="gear-dot" [title]="GEAR_LABELS[s.gear]">G{{ s.gear }}</span>
+                    </span>
+                  </div>
+                </div>
+
+                <div class="history-item-footer">
+                  <span *ngIf="run.trades_executed > 0" class="trades-badge">
+                    <span class="material-icons">check_circle</span>
+                    {{ run.trades_executed }} trade(s)
+                  </span>
+                  <span *ngIf="run.reason" class="skip-reason">{{ run.reason }}</span>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+</div>

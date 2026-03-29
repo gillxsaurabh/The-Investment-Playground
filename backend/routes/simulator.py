@@ -2,147 +2,150 @@
 
 import logging
 import threading
+from pathlib import Path
+from typing import Dict, Tuple
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 
 from broker import get_broker
+from config import STATE_DIR
+from middleware.auth import require_auth, require_broker
 from services.simulator_engine import PaperTradingSimulator, start_position_monitor
+from services.validation import validate_request, SimulatorExecuteBody, SimulatorCloseBody, SimulatorResetBody
 from constants import DEFAULT_INITIAL_CAPITAL
 
 logger = logging.getLogger(__name__)
 
 simulator_bp = Blueprint("simulator", __name__, url_prefix="/api/simulator")
 
-# Simulator singleton
-_simulator_instance = None
-_simulator_lock = threading.Lock()
-_simulator_token = None
+# Per-user simulator instances: {user_id: (PaperTradingSimulator, access_token)}
+_simulators: Dict[int, Tuple[PaperTradingSimulator, str]] = {}
+_simulators_lock = threading.Lock()
 
 
-def _get_simulator(access_token: str) -> PaperTradingSimulator:
-    """Get or create the simulator singleton, updating the Kite access token if it changed."""
-    global _simulator_instance, _simulator_token
-    with _simulator_lock:
-        if _simulator_instance is None:
-            broker = get_broker(access_token)
-            _simulator_instance = PaperTradingSimulator(broker.raw_kite)
-            _simulator_token = access_token
-            start_position_monitor(_simulator_instance)
-        elif access_token != _simulator_token:
-            # Token changed (new login / new day) — update the Kite instance
-            _simulator_instance.kite.set_access_token(access_token)
-            _simulator_token = access_token
-        return _simulator_instance
+def _user_simulator_files(user_id: int):
+    """Return per-user simulator data and price-history file paths."""
+    data_file = STATE_DIR / f"simulator_data_{user_id}.json"
+    history_file = STATE_DIR / f"simulator_price_history_{user_id}.json"
+    return data_file, history_file
+
+
+def _get_simulator(user_id: int, access_token: str) -> PaperTradingSimulator:
+    """Get or create a per-user simulator instance, refreshing the token if it changed."""
+    with _simulators_lock:
+        if user_id in _simulators:
+            sim, prev_token = _simulators[user_id]
+            if access_token != prev_token:
+                sim.kite.set_access_token(access_token)
+                _simulators[user_id] = (sim, access_token)
+            return sim
+
+        # First time for this user — create a new instance
+        broker = get_broker(access_token)
+        data_file, history_file = _user_simulator_files(user_id)
+        sim = PaperTradingSimulator(
+            broker.raw_kite,
+            data_file=data_file,
+            history_file=history_file,
+            user_id=user_id,
+        )
+        start_position_monitor(sim)
+        _simulators[user_id] = (sim, access_token)
+        return sim
 
 
 @simulator_bp.route("/execute", methods=["POST"])
-def simulator_execute():
+@require_auth
+@require_broker
+@validate_request(SimulatorExecuteBody)
+def simulator_execute(body: SimulatorExecuteBody):
     """Execute a virtual buy order."""
     try:
-        data = request.json
-        access_token = data.get("access_token")
-        if not access_token:
-            return jsonify({"success": False, "error": "No access token"}), 401
-
-        sim = _get_simulator(access_token)
+        sim = _get_simulator(g.current_user["id"], g.broker_token)
         result = sim.execute_order(
-            symbol=data["symbol"],
-            quantity=data["quantity"],
-            atr_at_entry=data["atr"],
-            trail_multiplier=data.get("trail_multiplier", 1.5),
-            instrument_token=data.get("instrument_token"),
-            ltp=data.get("ltp"),  # use modal price when provided
+            symbol=body.symbol,
+            quantity=body.quantity,
+            atr_at_entry=body.atr,
+            trail_multiplier=body.trail_multiplier,
+            instrument_token=body.instrument_token,
+            ltp=body.ltp,
         )
         status = 200 if result.get("success") else 400
         return jsonify(result), status
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Failed to execute order"}), 500
 
 
-@simulator_bp.route("/positions", methods=["POST"])
+@simulator_bp.route("/positions", methods=["GET"])
+@require_auth
+@require_broker
 def simulator_positions():
     """Get active positions with live P&L."""
     try:
-        data = request.json
-        access_token = data.get("access_token")
-        if not access_token:
-            return jsonify({"success": False, "error": "No access token"}), 401
-
-        sim = _get_simulator(access_token)
+        sim = _get_simulator(g.current_user["id"], g.broker_token)
         result = sim.get_positions_with_pnl()
         return jsonify({"success": True, **result})
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Failed to fetch positions"}), 500
 
 
 @simulator_bp.route("/close", methods=["POST"])
-def simulator_close():
+@require_auth
+@require_broker
+@validate_request(SimulatorCloseBody)
+def simulator_close(body: SimulatorCloseBody):
     """Close a virtual position."""
     try:
-        data = request.json
-        access_token = data.get("access_token")
-        if not access_token:
-            return jsonify({"success": False, "error": "No access token"}), 401
-
-        sim = _get_simulator(access_token)
-        result = sim.close_position(trade_id=data["trade_id"])
+        sim = _get_simulator(g.current_user["id"], g.broker_token)
+        result = sim.close_position(trade_id=body.trade_id)
         status = 200 if result.get("success") else 404
         return jsonify(result), status
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Failed to close position"}), 500
 
 
 @simulator_bp.route("/reset", methods=["POST"])
-def simulator_reset():
+@require_auth
+@require_broker
+@validate_request(SimulatorResetBody)
+def simulator_reset(body: SimulatorResetBody):
     """Reset the simulator."""
     try:
-        data = request.json
-        access_token = data.get("access_token")
-        if not access_token:
-            return jsonify({"success": False, "error": "No access token"}), 401
-
-        sim = _get_simulator(access_token)
-        initial_capital = data.get("initial_capital", DEFAULT_INITIAL_CAPITAL)
-        result = sim.reset(initial_capital)
+        sim = _get_simulator(g.current_user["id"], g.broker_token)
+        result = sim.reset(body.initial_capital)
         return jsonify(result)
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Failed to reset simulator"}), 500
 
 
-@simulator_bp.route("/status", methods=["POST"])
+@simulator_bp.route("/status", methods=["GET"])
+@require_auth
+@require_broker
 def simulator_status():
     """Get simulator account summary."""
     try:
-        data = request.json
-        access_token = data.get("access_token")
-        if not access_token:
-            return jsonify({"success": False, "error": "No access token"}), 401
-
-        sim = _get_simulator(access_token)
+        sim = _get_simulator(g.current_user["id"], g.broker_token)
         summary = sim.get_account_summary()
         return jsonify({"success": True, **summary})
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Failed to fetch status"}), 500
 
 
-@simulator_bp.route("/price-history", methods=["POST"])
+@simulator_bp.route("/price-history", methods=["GET"])
+@require_auth
+@require_broker
 def simulator_price_history():
     """Get price history snapshots for charting."""
     try:
-        data = request.json
-        access_token = data.get("access_token")
-        if not access_token:
-            return jsonify({"success": False, "error": "No access token"}), 401
-
-        sim = _get_simulator(access_token)
-        minutes = data.get("minutes", 60)
+        sim = _get_simulator(g.current_user["id"], g.broker_token)
+        minutes = request.args.get("minutes", 60, type=int)
         history = sim.get_price_history(minutes)
         return jsonify({"success": True, "history": history})
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Failed to fetch price history"}), 500

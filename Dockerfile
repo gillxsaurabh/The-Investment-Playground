@@ -4,7 +4,7 @@ WORKDIR /app/frontend/cognicap-app
 COPY frontend/cognicap-app/package*.json ./
 RUN npm ci
 COPY frontend/cognicap-app/ ./
-RUN npx ng build --configuration=development
+RUN npx ng build --configuration=production
 
 # Stage 2: Python runtime
 FROM python:3.11-slim
@@ -15,6 +15,9 @@ ARG DEPS_VER=2
 COPY backend/requirements.txt ./backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
+# Copy Gunicorn config
+COPY gunicorn.conf.py ./gunicorn.conf.py
+
 # Copy backend source
 COPY backend/ ./backend/
 
@@ -24,5 +27,13 @@ COPY --from=frontend-builder /app/frontend/cognicap-app/dist ./frontend/cognicap
 # Create state directory (gitignored — must exist at runtime)
 RUN mkdir -p backend/data/state
 
+# Run as non-root user for security
+RUN adduser --disabled-password --gecos "" appuser && chown -R appuser:appuser /app
+USER appuser
+
+# Health check for container orchestrators
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${PORT:-5000}/health/live')"
+
 # Railway/Render inject PORT; config.py reads it
-CMD ["python", "backend/app.py"]
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "backend.app:create_app()"]

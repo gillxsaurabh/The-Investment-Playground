@@ -18,6 +18,7 @@ from pathlib import Path
 import pytz
 
 from config import TOKEN_FILE, SIMULATOR_DATA_FILE, AUTOMATION_STATE_FILE
+from services.file_lock import locked_json_read, atomic_json_write
 from constants import (
     VIX_HIGH_THRESHOLD, VIX_RSI_TIGHTENING,
     VIX_TIER1_THRESHOLD, VIX_TIER2_THRESHOLD, VIX_TIER3_THRESHOLD,
@@ -55,30 +56,21 @@ MAX_FALLBACK_DEPTH = 10        # How deep into a gear's ranked list to look for 
 # ---------------------------------------------------------------------------
 
 def _load_state() -> dict:
-    path = Path(AUTOMATION_STATE_FILE)
-    if path.exists():
-        with open(path) as f:
-            return json.load(f)
-    return {"enabled": False, "mode": "simulator", "last_run": None, "history": []}
+    return locked_json_read(
+        AUTOMATION_STATE_FILE,
+        default={"enabled": False, "mode": "simulator", "last_run": None, "history": []},
+    )
 
 
 def _save_state(state: dict) -> None:
-    path = Path(AUTOMATION_STATE_FILE)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w") as f:
-        json.dump(state, f, indent=2, default=str)
+    atomic_json_write(AUTOMATION_STATE_FILE, state, indent=2, default=str)
 
 
 def _load_access_token() -> str | None:
-    path = Path(TOKEN_FILE)
-    if not path.exists():
+    data = locked_json_read(TOKEN_FILE, default=None)
+    if data is None:
         return None
-    try:
-        with open(path) as f:
-            data = json.load(f)
-        return data.get("access_token")
-    except Exception:
-        return None
+    return data.get("access_token")
 
 
 # ---------------------------------------------------------------------------
@@ -106,12 +98,8 @@ def _count_open_automation_positions(_run_id: str = None) -> int:
             return 0
 
     # Simulator mode: read from JSON
-    path = Path(SIMULATOR_DATA_FILE)
-    if not path.exists():
-        return 0
     try:
-        with open(path) as f:
-            data = json.load(f)
+        data = locked_json_read(SIMULATOR_DATA_FILE, default={})
         open_positions = data.get("active_positions", [])
         return sum(1 for p in open_positions if p.get("automation_run_id"))
     except Exception as e:

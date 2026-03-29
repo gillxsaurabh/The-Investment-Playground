@@ -28,10 +28,9 @@ export class ChatService {
 
   constructor(private http: HttpClient) {
     this.sessionId = this.generateSessionId();
-    // Add welcome message
     this.addMessage({
       id: this.generateMessageId(),
-      text: 'Hello! I\'m your CogniCap AI assistant. How can I help you with your portfolio today?',
+      text: 'Hello! I\'m your Investment Playground AI assistant. How can I help you with your portfolio today?',
       isUser: false,
       timestamp: new Date()
     });
@@ -51,7 +50,6 @@ export class ChatService {
   }
 
   sendMessage(message: string): Observable<ChatResponse> {
-    // Add user message immediately
     this.addMessage({
       id: this.generateMessageId(),
       text: message,
@@ -61,12 +59,10 @@ export class ChatService {
 
     return this.http.post<ChatResponse>(`${this.apiUrl}/chat/send`, {
       message,
-      session_id: this.sessionId,
-      access_token: localStorage.getItem('access_token') || ''
+      session_id: this.sessionId
     }).pipe(
       tap(response => {
         if (response.success && response.response) {
-          // Add AI response
           this.addMessage({
             id: this.generateMessageId(),
             text: response.response,
@@ -83,12 +79,11 @@ export class ChatService {
       session_id: this.sessionId
     }).pipe(
       tap(() => {
-        // Clear messages and add welcome message
         this.messagesSubject.next([]);
         this.sessionId = this.generateSessionId();
         this.addMessage({
           id: this.generateMessageId(),
-          text: 'Hello! I\'m your CogniCap AI assistant. How can I help you with your portfolio today?',
+          text: 'Hello! I\'m your Investment Playground AI assistant. How can I help you with your portfolio today?',
           isUser: false,
           timestamp: new Date()
         });

@@ -7,7 +7,9 @@ POST /api/trading/mode.
 
 import logging
 
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, g
+
+from middleware.auth import require_auth, require_broker
 
 logger = logging.getLogger(__name__)
 
@@ -20,6 +22,7 @@ def _get_engine(access_token: str, mode: str = None):
 
 
 @trading_bp.route("/mode", methods=["GET"])
+@require_auth
 def get_mode():
     """Return current trading mode."""
     from services.engine_factory import get_current_mode
@@ -27,6 +30,7 @@ def get_mode():
 
 
 @trading_bp.route("/mode", methods=["POST"])
+@require_auth
 def set_mode():
     """Set trading mode. Requires confirm=true when switching to live."""
     data = request.get_json(silent=True) or {}
@@ -50,15 +54,13 @@ def set_mode():
 
 
 @trading_bp.route("/execute", methods=["POST"])
+@require_auth
+@require_broker
 def execute_order():
     """Execute a buy order through the active engine."""
     try:
         data = request.json
-        access_token = data.get("access_token")
-        if not access_token:
-            return jsonify({"success": False, "error": "No access token"}), 401
-
-        engine = _get_engine(access_token)
+        engine = _get_engine(g.broker_token)
         result = engine.execute_order(
             symbol=data["symbol"],
             quantity=data["quantity"],
@@ -73,36 +75,31 @@ def execute_order():
         return jsonify(result), status
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Failed to execute order"}), 500
 
 
-@trading_bp.route("/positions", methods=["POST"])
+@trading_bp.route("/positions", methods=["GET"])
+@require_auth
+@require_broker
 def get_positions():
     """Get active positions with live P&L from the active engine."""
     try:
-        data = request.json
-        access_token = data.get("access_token")
-        if not access_token:
-            return jsonify({"success": False, "error": "No access token"}), 401
-
-        engine = _get_engine(access_token)
+        engine = _get_engine(g.broker_token)
         result = engine.get_positions_with_pnl()
         return jsonify({"success": True, "mode": engine.mode, **result})
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Failed to fetch positions"}), 500
 
 
 @trading_bp.route("/close", methods=["POST"])
+@require_auth
+@require_broker
 def close_position():
     """Close a position through the active engine."""
     try:
         data = request.json
-        access_token = data.get("access_token")
-        if not access_token:
-            return jsonify({"success": False, "error": "No access token"}), 401
-
-        engine = _get_engine(access_token)
+        engine = _get_engine(g.broker_token)
         result = engine.close_position(
             trade_id=data["trade_id"],
             reason=data.get("reason", "Manual Close"),
@@ -111,76 +108,64 @@ def close_position():
         return jsonify(result), status
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Failed to close position"}), 500
 
 
-@trading_bp.route("/status", methods=["POST"])
+@trading_bp.route("/status", methods=["GET"])
+@require_auth
+@require_broker
 def account_status():
     """Get account summary from the active engine."""
     try:
-        data = request.json
-        access_token = data.get("access_token")
-        if not access_token:
-            return jsonify({"success": False, "error": "No access token"}), 401
-
-        engine = _get_engine(access_token)
+        engine = _get_engine(g.broker_token)
         summary = engine.get_account_summary()
         return jsonify({"success": True, "mode": engine.mode, **summary})
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Failed to fetch status"}), 500
 
 
-@trading_bp.route("/price-history", methods=["POST"])
+@trading_bp.route("/price-history", methods=["GET"])
+@require_auth
+@require_broker
 def price_history():
     """Get price history snapshots for charting."""
     try:
-        data = request.json
-        access_token = data.get("access_token")
-        if not access_token:
-            return jsonify({"success": False, "error": "No access token"}), 401
-
-        engine = _get_engine(access_token)
-        minutes = data.get("minutes", 60)
+        engine = _get_engine(g.broker_token)
+        minutes = request.args.get("minutes", 60, type=int)
         history = engine.get_price_history(minutes)
         return jsonify({"success": True, "mode": engine.mode, "history": history})
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Failed to fetch price history"}), 500
 
 
-@trading_bp.route("/orders", methods=["POST"])
+@trading_bp.route("/orders", methods=["GET"])
+@require_auth
+@require_broker
 def get_orders():
     """Today's orders. Live: from Kite API. Simulator: empty list."""
     try:
-        data = request.json
-        access_token = data.get("access_token")
-        if not access_token:
-            return jsonify({"success": False, "error": "No access token"}), 401
-
-        engine = _get_engine(access_token)
+        engine = _get_engine(g.broker_token)
         if engine.mode == "live":
             from broker import get_broker
-            broker = get_broker(access_token)
+            broker = get_broker(g.broker_token)
             orders = broker.get_orders()
             return jsonify({"success": True, "mode": "live", "orders": orders})
         else:
             return jsonify({"success": True, "mode": "simulator", "orders": []})
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Failed to fetch orders"}), 500
 
 
 @trading_bp.route("/reconcile", methods=["POST"])
+@require_auth
+@require_broker
 def reconcile():
     """Trigger position reconciliation against Kite holdings (live mode only)."""
     try:
-        data = request.json
-        access_token = data.get("access_token")
-        if not access_token:
-            return jsonify({"success": False, "error": "No access token"}), 401
-
-        engine = _get_engine(access_token)
+        engine = _get_engine(g.broker_token)
         if engine.mode != "live":
             return jsonify({"success": False, "error": "Reconcile only applicable in live mode"}), 400
 
@@ -188,4 +173,4 @@ def reconcile():
         return jsonify(result)
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Reconciliation failed"}), 500

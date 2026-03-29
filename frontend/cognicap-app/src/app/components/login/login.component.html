@@ -10,84 +10,118 @@
       <div class="brand-icon">
         <span class="material-icons">candlestick_chart</span>
       </div>
-      <h1>CogniCap</h1>
+      <h1>The Investment Playground</h1>
       <p class="subtitle">Intelligent Portfolio Dashboard</p>
+    </div>
+
+    <!-- Tab switcher (login/signup only, not forgot) -->
+    <div class="tab-switcher" *ngIf="mode !== 'forgot'">
+      <button class="tab" [class.active]="mode === 'login'" (click)="switchMode('login')">Sign In</button>
+      <button class="tab" [class.active]="mode === 'signup'" (click)="switchMode('signup')">Sign Up</button>
+    </div>
+
+    <!-- Forgot password header -->
+    <div class="forgot-header" *ngIf="mode === 'forgot'">
+      <h2>Reset Password</h2>
+      <p class="forgot-sub">Enter your email and we'll send you a reset link.</p>
     </div>
 
     <div class="login-content">
 
-      <!-- Step 1: get URL -->
-      <div class="info-box" *ngIf="!showLoginUrl">
-        <span class="material-icons info-icon">info</span>
-        <p>Connect your Zerodha account to get started</p>
+      <!-- Sign Up: Name field -->
+      <div class="form-group" *ngIf="mode === 'signup'">
+        <label for="name">
+          <span class="material-icons">person</span>
+          Name
+        </label>
+        <input type="text" id="name" [(ngModel)]="name" placeholder="Your name" [disabled]="isLoading" autocomplete="name">
       </div>
 
-      <button
-        class="btn btn-primary"
-        (click)="getLoginUrl()"
-        [disabled]="isLoading"
-        *ngIf="!showLoginUrl">
-        <span class="material-icons" *ngIf="!isLoading">link</span>
+      <!-- Email -->
+      <div class="form-group">
+        <label for="email">
+          <span class="material-icons">email</span>
+          Email
+        </label>
+        <input type="email" id="email" [(ngModel)]="email" placeholder="you@example.com"
+          [disabled]="isLoading" autocomplete="email"
+          (keyup.enter)="mode === 'login' ? onSubmit() : null">
+      </div>
+
+      <!-- Password (login and signup only) -->
+      <div class="form-group" *ngIf="mode !== 'forgot'">
+        <label for="password">
+          <span class="material-icons">lock</span>
+          Password
+        </label>
+        <input type="password" id="password" [(ngModel)]="password" placeholder="Enter password"
+          [disabled]="isLoading" autocomplete="current-password"
+          (keyup.enter)="mode === 'login' ? onSubmit() : null">
+      </div>
+
+      <!-- Confirm password (signup only) -->
+      <div class="form-group" *ngIf="mode === 'signup'">
+        <label for="confirmPassword">
+          <span class="material-icons">lock</span>
+          Confirm Password
+        </label>
+        <input type="password" id="confirmPassword" [(ngModel)]="confirmPassword" placeholder="Confirm password"
+          [disabled]="isLoading" autocomplete="new-password" (keyup.enter)="onSubmit()">
+      </div>
+
+      <!-- Forgot password link (login mode only) -->
+      <div class="forgot-link" *ngIf="mode === 'login'">
+        <a (click)="switchMode('forgot')">Forgot password?</a>
+      </div>
+
+      <!-- Submit button -->
+      <button class="btn btn-primary" (click)="onSubmit()" [disabled]="isLoading">
+        <span class="material-icons" *ngIf="!isLoading">
+          {{ mode === 'login' ? 'login' : mode === 'signup' ? 'person_add' : 'send' }}
+        </span>
         <span class="material-icons spin-icon" *ngIf="isLoading">refresh</span>
-        <span>{{ isLoading ? 'Opening...' : 'Get Login URL' }}</span>
+        <span *ngIf="mode === 'login'">{{ isLoading ? 'Signing in...' : 'Sign In' }}</span>
+        <span *ngIf="mode === 'signup'">{{ isLoading ? 'Creating account...' : 'Create Account' }}</span>
+        <span *ngIf="mode === 'forgot'">{{ isLoading ? 'Sending...' : 'Send Reset Link' }}</span>
       </button>
 
-      <!-- Step 2: paste token -->
-      <div class="login-url-section" *ngIf="showLoginUrl">
-
-        <div class="success-box">
-          <span class="material-icons">check_circle</span>
-          <div>
-            <p>Login URL opened in a new window</p>
-            <small>Didn't open? <a [href]="loginUrl" target="_blank">Click here</a></small>
-          </div>
-        </div>
-
-        <div class="instructions">
-          <h3>
-            <span class="material-icons">list_alt</span>
-            Next Steps
-          </h3>
-          <ol>
-            <li>Login with your Zerodha credentials</li>
-            <li>After redirect, copy the <strong>request_token</strong> from the URL</li>
-            <li>Paste it below and click Login</li>
-          </ol>
-        </div>
-
-        <div class="form-group">
-          <label for="requestToken">
-            <span class="material-icons">vpn_key</span>
-            Request Token
-          </label>
-          <input
-            type="text"
-            id="requestToken"
-            [(ngModel)]="requestToken"
-            placeholder="Paste your request token here"
-            [disabled]="isLoading"
-            (keyup.enter)="login()">
-        </div>
-
-        <button
-          class="btn btn-success"
-          (click)="login()"
-          [disabled]="isLoading || !requestToken.trim()">
-          <span class="material-icons" *ngIf="!isLoading">login</span>
-          <span class="material-icons spin-icon" *ngIf="isLoading">refresh</span>
-          <span>{{ isLoading ? 'Authenticating...' : 'Login to Dashboard' }}</span>
-        </button>
+      <!-- Success message -->
+      <div class="success-box" *ngIf="successMessage">
+        <span class="material-icons">check_circle</span>
+        <span>{{ successMessage }}</span>
       </div>
 
+      <!-- Error message -->
       <div class="error-box" *ngIf="error">
         <span class="material-icons">error_outline</span>
         <span>{{ error }}</span>
       </div>
+
+      <!-- Switch prompt (login/signup) -->
+      <div class="switch-prompt" *ngIf="mode !== 'forgot'">
+        <span *ngIf="mode === 'login'">
+          Don't have an account?
+          <a (click)="switchMode('signup')">Sign up</a>
+        </span>
+        <span *ngIf="mode === 'signup'">
+          Already have an account?
+          <a (click)="switchMode('login')">Sign in</a>
+        </span>
+      </div>
+
+      <!-- Back to login (forgot mode) -->
+      <div class="switch-prompt" *ngIf="mode === 'forgot'">
+        <a (click)="switchMode('login')">
+          <span class="material-icons" style="font-size:13px;vertical-align:middle;">arrow_back</span>
+          Back to Sign In
+        </a>
+      </div>
+
     </div>
 
     <div class="footer">
       <span class="material-icons footer-icon">security</span>
-      <small>Secured by Zerodha Kite API</small>
+      <small>Your data is encrypted and secure</small>
     </div>
   </div>
 </div>

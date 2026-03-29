@@ -1,23 +1,8 @@
+@use '../../styles/tokens' as *;
+
 // ============================================================
 // TIP Dashboard — Dark Purple Theme
 // ============================================================
-
-$bg-primary:   #0d0d0d;
-$bg-card:      #161616;
-$bg-elevated:  #1e1e1e;
-$bg-hover:     #252525;
-$border-subtle:  rgba(255, 255, 255, 0.06);
-$border-default: rgba(255, 255, 255, 0.1);
-$accent:       #6c63ff;
-$accent-dim:   rgba(108, 99, 255, 0.12);
-$accent-glow:  rgba(108, 99, 255, 0.25);
-$text-primary:   #f5f5f5;
-$text-secondary: #a1a1aa;
-$text-muted:     #52525b;
-$green:  #22c55e;
-$green-dim: rgba(34, 197, 94, 0.15);
-$red:    #ef4444;
-$red-dim: rgba(239, 68, 68, 0.15);
 
 // ============================================================
 // Layout
@@ -1012,6 +997,167 @@ $red-dim: rgba(239, 68, 68, 0.15);
   .health-cards-grid { grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); }
 }
 
+// ============================================================
+// Quick Row — Positions Widget + Action Cards
+// ============================================================
+
+.quick-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.positions-widget {
+  background: $bg-card;
+  border: 1px solid $border-subtle;
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  &:hover { border-color: $accent; transform: translateY(-1px); }
+
+  .widget-header {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: $text-secondary;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    .material-icons { font-size: 16px; color: $accent; }
+  }
+
+  .widget-body {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+  }
+
+  .widget-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .widget-number {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: $text-primary;
+    &.pnl-pos { color: $green; }
+    &.pnl-neg { color: $red; }
+  }
+
+  .widget-label {
+    font-size: 0.68rem;
+    color: $text-muted;
+    font-weight: 600;
+  }
+
+  .widget-link {
+    font-size: 0.72rem;
+    color: $accent;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    margin-top: auto;
+    .material-icons { font-size: 13px; }
+  }
+}
+
+.action-card {
+  background: $bg-card;
+  border: 1px solid $border-subtle;
+  border-radius: 12px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: border-color 0.2s, transform 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  &:hover { border-color: $accent; transform: translateY(-1px); }
+
+  .action-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: $accent-dim;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    .material-icons { font-size: 20px; color: $accent; }
+  }
+
+  .sell-icon { background: rgba(239,68,68,0.12); .material-icons { color: $red; } }
+  .auto-icon { background: rgba(234,179,8,0.12); .material-icons { color: #eab308; } }
+
+  .action-info { flex: 1; min-width: 0; }
+  .action-title { font-size: 0.82rem; font-weight: 700; color: $text-primary; }
+  .action-desc { font-size: 0.72rem; color: $text-muted; margin-top: 2px; }
+
+  .action-arrow { font-size: 16px; color: $text-muted; flex-shrink: 0; }
+}
+
+// ============================================================
+// Activity Row — Recent Trades
+// ============================================================
+
+.activity-row {
+  background: $bg-card;
+  border: 1px solid $border-subtle;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 8px;
+}
+
+.activity-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: $text-primary;
+  margin-bottom: 10px;
+  .material-icons { font-size: 16px; color: $accent; }
+}
+
+.view-all-btn {
+  margin-left: auto;
+  background: none;
+  border: none;
+  color: $accent;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  &:hover { text-decoration: underline; }
+}
+
+.activity-list { display: flex; flex-direction: column; gap: 6px; }
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.8rem;
+  padding: 5px 0;
+  border-top: 1px solid $border-subtle;
+}
+.a-symbol { font-weight: 700; color: $text-primary; flex: 0 0 100px; }
+.a-reason { color: $text-muted; flex: 1; font-size: 0.75rem; font-style: italic; }
+.a-pnl { font-weight: 700; font-size: 0.82rem; &.pos { color: $green; } &.neg { color: $red; } }
+
+// ============================================================
+// Responsive
+// ============================================================
+
+@media (max-width: 1200px) {
+  .quick-row { grid-template-columns: 1fr 1fr; }
+}
+
 @media (max-width: 768px) {
   .dashboard-layout { padding: 16px; }
 
@@ -1019,6 +1165,8 @@ $red-dim: rgba(239, 68, 68, 0.15);
     grid-template-columns: 1fr;
     .summary-card { padding: 16px; }
   }
+
+  .quick-row { grid-template-columns: 1fr 1fr; }
 
   .health-cards-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
 
@@ -1033,4 +1181,148 @@ $red-dim: rgba(239, 68, 68, 0.15);
   .modal-body { padding: 16px; }
   .stock-overview { grid-template-columns: 1fr; gap: 10px; }
   .investment-grid { grid-template-columns: 1fr; }
+}
+
+// ============================================================
+// Audit Modal extras
+// ============================================================
+
+.audit-modal {
+  max-width: 640px;
+
+  .verdict-banner {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    background: none;
+    border: none;
+    padding: 0;
+  }
+}
+
+.audit-score-val {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.verdict-label-chip,
+.verdict-action-chip {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.verdict-label-chip {
+  &.label-healthy  { color: $green;  border-color: rgba($green,0.4);   background: rgba($green,0.1); }
+  &.label-stable   { color: $yellow; border-color: rgba($yellow,0.4);  background: rgba($yellow,0.1); }
+  &.label-watch    { color: $orange; border-color: rgba($orange,0.4);  background: rgba($orange,0.1); }
+  &.label-critical { color: $red;    border-color: rgba($red,0.4);     background: rgba($red,0.1); }
+}
+
+.verdict-action-chip {
+  &.verdict-hold          { color: #60a5fa; border-color: rgba(96,165,250,0.35); background: rgba(96,165,250,0.08); }
+  &.verdict-monitor       { color: $yellow; border-color: rgba($yellow,0.35);    background: rgba($yellow,0.08); }
+  &.verdict-consider-exit { color: $orange; border-color: rgba($orange,0.35);    background: rgba($orange,0.08); }
+  &.verdict-exit          { color: $red;    border-color: rgba($red,0.35);        background: rgba($red,0.08); }
+}
+
+.component-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.comp-row {
+  display: grid;
+  grid-template-columns: 110px 1fr 55px;
+  align-items: center;
+  gap: 10px;
+}
+
+.comp-label {
+  font-size: 12px;
+  color: $text-muted;
+  font-weight: 500;
+}
+
+.comp-bar-track {
+  height: 8px;
+  background: $bg-elevated;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.comp-bar-fill {
+  height: 100%;
+  background: $accent;
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+.comp-val {
+  font-size: 11px;
+  color: $text-secondary;
+  text-align: right;
+}
+
+.ai-reasoning-text {
+  font-size: 13px;
+  line-height: 1.65;
+  color: $text-secondary;
+  margin: 0;
+}
+
+.risks-positives {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 4px;
+
+  @media (max-width: 480px) { grid-template-columns: 1fr; }
+}
+
+.risks-col {
+  h4 {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 0 0 8px;
+    color: $text-muted;
+
+    .material-icons { font-size: 14px; }
+  }
+
+  ul {
+    margin: 0;
+    padding-left: 16px;
+    list-style: disc;
+
+    li {
+      font-size: 12px;
+      color: $text-secondary;
+      line-height: 1.6;
+    }
+  }
+}
+
+.news-list {
+  margin: 0;
+  padding-left: 16px;
+  list-style: disc;
+
+  li {
+    font-size: 12px;
+    color: $text-secondary;
+    line-height: 1.65;
+    margin-bottom: 4px;
+  }
 }

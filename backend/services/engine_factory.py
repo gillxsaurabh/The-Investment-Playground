@@ -4,12 +4,11 @@ Maintains singletons so the same engine instance is shared across routes,
 automation, and the position monitor.
 """
 
-import json
 import logging
 import threading
-from pathlib import Path
 from typing import Optional
 
+from services.file_lock import locked_json_read, atomic_json_write
 from services.trading_engine import TradingEngine
 
 logger = logging.getLogger(__name__)
@@ -80,30 +79,14 @@ def set_trading_mode(mode: str) -> None:
     if mode not in ("simulator", "live"):
         raise ValueError(f"Invalid mode: {mode}")
     from config import AUTOMATION_STATE_FILE
-    path = Path(AUTOMATION_STATE_FILE)
-    state: dict = {}
-    if path.exists():
-        try:
-            with open(path) as f:
-                state = json.load(f)
-        except Exception:
-            pass
+    state = locked_json_read(AUTOMATION_STATE_FILE, default={})
     state["mode"] = mode
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w") as f:
-        json.dump(state, f, indent=2)
-    logger.info(f"[EngineFactory] Trading mode set to '{mode}'")
+    atomic_json_write(AUTOMATION_STATE_FILE, state, indent=2)
+    logger.info("[EngineFactory] Trading mode set to '%s'", mode)
 
 
 def _read_mode_from_state() -> str:
     """Read mode from automation_state.json. Defaults to 'simulator'."""
     from config import AUTOMATION_STATE_FILE
-    path = Path(AUTOMATION_STATE_FILE)
-    if path.exists():
-        try:
-            with open(path) as f:
-                data = json.load(f)
-            return data.get("mode", "simulator")
-        except Exception:
-            pass
-    return "simulator"
+    data = locked_json_read(AUTOMATION_STATE_FILE, default={})
+    return data.get("mode", "simulator")

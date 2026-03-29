@@ -25,25 +25,39 @@ def get_conn() -> sqlite3.Connection:
     return conn
 
 
+LATEST_SCHEMA_VERSION = 5
+
+
 def init_db() -> None:
-    """Create all tables from migrations/001_initial.sql if not already present."""
+    """Run all pending migrations sequentially."""
     migrations_dir = Path(__file__).resolve().parent.parent / "migrations"
-    migration_file = migrations_dir / "001_initial.sql"
-
-    if not migration_file.exists():
-        logger.error(f"[DB] Migration file not found: {migration_file}")
-        return
-
     conn = get_conn()
     try:
         version = conn.execute("PRAGMA user_version").fetchone()[0]
-        if version >= 1:
-            logger.debug("[DB] Schema already at version 1 — skipping migration")
-            return
-        sql = migration_file.read_text()
-        conn.executescript(sql)
-        conn.commit()
-        logger.info("[DB] Schema initialized (version 1)")
+
+        migrations = [
+            (1, "001_initial.sql"),
+            (2, "002_users.sql"),
+            (3, "003_add_user_id.sql"),
+            (4, "004_analysis_cache.sql"),
+            (5, "005_password_reset.sql"),
+        ]
+
+        for target_version, filename in migrations:
+            if version >= target_version:
+                continue
+            migration_file = migrations_dir / filename
+            if not migration_file.exists():
+                logger.error(f"[DB] Migration file not found: {migration_file}")
+                return
+            sql = migration_file.read_text()
+            conn.executescript(sql)
+            conn.commit()
+            logger.info(f"[DB] Migrated to schema version {target_version}")
+
+        final_version = conn.execute("PRAGMA user_version").fetchone()[0]
+        if final_version >= LATEST_SCHEMA_VERSION:
+            logger.debug(f"[DB] Schema at version {final_version}")
     except Exception as e:
         logger.error(f"[DB] Schema initialization failed: {e}", exc_info=True)
     finally:
@@ -54,7 +68,7 @@ def init_db() -> None:
 # Trade CRUD
 # ---------------------------------------------------------------------------
 
-def insert_trade(trade: Dict[str, Any]) -> None:
+def insert_trade(trade: Dict[str, Any], user_id: Optional[int] = None) -> None:
     """Insert a new trade record."""
     atr = trade.get("atr_at_entry", 0)
     multiplier = trade.get("trail_multiplier", 1.5)
@@ -69,7 +83,8 @@ def insert_trade(trade: Dict[str, Any]) -> None:
                 entry_order_id, sl_order_id, entry_status,
                 status, gear_at_entry, automation_run_id,
                 account_balance_before, account_balance_after,
-                scan_id, scan_rank, scan_ai_conviction, trading_mode
+                scan_id, scan_rank, scan_ai_conviction, trading_mode,
+                user_id
             ) VALUES (
                 :trade_id, :symbol, :instrument_token, :sector,
                 :entry_ltp, :entry_price, :quantity, :total_cost, :entry_time,
@@ -78,7 +93,8 @@ def insert_trade(trade: Dict[str, Any]) -> None:
                 :entry_order_id, :sl_order_id, :entry_status,
                 :status, :gear_at_entry, :automation_run_id,
                 :account_balance_before, :account_balance_after,
-                :scan_id, :scan_rank, :scan_ai_conviction, :trading_mode
+                :scan_id, :scan_rank, :scan_ai_conviction, :trading_mode,
+                :user_id
             )
         """, {
             "trade_id": trade.get("trade_id"),
@@ -110,6 +126,7 @@ def insert_trade(trade: Dict[str, Any]) -> None:
             "scan_rank": trade.get("scan_rank"),
             "scan_ai_conviction": trade.get("scan_ai_conviction"),
             "trading_mode": trade.get("trading_mode", "simulator"),
+            "user_id": user_id,
         })
         conn.commit()
     except Exception as e:
@@ -210,17 +227,20 @@ def update_trade_exit(
         conn.close()
 
 
-def get_open_trades(trading_mode: Optional[str] = None) -> List[Dict[str, Any]]:
-    """Get all open trades, optionally filtered by trading_mode."""
+def get_open_trades(trading_mode: Optional[str] = None, user_id: Optional[int] = None) -> List[Dict[str, Any]]:
+    """Get all open trades, optionally filtered by trading_mode and/or user_id."""
     conn = get_conn()
     try:
+        conditions = ["status = 'OPEN'"]
+        params: List[Any] = []
         if trading_mode:
-            rows = conn.execute(
-                "SELECT * FROM trades WHERE status = 'OPEN' AND trading_mode = ?",
-                (trading_mode,),
-            ).fetchall()
-        else:
-            rows = conn.execute("SELECT * FROM trades WHERE status = 'OPEN'").fetchall()
+            conditions.append("trading_mode = ?")
+            params.append(trading_mode)
+        if user_id is not None:
+            conditions.append("user_id = ?")
+            params.append(user_id)
+        where = " AND ".join(conditions)
+        rows = conn.execute(f"SELECT * FROM trades WHERE {where}", params).fetchall()
         return [dict(row) for row in rows]
     except Exception as e:
         logger.warning(f"[DB] get_open_trades failed: {e}")

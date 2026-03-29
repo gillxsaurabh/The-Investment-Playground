@@ -1,0 +1,96 @@
+<div class="page">
+  <div class="card">
+
+    <!-- Logo -->
+    <div class="logo-row">
+      <span class="brand">The Investment Playground</span>
+    </div>
+
+    <!-- Header -->
+    <div class="card-header">
+      <div class="kite-icon">
+        <span class="material-icons">link</span>
+      </div>
+      <h1>Connect Zerodha Kite</h1>
+      <p class="subtitle">
+        The Investment Playground uses your Kite session to access live portfolio data.
+        Kite sessions reset every day — reconnect each morning to continue.
+      </p>
+    </div>
+
+    <!-- Steps -->
+    <ol class="steps" *ngIf="status !== 'linking'">
+      <li [class.done]="status === 'awaiting-token' || status === 'error'">
+        <span class="step-num">1</span>
+        <div class="step-body">
+          <strong>Open Kite Login</strong>
+          <span>Sign in to your Zerodha account in the new tab.</span>
+        </div>
+      </li>
+      <li [class.done]="requestToken.length > 0">
+        <span class="step-num">2</span>
+        <div class="step-body">
+          <strong>Copy the request token</strong>
+          <span>After login, Kite redirects to a URL containing <code>request_token=…</code>. Copy that value.</span>
+        </div>
+      </li>
+      <li>
+        <span class="step-num">3</span>
+        <div class="step-body">
+          <strong>Paste and connect</strong>
+          <span>Enter the token below and click Connect.</span>
+        </div>
+      </li>
+    </ol>
+
+    <!-- Step 1: Get URL button -->
+    <button
+      class="btn-primary"
+      (click)="openKiteLogin()"
+      [disabled]="status === 'fetching-url' || status === 'linking'">
+      <span class="material-icons spin" *ngIf="status === 'fetching-url'">refresh</span>
+      <span class="material-icons" *ngIf="status !== 'fetching-url'">open_in_new</span>
+      {{ status === 'fetching-url' ? 'Opening…' : (status === 'awaiting-token' ? 'Reopen Kite Login' : 'Open Kite Login') }}
+    </button>
+
+    <!-- Step 2 & 3: Token input (shown once URL is fetched) -->
+    <div class="token-section" *ngIf="status === 'awaiting-token' || status === 'error'">
+      <label class="token-label">Request Token</label>
+      <input
+        class="token-input"
+        type="text"
+        [(ngModel)]="requestToken"
+        placeholder="Paste your request_token here"
+        (keyup.enter)="linkAccount()"
+        autofocus>
+      <button
+        class="btn-connect"
+        (click)="linkAccount()"
+        [disabled]="!requestToken.trim()">
+        <span class="material-icons">check_circle</span>
+        Connect Account
+      </button>
+    </div>
+
+    <!-- Linking spinner -->
+    <div class="linking-row" *ngIf="status === 'linking'">
+      <span class="material-icons spin">refresh</span>
+      Verifying and linking your Kite account…
+    </div>
+
+    <!-- Error -->
+    <div class="error-box" *ngIf="errorMsg">
+      <span class="material-icons">error_outline</span>
+      {{ errorMsg }}
+    </div>
+
+    <!-- Footer -->
+    <div class="footer-row">
+      <button class="btn-logout" (click)="logout()">
+        <span class="material-icons">logout</span>
+        Log out
+      </button>
+    </div>
+
+  </div>
+</div>

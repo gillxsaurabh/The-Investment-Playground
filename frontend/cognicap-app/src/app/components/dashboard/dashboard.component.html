@@ -3,6 +3,7 @@
   <app-header-banner
     [userName]="user?.name || ''"
     [activePage]="'dashboard'"
+    [brokerLinked]="brokerLinked"
     [nifty]="nifty"
     [sensex]="sensex"
     [marketGainers]="marketGainers"
@@ -83,132 +84,91 @@
           </div>
         </div>
 
-        <!-- ─── Stock Health Analysis Section ──────────────── -->
-        <div class="health-section">
-          <div class="health-header">
-            <div class="header-content">
-              <div class="header-title-row">
-                <span class="material-icons section-icon">monitor_heart</span>
-                <h2>Stock Health Analysis</h2>
-                <button
-                  class="analyze-all-btn"
-                  (click)="analyzeAllStocks()"
-                  [disabled]="isLoading || isAnalyzingAll || holdings.length === 0">
-                  <span class="material-icons">auto_awesome</span>
-                  {{ isAnalyzingAll ? 'Analyzing...' : 'Analyze All' }}
-                </button>
-                <button class="arena-btn" (click)="navigateToTradingAgent()">
-                  <span class="material-icons">rocket_launch</span>
-                  Trading Arena
-                </button>
+        <!-- ─── Quick Actions + Positions Widget ─────────────── -->
+        <div class="quick-row">
+
+          <!-- Open Positions Widget -->
+          <div class="positions-widget" (click)="navigateToPositions()">
+            <div class="widget-header">
+              <span class="material-icons">candlestick_chart</span>
+              <span>Open Positions</span>
+            </div>
+            <div class="widget-body">
+              <div class="widget-stat">
+                <span class="widget-number">{{ openPositionsCount }}</span>
+                <span class="widget-label">Active</span>
               </div>
-              <div class="health-stats">
-                <span class="stat">
-                  <span class="material-icons stat-icon">format_list_numbered</span>
-                  {{ holdings.length }} Total
+              <div class="widget-stat" *ngIf="openPositionsCount > 0">
+                <span class="widget-number" [class.pnl-pos]="totalUnrealizedPnl >= 0" [class.pnl-neg]="totalUnrealizedPnl < 0">
+                  {{ totalUnrealizedPnl >= 0 ? '+' : '' }}₹{{ totalUnrealizedPnl.toFixed(0) }}
                 </span>
-                <span class="stat">
-                  <span class="material-icons stat-icon">check_circle</span>
-                  {{ getAnalyzedCount() }} Analyzed
-                </span>
+                <span class="widget-label">Unrealized P&L</span>
               </div>
             </div>
+            <div class="widget-link">View Positions <span class="material-icons">arrow_forward</span></div>
           </div>
 
-          <!-- Analysis Progress -->
-          <div class="analyze-progress" *ngIf="isAnalyzingAll && analyzeAllProgress">
-            <div class="progress-indicator">
-              <div class="progress-spinner"></div>
-              <span class="progress-text">{{ analyzeAllProgress }}</span>
+          <!-- Discover Card -->
+          <div class="action-card discover-card" (click)="navigateToDiscover()">
+            <div class="action-icon"><span class="material-icons">search</span></div>
+            <div class="action-info">
+              <div class="action-title">Discover Stocks</div>
+              <div class="action-desc">AI-powered stock discovery pipeline</div>
             </div>
-            <button class="cancel-analysis-btn" (click)="cancelAnalysis()">
-              <span class="material-icons">cancel</span>
-              Cancel
-            </button>
+            <span class="material-icons action-arrow">arrow_forward</span>
           </div>
 
-          <!-- Health Cards Grid -->
-          <div class="health-cards-grid" *ngIf="holdings.length > 0">
-            <div
-              class="health-card"
-              *ngFor="let holding of holdings"
-              [class.analyzed]="holding.analysisState === 'analyzed'">
-
-              <!-- Card Header -->
-              <div class="card-header" (click)="holding.analysisState === 'analyzed' ? openStockModal(holding) : null">
-                <div class="stock-info">
-                  <h3 class="stock-symbol">{{ holding.tradingsymbol }}</h3>
-                  <div class="stock-metrics">
-                    <span class="metric">{{ formatCurrency(holding.last_price) }}</span>
-                    <span class="metric quantity">Qty: {{ holding.quantity }}</span>
-                  </div>
-                </div>
-
-                <!-- Not analysed -->
-                <div class="action-section" *ngIf="holding.analysisState === 'not-analyzed'">
-                  <button class="analyze-btn" (click)="analyzeStock(holding); $event.stopPropagation()">
-                    <span class="material-icons">analytics</span>
-                    Analyze
-                  </button>
-                </div>
-
-                <!-- Analysing -->
-                <div class="action-section" *ngIf="holding.analysisState === 'analyzing'">
-                  <div class="analyzing-state" *ngIf="!holding.agentStatus">
-                    <div class="small-spinner"></div>
-                    <span>Analyzing...</span>
-                  </div>
-                  <div class="agent-progress" *ngIf="holding.agentStatus">
-                    <div
-                      class="agent-pill"
-                      *ngFor="let agent of ['stats_agent', 'company_health_agent', 'breaking_news_agent', 'synthesizer']"
-                      [class.running]="holding.agentStatus[agent] === 'running'"
-                      [class.completed]="holding.agentStatus[agent] === 'completed'"
-                      [class.pending]="holding.agentStatus[agent] === 'pending'">
-                      <span class="agent-name">{{ agentDisplayName(agent) }}</span>
-                      <span class="agent-icon" *ngIf="holding.agentStatus[agent] === 'running'">
-                        <span class="spinner-icon"></span>
-                      </span>
-                      <span class="agent-icon check" *ngIf="holding.agentStatus[agent] === 'completed'">
-                        <span class="material-icons">check</span>
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- Analysed — score -->
-                <div class="score-section" *ngIf="holding.analysisState === 'analyzed' && holding.analysis">
-                  <button class="reanalyze-btn" (click)="analyzeStock(holding); $event.stopPropagation()" title="Re-analyse">
-                    <span class="material-icons">refresh</span>
-                  </button>
-                  <div class="overall-score" [style.background]="getScoreColor(getOverallScore(holding.analysis)!)">
-                    <span class="score-number">{{ getOverallScore(holding.analysis) }}</span>
-                  </div>
-                  <div class="view-details-icon">
-                    <span class="material-icons">open_in_new</span>
-                  </div>
-                </div>
-
-                <!-- Error -->
-                <div class="action-section" *ngIf="holding.analysisState === 'error'">
-                  <button class="retry-analyze-btn" (click)="analyzeStock(holding); $event.stopPropagation()">
-                    <span class="material-icons">refresh</span>
-                    Retry
-                  </button>
-                </div>
-              </div>
+          <!-- Stock Audit Card -->
+          <div class="action-card sell-card" (click)="runAudit()">
+            <div class="action-icon sell-icon"><span class="material-icons">health_and_safety</span></div>
+            <div class="action-info">
+              <div class="action-title">Run Stock Audit</div>
+              <div class="action-desc">Score all holdings — health &amp; exit signals</div>
             </div>
+            <span class="material-icons action-arrow">{{ auditIsRunning ? 'hourglass_empty' : 'play_circle' }}</span>
           </div>
 
-          <!-- Empty State -->
-          <div class="empty-state" *ngIf="!isLoading && !error && holdings.length === 0">
-            <div class="empty-icon">
-              <span class="material-icons">query_stats</span>
+          <!-- Automation Card -->
+          <div class="action-card auto-card" (click)="navigateToAutomation()">
+            <div class="action-icon auto-icon"><span class="material-icons">schedule</span></div>
+            <div class="action-info">
+              <div class="action-title">Automation</div>
+              <div class="action-desc">Weekly pipeline scheduling</div>
             </div>
-            <h3>No Holdings Found</h3>
-            <p>Your portfolio is empty. Add some stocks to see their health analysis.</p>
+            <span class="material-icons action-arrow">arrow_forward</span>
+          </div>
+
+        </div>
+
+        <!-- ─── Recent Trades Activity ──────────────────────── -->
+        <div class="activity-row" *ngIf="recentTrades.length > 0">
+          <div class="activity-header">
+            <span class="material-icons">history</span>
+            Recent Trades
+            <button class="view-all-btn" (click)="navigateToPositions()">View All</button>
+          </div>
+          <div class="activity-list">
+            <div *ngFor="let t of recentTrades" class="activity-item">
+              <span class="a-symbol">{{ t.symbol }}</span>
+              <span class="a-reason">{{ t.reason }}</span>
+              <span class="a-pnl" [class.pos]="t.realized_pnl >= 0" [class.neg]="t.realized_pnl < 0">
+                {{ t.realized_pnl >= 0 ? '+' : '' }}₹{{ t.realized_pnl.toFixed(0) }}
+              </span>
+            </div>
           </div>
         </div>
+
+        <!-- ─── Stock Audit Chart ─────────────────────────── -->
+        <app-stock-audit-chart
+          [holdings]="auditHoldings"
+          [summary]="auditSummary"
+          [isRunning]="auditIsRunning"
+          [steps]="auditSteps"
+          [lastRunAt]="auditLastRunAt"
+          [pipelineMessage]="auditPipelineMessage"
+          (onRunAudit)="runAudit()"
+          (onSelectStock)="openAuditStockModal($event)">
+        </app-stock-audit-chart>
       </div>
     </main>
   </div>
@@ -217,202 +177,127 @@
   <app-chat></app-chat>
 </div>
 
-<!-- Stock Details Modal — OUTSIDE dashboard-container to avoid stacking context issues -->
-<div class="modal-overlay" *ngIf="selectedStock" (click)="closeStockModal()">
-  <div class="modal-content" (click)="$event.stopPropagation()">
+<!-- Audit Stock Detail Modal -->
+<div class="modal-overlay" *ngIf="auditSelectedStock" (click)="closeAuditStockModal()">
+  <div class="modal-content audit-modal" (click)="$event.stopPropagation()">
     <div class="modal-header">
       <div class="modal-title">
-        <span class="material-icons modal-title-icon">monitor_heart</span>
-        <h2>{{ selectedStock.tradingsymbol }}</h2>
-        <span class="modal-subtitle">Health Analysis</span>
+        <span class="material-icons modal-title-icon">health_and_safety</span>
+        <h2>{{ auditSelectedStock.symbol }}</h2>
+        <span class="modal-subtitle">Stock Audit</span>
       </div>
-      <button class="close-btn" (click)="closeStockModal()">
+      <button class="close-btn" (click)="closeAuditStockModal()">
         <span class="material-icons">close</span>
       </button>
     </div>
 
     <div class="modal-body">
-      <!-- Stock Overview -->
+
+      <!-- Overview row -->
       <div class="stock-overview">
         <div class="overview-item">
-          <span class="label">
-            <span class="material-icons">attach_money</span>
-            Current Price
-          </span>
-          <span class="value">{{ formatCurrency(selectedStock.last_price) }}</span>
+          <span class="label"><span class="material-icons">attach_money</span> Price</span>
+          <span class="value">{{ formatCurrency(auditSelectedStock.last_price) }}</span>
         </div>
         <div class="overview-item">
-          <span class="label">
-            <span class="material-icons">inventory_2</span>
-            Quantity
-          </span>
-          <span class="value">{{ selectedStock.quantity }}</span>
+          <span class="label"><span class="material-icons">inventory_2</span> Qty</span>
+          <span class="value">{{ auditSelectedStock.quantity }}</span>
         </div>
         <div class="overview-item">
-          <span class="label">
-            <span class="material-icons">health_and_safety</span>
-            Health Score
+          <span class="label"><span class="material-icons">health_and_safety</span> Score</span>
+          <span class="value audit-score-val" [style.color]="getScoreColor(auditSelectedStock.health_score / 2)">
+            {{ auditSelectedStock.health_score | number:'1.1-1' }}/10
           </span>
-          <div class="score-display" [style.background]="getScoreColor(getOverallScore(selectedStock.analysis)!)">
-            {{ getOverallScore(selectedStock.analysis) }}
+        </div>
+        <div class="overview-item">
+          <span class="label"><span class="material-icons">trending_up</span> P&L</span>
+          <span class="value"
+            [class.positive]="auditSelectedStock.pnl >= 0"
+            [class.negative]="auditSelectedStock.pnl < 0">
+            {{ formatPercentage(auditSelectedStock.pnl_percentage) }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Verdict + label -->
+      <div class="verdict-banner">
+        <span class="verdict-label-chip" [ngClass]="'label-' + auditSelectedStock.health_label.toLowerCase()">
+          {{ auditSelectedStock.health_label }}
+        </span>
+        <span class="verdict-action-chip" [ngClass]="'verdict-' + auditSelectedStock.audit_verdict.toLowerCase().replace('_','-')">
+          {{ auditSelectedStock.audit_verdict | titlecase }}
+        </span>
+      </div>
+
+      <!-- Component scores -->
+      <div class="health-analysis-section">
+        <h3><span class="material-icons">bar_chart</span> Score Breakdown</h3>
+        <div class="component-bars">
+          <div class="comp-row" *ngFor="let comp of [
+            {key:'technical',   label:'Technical',        max:3.0, val:auditSelectedStock.health_components?.technical},
+            {key:'fundamental', label:'Fundamental',      max:2.5, val:auditSelectedStock.health_components?.fundamental},
+            {key:'rs',          label:'Rel. Strength',    max:2.0, val:auditSelectedStock.health_components?.relative_strength},
+            {key:'news',        label:'News',             max:1.5, val:auditSelectedStock.health_components?.news},
+            {key:'position',    label:'Position',         max:1.0, val:auditSelectedStock.health_components?.position}
+          ]">
+            <span class="comp-label">{{ comp.label }}</span>
+            <div class="comp-bar-track">
+              <div class="comp-bar-fill" [style.width.%]="(comp.val || 0) / comp.max * 100"></div>
+            </div>
+            <span class="comp-val">{{ comp.val | number:'1.1-1' }}/{{ comp.max }}</span>
           </div>
         </div>
       </div>
 
-      <!-- Investment Details -->
-      <div class="investment-section">
-        <h3>
-          <span class="material-icons">account_balance</span>
-          Investment Overview
-        </h3>
+      <!-- AI Reasoning -->
+      <div class="health-analysis-section" *ngIf="auditSelectedStock.ai_reasoning">
+        <h3><span class="material-icons">psychology</span> AI Analysis</h3>
+        <p class="ai-reasoning-text">{{ auditSelectedStock.ai_reasoning }}</p>
+      </div>
+
+      <!-- Risks / Positives -->
+      <div class="risks-positives" *ngIf="auditSelectedStock.key_risks?.length || auditSelectedStock.key_positives?.length">
+        <div class="risks-col" *ngIf="auditSelectedStock.key_positives?.length">
+          <h4><span class="material-icons">thumb_up</span> Positives</h4>
+          <ul>
+            <li *ngFor="let p of auditSelectedStock.key_positives">{{ p }}</li>
+          </ul>
+        </div>
+        <div class="risks-col" *ngIf="auditSelectedStock.key_risks?.length">
+          <h4><span class="material-icons">warning</span> Risks</h4>
+          <ul>
+            <li *ngFor="let r of auditSelectedStock.key_risks">{{ r }}</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Technical indicators -->
+      <div class="health-analysis-section">
+        <h3><span class="material-icons">show_chart</span> Technicals</h3>
         <div class="investment-grid">
-          <div class="investment-item">
-            <span class="label">Average Price</span>
-            <span class="value">{{ formatCurrency(selectedStock.average_price) }}</span>
-          </div>
-          <div class="investment-item">
-            <span class="label">Current Value</span>
-            <span class="value">{{ formatCurrency(selectedStock.last_price * selectedStock.quantity) }}</span>
-          </div>
-          <div class="investment-item">
-            <span class="label">Total Investment</span>
-            <span class="value">{{ formatCurrency(selectedStock.average_price * selectedStock.quantity) }}</span>
-          </div>
-          <div class="investment-item">
-            <span class="label">P&amp;L</span>
-            <span class="value" [class.positive]="selectedStock.pnl > 0" [class.negative]="selectedStock.pnl < 0">
-              {{ formatCurrency(selectedStock.pnl) }}
-            </span>
-          </div>
+          <div class="investment-item"><span class="label">RSI</span><span class="value">{{ auditSelectedStock.rsi | number:'1.0-1' }}</span></div>
+          <div class="investment-item"><span class="label">ADX</span><span class="value">{{ auditSelectedStock.adx | number:'1.0-1' }}</span></div>
+          <div class="investment-item"><span class="label">EMA 20</span><span class="value">{{ auditSelectedStock.ema_20 | number:'1.0-2' }}</span></div>
+          <div class="investment-item"><span class="label">EMA 50</span><span class="value">{{ auditSelectedStock.ema_50 | number:'1.0-2' }}</span></div>
+          <div class="investment-item"><span class="label">EMA 200</span><span class="value">{{ auditSelectedStock.ema_200 | number:'1.0-2' }}</span></div>
+          <div class="investment-item"><span class="label">3M Return</span><span class="value" [class.positive]="(auditSelectedStock.stock_3m_return || 0) >= 0" [class.negative]="(auditSelectedStock.stock_3m_return || 0) < 0">{{ auditSelectedStock.stock_3m_return | number:'1.1-1' }}%</span></div>
         </div>
       </div>
 
-      <!-- Agent Analysis -->
-      <ng-container *ngIf="selectedStock.analysis?.agents as agents">
-        <div class="verdict-banner" *ngIf="selectedStock.analysis?.verdict">
-          <h3>
-            <span class="material-icons">gavel</span>
-            Verdict
-          </h3>
-          <p class="verdict-text">{{ selectedStock.analysis?.verdict }}</p>
-        </div>
+      <!-- News headlines -->
+      <div class="health-analysis-section" *ngIf="auditSelectedStock.news_headlines?.length">
+        <h3><span class="material-icons">newspaper</span> Recent News</h3>
+        <ul class="news-list">
+          <li *ngFor="let h of auditSelectedStock.news_headlines">{{ h }}</li>
+        </ul>
+      </div>
 
-        <div class="health-analysis-section">
-          <h3>
-            <span class="material-icons">smart_toy</span>
-            Agent Analysis
-          </h3>
+      <!-- Audit timestamp -->
+      <div class="timestamp-section" *ngIf="auditSelectedStock.saved_at">
+        <span class="material-icons">schedule</span>
+        <small>Audited: {{ formatDate(auditSelectedStock.saved_at) }}</small>
+      </div>
 
-          <div class="analysis-metric">
-            <div class="metric-header">
-              <div class="metric-name-wrap">
-                <span class="material-icons agent-icon-sm">bar_chart</span>
-                <span class="metric-name">Stats Agent</span>
-              </div>
-              <div class="metric-score" [style.background]="getScoreColor(agents.stats_agent.score)">
-                {{ agents.stats_agent.score }}
-              </div>
-            </div>
-            <p class="metric-description">{{ agents.stats_agent.explanation }}</p>
-          </div>
-
-          <div class="analysis-metric">
-            <div class="metric-header">
-              <div class="metric-name-wrap">
-                <span class="material-icons agent-icon-sm">business</span>
-                <span class="metric-name">Company Health Agent</span>
-              </div>
-              <div class="metric-score" [style.background]="getScoreColor(agents.company_health_agent.score)">
-                {{ agents.company_health_agent.score }}
-              </div>
-            </div>
-            <p class="metric-description">{{ agents.company_health_agent.explanation }}</p>
-          </div>
-
-          <div class="analysis-metric">
-            <div class="metric-header">
-              <div class="metric-name-wrap">
-                <span class="material-icons agent-icon-sm">newspaper</span>
-                <span class="metric-name">Breaking News Agent</span>
-              </div>
-              <div class="metric-score" [style.background]="getScoreColor(agents.breaking_news_agent.score)">
-                {{ agents.breaking_news_agent.score }}
-              </div>
-            </div>
-            <p class="metric-description">{{ agents.breaking_news_agent.explanation }}</p>
-          </div>
-        </div>
-      </ng-container>
-
-      <!-- Legacy format fallback -->
-      <ng-container *ngIf="!selectedStock.analysis?.agents && selectedStock.analysis?.details as details">
-        <div class="health-analysis-section">
-          <h3>
-            <span class="material-icons">analytics</span>
-            Detailed Health Analysis
-          </h3>
-
-          <div class="analysis-metric" *ngIf="details.recency">
-            <div class="metric-header">
-              <div class="metric-name-wrap">
-                <span class="material-icons agent-icon-sm">trending_up</span>
-                <span class="metric-name">Recency (Relative Strength)</span>
-              </div>
-              <div class="metric-score" [style.background]="getScoreColor(details.recency.score)">
-                {{ details.recency.score }}
-              </div>
-            </div>
-            <p class="metric-description">{{ details.recency.detail }}</p>
-          </div>
-
-          <div class="analysis-metric" *ngIf="details.trend">
-            <div class="metric-header">
-              <div class="metric-name-wrap">
-                <span class="material-icons agent-icon-sm">show_chart</span>
-                <span class="metric-name">Trend Analysis</span>
-              </div>
-              <div class="metric-score" [style.background]="getScoreColor(details.trend.score)">
-                {{ details.trend.score }}
-              </div>
-            </div>
-            <p class="metric-description">{{ details.trend.strength }} — {{ details.trend.direction }}</p>
-          </div>
-
-          <div class="analysis-metric" *ngIf="details.fundamentals">
-            <div class="metric-header">
-              <div class="metric-name-wrap">
-                <span class="material-icons agent-icon-sm">account_balance</span>
-                <span class="metric-name">Fundamentals</span>
-              </div>
-              <div class="metric-score" [style.background]="getScoreColor(details.fundamentals.score)">
-                {{ details.fundamentals.score }}
-              </div>
-            </div>
-            <p class="metric-description">{{ details.fundamentals.summary }}</p>
-          </div>
-
-          <div class="analysis-metric" *ngIf="details.ai_sentiment">
-            <div class="metric-header">
-              <div class="metric-name-wrap">
-                <span class="material-icons agent-icon-sm">psychology</span>
-                <span class="metric-name">AI Sentiment</span>
-              </div>
-              <div class="metric-score" [style.background]="getScoreColor(details.ai_sentiment.score)">
-                {{ details.ai_sentiment.score }}
-              </div>
-            </div>
-            <p class="metric-description">{{ details.ai_sentiment.summary }}</p>
-          </div>
-        </div>
-      </ng-container>
-
-      <!-- Timestamp -->
-      <ng-container *ngIf="selectedStock.analysis as analysis">
-        <div class="timestamp-section" *ngIf="analysis.analyzed_at">
-          <span class="material-icons">schedule</span>
-          <small>Analysis performed on: {{ formatDate(analysis.analyzed_at) }}</small>
-        </div>
-      </ng-container>
     </div>
   </div>
 </div>

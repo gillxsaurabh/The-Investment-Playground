@@ -13,7 +13,8 @@ import { MarketIndex, Stock } from '../../../services/kite.service';
 })
 export class HeaderBannerComponent {
   @Input() userName: string = '';
-  @Input() activePage: 'dashboard' | 'trading-agent' = 'dashboard';
+  @Input() activePage: 'dashboard' | 'trading-agent' | 'discover' | 'positions' | 'automation' | 'account' = 'dashboard';
+  @Input() brokerLinked: boolean = false;
   @Input() nifty: MarketIndex | null = null;
   @Input() sensex: MarketIndex | null = null;
   @Input() marketGainers: Stock[] = [];

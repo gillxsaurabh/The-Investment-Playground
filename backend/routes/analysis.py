@@ -6,10 +6,12 @@ import time
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from flask import Blueprint, request, jsonify, Response, stream_with_context
+from flask import Blueprint, request, jsonify, Response, stream_with_context, g
 
 from broker import get_broker
+from middleware.auth import require_auth, require_broker
 from services.analysis_storage import save_analysis_result
+from services.validation import validate_request, AnalyzeStockBody
 
 logger = logging.getLogger(__name__)
 
@@ -17,23 +19,21 @@ analysis_bp = Blueprint("analysis", __name__, url_prefix="/api")
 
 
 @analysis_bp.route("/analyze-stock", methods=["POST"])
-def analyze_stock():
+@require_auth
+@require_broker
+@validate_request(AnalyzeStockBody)
+def analyze_stock(body: AnalyzeStockBody):
     """Analyze a single stock on-demand using 3 agents independently."""
     try:
         from agents.workers.stats_agent import stats_agent_node
         from agents.workers.company_health_agent import company_health_agent_node
         from agents.workers.breaking_news_agent import breaking_news_agent_node
 
-        data = request.json
-        access_token = data.get("access_token")
-        symbol = data.get("symbol")
-        instrument_token = data.get("instrument_token")
-        llm_provider = data.get("llm_provider", None)
-
-        if not access_token:
-            return jsonify({"success": False, "error": "Access token is required"}), 400
-        if not symbol:
-            return jsonify({"success": False, "error": "Symbol is required"}), 400
+        access_token = g.broker_token
+        user_id = g.current_user["id"]
+        symbol = body.symbol
+        instrument_token = body.instrument_token
+        llm_provider = body.llm_provider
 
         logger.info(f"Starting analysis for {symbol} (provider={llm_provider or 'gemini'})")
 
@@ -71,11 +71,9 @@ def analyze_stock():
                 agent_errors.append(name)
                 state[result_key] = {"score": 3.0, "explanation": f"{name} failed: {str(agent_err)}"}
 
-        # Synthesize overall score
         logger.info(f"Running synthesizer for {symbol}")
         try:
             from agents.analysis_graph import _synthesizer_node
-
             synth = _synthesizer_node(state)
             state.update(synth)
             logger.info(f"Synthesizer completed — overall: {state.get('overall_score')}")
@@ -109,30 +107,30 @@ def analyze_stock():
         if agent_errors:
             response_data["agent_errors"] = agent_errors
 
-        save_analysis_result(access_token, symbol, response_data)
+        save_analysis_result(user_id, symbol, response_data)
         logger.info(f"Done — {symbol} overall_score={state.get('overall_score')}, errors={agent_errors}")
 
         return jsonify(response_data)
 
     except Exception as e:
         logger.error(f"FATAL analysis error: {e}", exc_info=True)
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Analysis failed"}), 500
 
 
 @analysis_bp.route("/analyze-stock-stream", methods=["POST"])
-def analyze_stock_stream():
+@require_auth
+@require_broker
+@validate_request(AnalyzeStockBody)
+def analyze_stock_stream(body: AnalyzeStockBody):
     """SSE endpoint — streams per-agent progress for a single stock analysis."""
     try:
         from agents.analysis_stream import run_analysis_stream
 
-        data = request.json
-        access_token = data.get("access_token")
-        symbol = data.get("symbol")
-        instrument_token = data.get("instrument_token")
-        llm_provider = data.get("llm_provider", None)
-
-        if not access_token or not symbol:
-            return jsonify({"success": False, "error": "access_token and symbol are required"}), 400
+        access_token = g.broker_token
+        user_id = g.current_user["id"]
+        symbol = body.symbol
+        instrument_token = body.instrument_token
+        llm_provider = body.llm_provider
 
         def generate():
             final_data = None
@@ -148,7 +146,7 @@ def analyze_stock_stream():
             yield "event: end\ndata: {}\n\n"
 
             if final_data:
-                save_analysis_result(access_token, symbol, final_data)
+                save_analysis_result(user_id, symbol, final_data)
 
         return Response(
             stream_with_context(generate()),
@@ -161,21 +159,19 @@ def analyze_stock_stream():
         )
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Stream failed"}), 500
 
 
 @analysis_bp.route("/analyze-all", methods=["POST"])
+@require_auth
+@require_broker
 def analyze_all_stocks():
     """Analyze all stocks in portfolio."""
     try:
         from agents.analysis_graph import analysis_graph
 
-        data = request.json
-        access_token = data.get("access_token")
-
-        if not access_token:
-            return jsonify({"success": False, "error": "Access token is required"}), 400
-
+        access_token = g.broker_token
+        user_id = g.current_user["id"]
         broker = get_broker(access_token)
         holdings = broker.get_holdings()
 
@@ -185,25 +181,24 @@ def analyze_all_stocks():
         results = []
         failed_stocks = []
 
+        data = request.json or {}
         llm_provider = data.get("llm_provider", None)
 
         def run_analysis(symbol, instrument_token):
-            return analysis_graph.invoke(
-                {
-                    "symbol": symbol,
-                    "access_token": access_token,
-                    "instrument_token": instrument_token,
-                    "llm_provider": llm_provider,
-                    "stats_result": None,
-                    "company_health_result": None,
-                    "breaking_news_result": None,
-                    "overall_score": None,
-                    "verdict": None,
-                    "risk_factors": None,
-                    "conflict_summary": None,
-                    "analyzed_at": None,
-                }
-            )
+            return analysis_graph.invoke({
+                "symbol": symbol,
+                "access_token": access_token,
+                "instrument_token": instrument_token,
+                "llm_provider": llm_provider,
+                "stats_result": None,
+                "company_health_result": None,
+                "breaking_news_result": None,
+                "overall_score": None,
+                "verdict": None,
+                "risk_factors": None,
+                "conflict_summary": None,
+                "analyzed_at": None,
+            })
 
         with ThreadPoolExecutor(max_workers=2) as executor:
             futures = {}
@@ -231,24 +226,22 @@ def analyze_all_stocks():
                         },
                         "analyzed_at": result.get("analyzed_at"),
                     }
-                    save_analysis_result(access_token, symbol, response_data)
+                    save_analysis_result(user_id, symbol, response_data)
                     results.append({"symbol": symbol, "success": True, "analysis": response_data})
                 except Exception as e:
                     logger.error(f"Error analyzing {symbol}: {e}")
                     failed_stocks.append({"symbol": symbol, "error": str(e)})
                     results.append({"symbol": symbol, "success": False, "error": str(e)})
 
-        return jsonify(
-            {
-                "success": True,
-                "results": results,
-                "total_stocks": len(holdings),
-                "successful_analyses": len([r for r in results if r.get("success")]),
-                "failed_analyses": len(failed_stocks),
-                "failed_stocks": failed_stocks,
-                "completed_at": datetime.now().isoformat(),
-            }
-        )
+        return jsonify({
+            "success": True,
+            "results": results,
+            "total_stocks": len(holdings),
+            "successful_analyses": len([r for r in results if r.get("success")]),
+            "failed_analyses": len(failed_stocks),
+            "failed_stocks": failed_stocks,
+            "completed_at": datetime.now().isoformat(),
+        })
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Analysis failed"}), 500

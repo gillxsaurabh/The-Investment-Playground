@@ -2,7 +2,10 @@
 
 import logging
 
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
+
+from middleware.auth import require_auth
+from services.validation import validate_request, ChatSendBody
 
 logger = logging.getLogger(__name__)
 
@@ -10,44 +13,44 @@ chat_bp = Blueprint("chat", __name__, url_prefix="/api/chat")
 
 
 @chat_bp.route("/send", methods=["POST"])
-def chat_send():
+@require_auth
+@validate_request(ChatSendBody)
+def chat_send(body: ChatSendBody):
     """Send message to LangGraph agent."""
     try:
         from agents import run_agent
 
-        data = request.json
-        message = data.get("message", "")
-        session_id = data.get("session_id", "default")
-        access_token = data.get("access_token", "")
-
-        if not message:
-            return jsonify({"success": False, "error": "Message is required"}), 400
+        session_id = body.session_id or f"user_{g.current_user['id']}"
+        access_token = getattr(g, "broker_token", "") or ""
 
         response_text = run_agent(
-            message=message,
+            message=body.message,
             session_id=session_id,
             access_token=access_token,
         )
 
-        return jsonify(
-            {"success": True, "response": response_text, "session_id": session_id}
-        )
+        return jsonify({
+            "success": True,
+            "response": response_text,
+            "session_id": session_id,
+        })
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Chat request failed"}), 500
 
 
 @chat_bp.route("/clear", methods=["POST"])
+@require_auth
 def chat_clear():
     """Clear chat session."""
     try:
         from agents import clear_session
 
-        data = request.json
-        session_id = data.get("session_id", "default")
+        data = request.json or {}
+        session_id = data.get("session_id", f"user_{g.current_user['id']}")
         clear_session(session_id)
 
         return jsonify({"success": True, "message": "Chat session cleared"})
 
     except Exception as e:
-        return jsonify({"success": False, "error": str(e)}), 500
+        return jsonify({"success": False, "error": "Failed to clear session"}), 500

@@ -3,7 +3,7 @@ import { Observable, of, throwError } from 'rxjs';
 import { inject } from '@angular/core';
 import { DemoService, DEMO_DATA } from '../services/demo.service';
 
-// Endpoints that return demo data (read-only) ── matched by suffix
+// Endpoints that return demo data (read-only) -- matched by suffix
 const MOCK_MAP: Record<string, () => unknown> = {
   '/api/portfolio/holdings':      () => DEMO_DATA.holdings,
   '/api/portfolio/summary':       () => DEMO_DATA.portfolio_summary,
@@ -15,9 +15,10 @@ const MOCK_MAP: Record<string, () => unknown> = {
   '/api/trading/mode':            () => DEMO_DATA.trading_mode,
   '/api/automation/status':       () => DEMO_DATA.automation_status,
   '/api/automation/history':      () => DEMO_DATA.automation_history,
+  '/api/audit/results':           () => DEMO_DATA.audit_results,
 };
 
-// Endpoints that are blocked in demo — show Kite prompt instead
+// Endpoints that are blocked in demo -- show Kite prompt instead
 const BLOCKED_PATTERNS = [
   '/api/simulator/execute',
   '/api/simulator/close',
@@ -54,13 +55,13 @@ export function demoInterceptor(
     }
   }
 
-  // Auth endpoints — swallow errors in demo
+  // Auth endpoints -- swallow in demo
   if (url.includes('/api/auth/')) {
     return of(new HttpResponse({ status: 200, body: { success: true, ...DEMO_DATA.user } }));
   }
 
-  // Analysis endpoints — block and prompt
-  if (url.includes('/api/analyze')) {
+  // Analysis and audit run endpoints -- block and prompt
+  if (url.includes('/api/analyze') || url.includes('/api/audit/run')) {
     demoService.showKitePrompt();
     return throwError(() => ({ status: 403, error: { demo_blocked: true } }));
   }

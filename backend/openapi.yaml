@@ -1,0 +1,465 @@
+openapi: "3.1.0"
+info:
+  title: CogniCap API
+  version: "1.0.0"
+  description: |
+    CogniCap trading portfolio dashboard API.
+
+    **Authentication:** Most endpoints require a JWT Bearer token in the
+    `Authorization` header. Obtain one via `/api/auth/login` or `/api/auth/register`.
+    Broker-dependent endpoints additionally require a linked Zerodha Kite account.
+
+servers:
+  - url: http://localhost:5000
+    description: Local development
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    Error:
+      type: object
+      properties:
+        success: { type: boolean, example: false }
+        error: { type: string }
+        request_id: { type: string }
+    Success:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+
+security:
+  - BearerAuth: []
+
+paths:
+  # ── Auth ────────────────────────────────────────────────
+  /api/auth/register:
+    post:
+      tags: [Auth]
+      summary: Register a new account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, name]
+              properties:
+                email: { type: string, format: email }
+                password: { type: string, minLength: 8 }
+                name: { type: string, minLength: 1 }
+      responses:
+        "201":
+          description: User created, tokens returned
+        "400":
+          description: Validation error
+        "409":
+          description: Email already registered
+
+  /api/auth/login:
+    post:
+      tags: [Auth]
+      summary: Login with email + password
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string }
+                password: { type: string }
+      responses:
+        "200":
+          description: Login successful, tokens returned
+        "401":
+          description: Invalid credentials
+
+  /api/auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Refresh access token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token: { type: string }
+      responses:
+        "200":
+          description: New token pair returned
+        "401":
+          description: Invalid or expired refresh token
+
+  /api/auth/me:
+    get:
+      tags: [Auth]
+      summary: Get current user profile + broker status
+      responses:
+        "200":
+          description: User profile
+
+  /api/auth/logout:
+    post:
+      tags: [Auth]
+      summary: Logout (revoke all refresh tokens)
+      responses:
+        "200":
+          description: Logged out
+
+  /api/auth/change-password:
+    post:
+      tags: [Auth]
+      summary: Change password (revokes all sessions)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, new_password]
+              properties:
+                current_password: { type: string }
+                new_password: { type: string, minLength: 8 }
+      responses:
+        "200":
+          description: Password changed
+        "400":
+          description: Current password incorrect
+
+  /api/auth/forgot-password:
+    post:
+      tags: [Auth]
+      summary: Request password reset (always returns 200)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string }
+      responses:
+        "200":
+          description: Reset token generated (check server logs)
+
+  /api/auth/reset-password:
+    post:
+      tags: [Auth]
+      summary: Reset password with token
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, new_password]
+              properties:
+                token: { type: string }
+                new_password: { type: string, minLength: 8 }
+      responses:
+        "200":
+          description: Password reset
+        "400":
+          description: Invalid or expired token
+
+  /api/auth/broker/login-url:
+    get:
+      tags: [Auth - Broker]
+      summary: Get Zerodha login URL for broker linking
+      responses:
+        "200":
+          description: Login URL returned
+
+  /api/auth/broker/link:
+    post:
+      tags: [Auth - Broker]
+      summary: Link Kite broker account
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [request_token]
+              properties:
+                request_token: { type: string }
+      responses:
+        "200":
+          description: Broker linked
+
+  /api/auth/broker/status:
+    get:
+      tags: [Auth - Broker]
+      summary: Check broker link and token validity
+      responses:
+        "200":
+          description: Broker status
+
+  # ── Health ──────────────────────────────────────────────
+  /health:
+    get:
+      tags: [Health]
+      summary: Legacy health check
+      security: []
+      responses:
+        "200":
+          description: OK
+
+  /health/live:
+    get:
+      tags: [Health]
+      summary: Liveness probe
+      security: []
+      responses:
+        "200":
+          description: Process is alive
+
+  /health/ready:
+    get:
+      tags: [Health]
+      summary: Readiness probe (checks DB)
+      security: []
+      responses:
+        "200":
+          description: Ready
+        "503":
+          description: Not ready
+
+  /health/metrics:
+    get:
+      tags: [Health]
+      summary: Runtime metrics (authenticated)
+      responses:
+        "200":
+          description: Metrics data
+
+  # ── Simulator ───────────────────────────────────────────
+  /api/simulator/execute:
+    post:
+      tags: [Simulator]
+      summary: Execute a virtual buy order
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [symbol, quantity, atr]
+              properties:
+                symbol: { type: string }
+                quantity: { type: integer, minimum: 1 }
+                atr: { type: number }
+                trail_multiplier: { type: number, default: 1.5 }
+                instrument_token: { type: integer }
+                ltp: { type: number }
+      responses:
+        "200":
+          description: Trade executed
+
+  /api/simulator/positions:
+    get:
+      tags: [Simulator]
+      summary: Get all positions with live P&L
+      responses:
+        "200":
+          description: Positions with account summary
+
+  /api/simulator/close:
+    post:
+      tags: [Simulator]
+      summary: Close a virtual position
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [trade_id]
+              properties:
+                trade_id: { type: string }
+      responses:
+        "200":
+          description: Position closed
+
+  /api/simulator/reset:
+    post:
+      tags: [Simulator]
+      summary: Reset simulator to starting state
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                initial_capital: { type: number, default: 1000000 }
+      responses:
+        "200":
+          description: Simulator reset
+
+  /api/simulator/status:
+    get:
+      tags: [Simulator]
+      summary: Get account summary
+      responses:
+        "200":
+          description: Account status
+
+  /api/simulator/price-history:
+    get:
+      tags: [Simulator]
+      summary: Get price history for charting
+      responses:
+        "200":
+          description: Price history array
+
+  # ── Analysis ────────────────────────────────────────────
+  /api/analyze-stock:
+    post:
+      tags: [Analysis]
+      summary: Analyze a stock (AI-powered)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [symbol]
+              properties:
+                symbol: { type: string }
+                llm_provider: { type: string, enum: [claude, gemini, openai] }
+      responses:
+        "200":
+          description: Analysis result
+
+  /api/analyze-stock-stream:
+    post:
+      tags: [Analysis]
+      summary: Stream stock analysis via SSE
+      responses:
+        "200":
+          description: SSE event stream
+
+  # ── Portfolio ───────────────────────────────────────────
+  /api/portfolio/holdings:
+    get:
+      tags: [Portfolio]
+      summary: Get portfolio holdings with analysis
+      responses:
+        "200":
+          description: Holdings array
+
+  /api/portfolio/summary:
+    get:
+      tags: [Portfolio]
+      summary: Get portfolio summary (total P&L, etc.)
+      responses:
+        "200":
+          description: Portfolio summary
+
+  # ── Chat ────────────────────────────────────────────────
+  /api/chat/send:
+    post:
+      tags: [Chat]
+      summary: Send a message to the AI assistant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [message]
+              properties:
+                message: { type: string, maxLength: 4000 }
+                session_id: { type: string }
+      responses:
+        "200":
+          description: AI response
+
+  /api/chat/clear:
+    post:
+      tags: [Chat]
+      summary: Clear chat session
+      responses:
+        "200":
+          description: Session cleared
+
+  # ── Decision Support ────────────────────────────────────
+  /api/decision-support/run:
+    post:
+      tags: [Decision Support]
+      summary: Run the buy pipeline (4-2-1-1 stock discovery)
+      responses:
+        "200":
+          description: SSE event stream with pipeline progress
+
+  /api/decision-support/sell:
+    post:
+      tags: [Decision Support]
+      summary: Run the sell audit pipeline
+      responses:
+        "200":
+          description: SSE event stream with sell analysis
+
+  # ── Automation ──────────────────────────────────────────
+  /api/automation/status:
+    get:
+      tags: [Automation]
+      summary: Get automation status and next run time
+      responses:
+        "200":
+          description: Automation state
+
+  /api/automation/enable:
+    post:
+      tags: [Automation]
+      summary: Enable or disable weekly automation
+      responses:
+        "200":
+          description: Automation toggled
+
+  /api/automation/run-now:
+    post:
+      tags: [Automation]
+      summary: Trigger an immediate automation run
+      responses:
+        "200":
+          description: Run started
+
+  /api/automation/history:
+    get:
+      tags: [Automation]
+      summary: Get automation run history
+      responses:
+        "200":
+          description: History array
+
+  # ── Market ──────────────────────────────────────────────
+  /api/market/indices:
+    get:
+      tags: [Market]
+      summary: Get market indices (Nifty 50, Sensex)
+      responses:
+        "200":
+          description: Index data
+
+  /api/market/top-stocks:
+    get:
+      tags: [Market]
+      summary: Get top performing stocks
+      responses:
+        "200":
+          description: Stock list

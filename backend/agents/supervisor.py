@@ -11,8 +11,13 @@ from agents.workers import portfolio_agent, general_agent  # noqa: F401
 
 
 def _supervisor_node(state: AgentState) -> dict:
-    """Classify user intent and pick the right worker agent."""
-    llm = get_llm(temperature=0)
+    """Classify user intent and pick the right worker agent.
+
+    Uses OpenAI (GPT-4o-mini) for routing — it's fast, cheap, and well-suited
+    for classification tasks.  Claude is reserved for financial analysis.
+    Falls back to Gemini if OPENAI_API_KEY is not set.
+    """
+    llm = get_llm(temperature=0, provider="openai")
     agent_descriptions = get_agent_descriptions()
     agent_names = list(get_registered_agents().keys())
 

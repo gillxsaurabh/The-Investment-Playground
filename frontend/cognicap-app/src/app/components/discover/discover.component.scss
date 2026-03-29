@@ -1,0 +1,461 @@
+$bg-primary:   #0d0d0d;
+$bg-card:      #161616;
+$bg-elevated:  #1e1e1e;
+$bg-hover:     #252525;
+$border-subtle:  rgba(255, 255, 255, 0.06);
+$border-default: rgba(255, 255, 255, 0.1);
+$accent:       #6c63ff;
+$accent-dim:   rgba(108, 99, 255, 0.12);
+$text-primary:   #f5f5f5;
+$text-secondary: #a1a1aa;
+$text-muted:     #52525b;
+$green:  #22c55e;
+$red:    #ef4444;
+$orange: #f97316;
+
+.discover-container {
+  min-height: 100vh;
+  background: $bg-primary;
+}
+
+.discover-layout {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 24px 30px;
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 20px;
+  align-items: start;
+}
+
+// ---- Mode bar ----
+.mode-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.mode-pills { display: flex; gap: 6px; }
+.mode-pill {
+  padding: 6px 16px;
+  border-radius: 20px;
+  border: 1px solid $border-default;
+  background: transparent;
+  color: $text-secondary;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.05em;
+  transition: all 0.2s;
+  &:disabled { opacity: 0.4; cursor: not-allowed; }
+  &.active-buy { background: rgba(34,197,94,0.12); border-color: #22c55e; color: #22c55e; }
+  &.active-sell { background: rgba(239,68,68,0.12); border-color: #ef4444; color: #ef4444; }
+}
+.mode-desc { font-size: 0.78rem; color: $text-muted; }
+.sell-desc { color: rgba(239,68,68,0.7); }
+
+// ---- Gear slider ----
+.gear-section {
+  background: $bg-card;
+  border: 1px solid $border-subtle;
+  border-radius: 12px;
+  padding: 14px 16px;
+  margin-bottom: 14px;
+  &.turbo { border-color: rgba(239,68,68,0.3); animation: turbo-shake 0.4s ease-in-out; }
+}
+@keyframes turbo-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+
+.gear-icon { font-size: 1.4rem; margin-bottom: 8px; &.shake { animation: turbo-shake 0.4s ease-in-out; } }
+.gear-slider-wrap { display: flex; flex-direction: column; gap: 6px; }
+.gear-slider {
+  -webkit-appearance: none;
+  width: 100%; height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(to right, #22c55e, #2dd4bf, #3b82f6, #f97316, #ef4444);
+  outline: none; cursor: pointer;
+  &::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--slider-color, #6c63ff); cursor: pointer; transition: transform 0.2s; &:hover { transform: scale(1.2); } }
+  &::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--slider-color, #6c63ff); cursor: pointer; border: none; }
+}
+.gear-labels { display: flex; justify-content: space-between; }
+.gear-label { font-size: 0.7rem; color: $text-muted; cursor: pointer; &.active { font-weight: 700; } }
+.gear-desc { font-size: 0.78rem; margin-top: 6px; }
+
+// ---- Provider row ----
+.provider-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  flex-wrap: wrap;
+}
+.provider-label { font-size: 0.75rem; color: $text-secondary; display: flex; align-items: center; gap: 4px; .material-icons { font-size: 14px; color: $accent; } }
+.provider-chips { display: flex; gap: 6px; }
+.provider-chip {
+  padding: 4px 12px;
+  border-radius: 16px;
+  border: 1px solid $border-default;
+  background: transparent;
+  color: $text-secondary;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  &.active { background: $accent-dim; border-color: $accent; color: $accent; }
+  &:hover:not(.active):not(:disabled) { border-color: rgba(255,255,255,0.2); }
+  &:disabled { opacity: 0.4; }
+}
+
+// ---- Run button ----
+.run-row { margin-bottom: 16px; }
+.btn-run {
+  width: 100%;
+  padding: 11px;
+  background: $accent;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+  &:hover { filter: brightness(1.1); }
+}
+.btn-cancel {
+  width: 100%;
+  padding: 11px;
+  background: rgba(239,68,68,0.12);
+  color: $red;
+  border: 1px solid rgba(239,68,68,0.3);
+  border-radius: 8px;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s;
+}
+
+// ---- Stepper (horizontal) ----
+.stepper {
+  display: flex;
+  flex-direction: row;
+  align-items: flex-start;
+  gap: 0;
+  margin-bottom: 16px;
+  overflow-x: auto;
+  padding: 4px 0 8px;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  min-width: 80px;
+  position: relative;
+}
+
+.step-indicator {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+}
+
+.step-dot {
+  width: 26px; height: 26px;
+  border-radius: 50%;
+  border: 2px solid $border-default;
+  background: $bg-elevated;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.65rem; color: $text-muted; flex-shrink: 0;
+  .material-icons { font-size: 13px; }
+  .step-num { font-size: 0.65rem; font-weight: 700; }
+}
+
+.step.running .step-dot { border-color: $accent; background: $accent-dim; color: $accent; }
+.step.completed .step-dot { border-color: $green; background: rgba(34,197,94,0.12); color: $green; }
+.step.error .step-dot { border-color: $red; background: rgba(239,68,68,0.12); color: $red; }
+
+// Horizontal connector between dots
+.step-line {
+  flex: 1;
+  height: 2px;
+  width: auto;
+  min-width: 8px;
+  background: $border-subtle;
+  margin: 0 2px;
+}
+
+// Label + counts below the dot
+.step-info {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 6px 4px 0;
+  width: 100%;
+}
+
+.step-name { font-size: 0.67rem; font-weight: 600; color: $text-primary; line-height: 1.3; }
+.step-counts { display: flex; align-items: center; gap: 3px; font-size: 0.65rem; color: $text-muted; margin-top: 2px; }
+.count-badge { background: $accent-dim; color: $accent; border-radius: 4px; padding: 0 4px; font-weight: 700; font-size: 0.62rem; }
+.arrow-sm { font-size: 10px !important; }
+.step-dur { font-size: 0.62rem; color: $text-muted; margin-top: 1px; }
+.spin-sm { animation: spin 0.6s linear infinite; }
+@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+
+// ---- Pipeline message ----
+.pipeline-msg { font-size: 0.8rem; color: $text-muted; background: $bg-card; border: 1px solid $border-subtle; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; }
+
+// ---- Results ----
+.results-section { margin-top: 8px; }
+.results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.results-title { font-size: 0.85rem; font-weight: 700; color: $text-primary; }
+
+.stock-cards { display: flex; flex-direction: column; gap: 8px; }
+.stock-card {
+  background: $bg-card;
+  border: 1px solid $border-subtle;
+  border-radius: 10px;
+  padding: 12px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  &:hover { border-color: $border-default; }
+  &.expanded { border-color: $accent; }
+}
+.card-top { display: flex; align-items: center; gap: 8px; }
+.rank-badge .rank-gold { color: #ffd700; font-weight: 800; font-size: 0.8rem; }
+.rank-badge .rank-silver { color: #c0c0c0; font-weight: 800; font-size: 0.8rem; }
+.rank-badge .rank-bronze { color: #cd7f32; font-weight: 800; font-size: 0.8rem; }
+.stock-identity { flex: 1; }
+.stock-sym { font-size: 0.9rem; font-weight: 700; color: $text-primary; display: block; }
+.stock-sector { font-size: 0.7rem; color: $text-muted; }
+.score-badge { background: $accent-dim; color: $accent; border-radius: 6px; padding: 3px 8px; font-size: 0.75rem; font-weight: 700; }
+.news-dot { width: 8px; height: 8px; border-radius: 50%; background: $text-muted; &.warning { background: $red; } &.clear { background: $green; } }
+.btn-add { background: $accent-dim; border: none; border-radius: 6px; color: $accent; cursor: pointer; padding: 4px; display: flex; align-items: center; .material-icons { font-size: 16px; } &:hover { background: rgba(108,99,255,0.2); } }
+.card-expanded { margin-top: 10px; border-top: 1px solid $border-subtle; padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
+.detail-row { display: flex; justify-content: space-between; font-size: 0.78rem; color: $text-secondary; .pos { color: $green; } .neg { color: $red; } }
+.why-selected { font-size: 0.75rem; color: $text-muted; font-style: italic; line-height: 1.4; }
+.btn-trade { background: $accent; color: #fff; border: none; border-radius: 6px; padding: 7px 14px; font-size: 0.78rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px; align-self: flex-start; margin-top: 4px; .material-icons { font-size: 14px; } &:hover { filter: brightness(1.1); } }
+
+// ---- Sell cards ----
+.sell-cards { display: flex; flex-direction: column; gap: 8px; }
+.sell-card { background: $bg-card; border: 1px solid $border-subtle; border-radius: 10px; padding: 12px; }
+.sell-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+.sell-sym { font-size: 0.9rem; font-weight: 700; color: $text-primary; flex: 1; }
+.urgency-badge { border-radius: 4px; padding: 2px 8px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.04em; }
+.urgent-strong { background: rgba(239,68,68,0.2); color: $red; border: 1px solid rgba(239,68,68,0.3); }
+.urgent-sell { background: rgba(249,115,22,0.15); color: $orange; border: 1px solid rgba(249,115,22,0.2); }
+.urgent-watch { background: rgba(234,179,8,0.12); color: #eab308; border: 1px solid rgba(234,179,8,0.2); }
+.urgent-hold { background: rgba(34,197,94,0.1); color: $green; border: 1px solid rgba(34,197,94,0.2); }
+.pnl { font-size: 0.8rem; font-weight: 700; &.pos { color: $green; } &.neg { color: $red; } }
+.sell-signals { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
+.signal-tag { background: $bg-elevated; border-radius: 4px; padding: 2px 7px; font-size: 0.68rem; color: $text-muted; }
+.sell-reason { font-size: 0.75rem; color: $text-muted; font-style: italic; line-height: 1.4; }
+
+// ---- Staging panel ----
+.staging-panel {
+  background: $bg-card;
+  border: 1px solid $border-subtle;
+  border-radius: 12px;
+  padding: 16px;
+  position: sticky;
+  top: 20px;
+}
+.staging-header { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; font-weight: 700; color: $text-primary; margin-bottom: 14px; .material-icons { font-size: 18px; color: $accent; } }
+.staging-count { background: $accent; color: #fff; border-radius: 10px; padding: 1px 7px; font-size: 0.7rem; font-weight: 700; }
+.staging-empty { text-align: center; color: $text-muted; padding: 20px 0; .material-icons { font-size: 32px; display: block; margin-bottom: 8px; } p { font-size: 0.8rem; line-height: 1.4; } }
+.staging-list { display: flex; flex-direction: column; gap: 8px; }
+.staging-item { display: flex; align-items: center; gap: 8px; background: $bg-elevated; border-radius: 8px; padding: 8px 10px; }
+.staging-sym { flex: 1; font-size: 0.85rem; font-weight: 700; color: $text-primary; }
+.staging-price { font-size: 0.75rem; color: $text-muted; }
+.btn-stage-trade { background: $accent-dim; color: $accent; border: none; border-radius: 6px; padding: 4px 10px; font-size: 0.73rem; font-weight: 600; cursor: pointer; &:hover { background: rgba(108,99,255,0.2); } }
+.btn-remove { background: none; border: none; color: $text-muted; cursor: pointer; display: flex; padding: 2px; .material-icons { font-size: 16px; } &:hover { color: $red; } }
+.btn-bulk { width: 100%; margin-top: 8px; padding: 9px; background: $accent; color: #fff; border: none; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; &:hover { filter: brightness(1.1); } }
+
+// ---- Trade Modal ----
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+.modal { background: $bg-card; border: 1px solid $border-default; border-radius: 16px; padding: 24px; width: 90%; max-width: 420px; max-height: 90vh; overflow-y: auto; }
+.modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; h3 { font-size: 1rem; font-weight: 700; color: $text-primary; } }
+.modal-close { background: none; border: none; color: $text-muted; cursor: pointer; .material-icons { font-size: 20px; } &:hover { color: $text-primary; } }
+.modal-body { display: flex; flex-direction: column; gap: 12px; align-items: center; }
+.trade-grid { width: 100%; display: flex; flex-direction: column; gap: 8px; }
+.trow { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: $text-secondary; .qty { font-size: 1.1rem; font-weight: 700; color: $accent; } }
+.error-box { width: 100%; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 10px; font-size: 0.8rem; color: $text-primary; }
+.btn-execute { width: 100%; padding: 11px; background: $accent; color: #fff; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; &:hover:not(:disabled) { filter: brightness(1.1); } &:disabled { opacity: 0.5; cursor: not-allowed; } }
+.spin-lg { animation: spin 0.8s linear infinite; font-size: 32px; color: $accent; }
+.error-state { color: $red; font-size: 0.85rem; }
+
+// ---- Pipeline panel ----
+.pipeline-panel {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 900px) {
+  .discover-layout { grid-template-columns: 1fr; }
+  .staging-panel { position: static; }
+}
+
+// ---- Staged button state ----
+.btn-add.btn-staged {
+  background: rgba(34, 197, 94, 0.12);
+  border-color: $green;
+  color: $green;
+}
+
+// ---- Mode row in staging panel ----
+.mode-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  border-bottom: 1px solid $border-subtle;
+  margin-bottom: 4px;
+}
+.mode-label { font-size: 0.72rem; color: $text-muted; font-weight: 600; text-transform: uppercase; }
+.mode-chips { display: flex; gap: 4px; flex: 1; }
+.mode-chip-sm {
+  flex: 1;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid $border-default;
+  background: transparent;
+  color: $text-secondary;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  &.active-sim { background: $accent-dim; border-color: $accent; color: $accent; }
+  &.active-live { background: rgba(239,68,68,0.12); border-color: $red; color: $red; }
+  &:hover:not(.active-sim):not(.active-live) { border-color: $text-muted; }
+}
+.live-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: $text-muted;
+  flex-shrink: 0;
+  &.live { background: $red; box-shadow: 0 0 5px rgba(239,68,68,0.6); }
+}
+
+// ---- Bulk trade modal ----
+.bulk-modal { max-width: 420px; }
+.bulk-summary {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.bulk-stat {
+  flex: 1;
+  background: $bg-elevated;
+  border: 1px solid $border-subtle;
+  border-radius: 8px;
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  span { font-size: 0.72rem; color: $text-muted; }
+  strong { font-size: 0.95rem; color: $text-primary; }
+}
+.bulk-stocks {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+.bulk-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  background: $bg-elevated;
+  border: 1px solid $border-subtle;
+  border-radius: 8px;
+  transition: border-color 0.2s;
+  &.bulk-success { border-color: $green; }
+  &.bulk-error { border-color: $red; }
+}
+.bulk-sym { font-weight: 700; color: $text-primary; font-size: 0.85rem; flex: 0 0 100px; }
+.bulk-qty { flex: 1; font-size: 0.78rem; color: $text-secondary; }
+.bulk-status-icon {
+  .material-icons { font-size: 16px; }
+  .material-icons:first-child { color: $green; }
+  .material-icons:nth-child(2) { color: $red; }
+}
+.bulk-progress {
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: $text-secondary;
+}
+.progress-bar {
+  height: 4px;
+  background: $bg-elevated;
+  border-radius: 2px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: $accent;
+  border-radius: 2px;
+  transition: width 0.3s;
+}
+.loading-body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 24px 0;
+  color: $text-secondary;
+  font-size: 0.85rem;
+}
+
+// ---- Confirm modal actions ----
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+}
+.btn-cancel-confirm {
+  flex: 1;
+  padding: 10px;
+  border: 1px solid $border-default;
+  border-radius: 8px;
+  background: transparent;
+  color: $text-secondary;
+  font-size: 0.875rem;
+  cursor: pointer;
+  &:hover { border-color: $text-muted; }
+}
+.btn-confirm-live {
+  flex: 1;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background: $red;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  .material-icons { font-size: 16px; }
+}
+.confirm-warning {
+  font-size: 0.875rem;
+  color: $text-secondary;
+  line-height: 1.6;
+  strong { color: $red; }
+}
