@@ -365,10 +365,11 @@ $text:         #e8e8f0;
 // Integration
 .vis-integration {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   width: 100%;
   justify-content: center;
   gap: 0;
+  padding-top: 0.5rem;
 }
 
 .flow-node {
@@ -412,6 +413,7 @@ $text:         #e8e8f0;
   background: linear-gradient(90deg, rgba($accent, 0.3), rgba($teal, 0.3));
   position: relative;
   margin: 0 1.2rem;
+  margin-top: 24px; // vertically center track with the 48px nodes
 
   .fdot {
     position: absolute;
