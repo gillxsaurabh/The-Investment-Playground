@@ -106,6 +106,9 @@ def create_app(testing=False):
 
     @app.errorhandler(404)
     def not_found(e):
+        # For non-API paths, serve the Angular SPA (handles browser back/forward and direct URL navigation)
+        if not request.path.startswith("/api/") and FRONTEND_DIST.exists():
+            return send_from_directory(str(FRONTEND_DIST), "index.html")
         return jsonify({"success": False, "error": "Not found", "request_id": _rid()}), 404
 
     @app.errorhandler(500)

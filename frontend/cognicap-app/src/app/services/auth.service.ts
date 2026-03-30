@@ -115,7 +115,7 @@ export class AuthService {
   // --- Auth state ---
 
   isAuthenticated(): boolean {
-    return !!this.getAccessToken() || localStorage.getItem('demo_mode') === 'true';
+    return !!this.getAccessToken();
   }
 
   get currentUser(): User | null {
