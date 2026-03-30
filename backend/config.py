@@ -79,6 +79,13 @@ FLASK_DEBUG = os.getenv("FLASK_DEBUG", "false").lower() == "true"
 
 def validate_config():
     """Validate that required environment variables are set. Call at startup."""
+    # --- Debug: check env var presence (temporary) ---
+    _jwt_raw = os.getenv("JWT_SECRET")
+    print(f"[Config] DEBUG: JWT_SECRET from os.getenv = {'<set, len=' + str(len(_jwt_raw)) + '>' if _jwt_raw else '<NOT SET>'}")
+    print(f"[Config] DEBUG: JWT_SECRET module var = {'<set, len=' + str(len(JWT_SECRET)) + '>' if JWT_SECRET else '<EMPTY>'}")
+    _env_keys = sorted([k for k in os.environ if 'JWT' in k or 'SECRET' in k or 'RAILWAY' in k])
+    print(f"[Config] DEBUG: Related env keys: {_env_keys}")
+
     # --- JWT_SECRET is mandatory — refuse to start without it ---
     if not JWT_SECRET:
         print("[Config] FATAL: JWT_SECRET is not set. The application cannot start.")
