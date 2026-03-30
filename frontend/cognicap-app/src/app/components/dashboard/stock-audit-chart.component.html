@@ -1,9 +1,9 @@
-<div class="audit-chart-card">
+<div class="audit-card">
 
   <!-- Header -->
   <div class="audit-header">
     <div class="audit-title-row">
-      <span class="audit-icon material-icons">health_and_safety</span>
+      <span class="material-icons audit-icon">health_and_safety</span>
       <h3 class="audit-title">Stock Audit</h3>
       <span *ngIf="lastRunAt" class="audit-last-run">Last run: {{ formatDate(lastRunAt) }}</span>
     </div>
@@ -53,14 +53,68 @@
       <span class="material-icons">dangerous</span>
       {{ summary.critical }} Critical
     </span>
-    <span class="pill pill-avg">
-      Avg {{ summary.avg_score | number:'1.1-1' }}/10
-    </span>
+    <span class="pill pill-avg">Avg {{ summary.avg_score | number:'1.1-1' }}/10</span>
   </div>
 
-  <!-- Chart -->
-  <div *ngIf="holdings.length > 0" class="chart-wrapper" [style.height.px]="chartHeight">
-    <canvas #chartCanvas></canvas>
+  <!-- Holdings scorecard -->
+  <div *ngIf="holdings.length > 0" class="holdings-list">
+
+    <!-- Column headers -->
+    <div class="audit-row audit-row--header">
+      <div class="cell-stock">Stock</div>
+      <div class="cell-comp" *ngFor="let key of componentKeys">
+        {{ componentLabels[key] }}
+      </div>
+      <div class="cell-score">Score</div>
+      <div class="cell-verdict">Verdict</div>
+      <div class="cell-pnl">P&amp;L</div>
+    </div>
+
+    <!-- Data rows -->
+    <div
+      class="audit-row audit-row--data"
+      *ngFor="let h of sortedHoldings; trackBy: trackBySymbol"
+      (click)="onSelectStock.emit(h)"
+    >
+      <!-- Stock name + health label -->
+      <div class="cell-stock">
+        <span class="stock-sym">{{ h.symbol }}</span>
+        <span class="label-chip" [class]="getLabelClass(h.health_label)">{{ h.health_label }}</span>
+      </div>
+
+      <!-- 5 component mini-bars (one per key) -->
+      <div class="cell-comp" *ngFor="let key of componentKeys">
+        <div class="bar-track">
+          <div
+            class="bar-fill"
+            [style.height.%]="getCompPct(h, key)"
+            [style.background]="getCompColor(h, key)"
+          ></div>
+        </div>
+        <span class="bar-val">{{ getCompVal(h, key) | number:'1.1-1' }}</span>
+      </div>
+
+      <!-- Total score -->
+      <div class="cell-score">
+        <span class="score-num" [style.color]="getLabelColor(h.health_label)">
+          {{ h.health_score | number:'1.1-1' }}
+        </span>
+        <span class="score-den">/10</span>
+      </div>
+
+      <!-- Verdict -->
+      <div class="cell-verdict">
+        <span class="verdict-chip" [class]="getVerdictClass(h.audit_verdict)">
+          {{ formatVerdict(h.audit_verdict) }}
+        </span>
+      </div>
+
+      <!-- P&L -->
+      <div class="cell-pnl" [class.pnl-pos]="h.pnl >= 0" [class.pnl-neg]="h.pnl < 0">
+        {{ h.pnl >= 0 ? '+' : '' }}{{ h.pnl_percentage | number:'1.1-1' }}%
+      </div>
+    </div>
+
   </div>
 
   <!-- Empty state -->
@@ -68,52 +122,6 @@
     <span class="material-icons empty-icon">analytics</span>
     <p>No audit results yet.</p>
     <p class="empty-sub">Click <strong>Run Audit</strong> to analyse your portfolio.</p>
-  </div>
-
-  <!-- Holdings table (below chart) -->
-  <div *ngIf="holdings.length > 0" class="holdings-table">
-    <table>
-      <thead>
-        <tr>
-          <th>Stock</th>
-          <th>Score</th>
-          <th>Label</th>
-          <th>Verdict</th>
-          <th>P&amp;L</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr
-          *ngFor="let h of holdings; trackBy: trackBySymbol"
-          class="holding-row"
-          (click)="onSelectStock.emit(h)"
-        >
-          <td class="sym-cell">{{ h.symbol }}</td>
-          <td class="score-cell">
-            <span class="score-badge" [class]="getLabelClass(h.health_label)">
-              {{ h.health_score | number:'1.1-1' }}
-            </span>
-          </td>
-          <td>
-            <span class="label-chip" [class]="getLabelClass(h.health_label)">
-              {{ h.health_label }}
-            </span>
-          </td>
-          <td>
-            <span class="verdict-chip" [class]="getVerdictClass(h.audit_verdict)">
-              {{ h.audit_verdict | titlecase }}
-            </span>
-          </td>
-          <td class="pnl-cell" [class.pnl-pos]="h.pnl >= 0" [class.pnl-neg]="h.pnl < 0">
-            {{ h.pnl >= 0 ? '+' : '' }}{{ h.pnl_percentage | number:'1.1-1' }}%
-          </td>
-          <td class="arrow-cell">
-            <span class="material-icons">chevron_right</span>
-          </td>
-        </tr>
-      </tbody>
-    </table>
   </div>
 
 </div>

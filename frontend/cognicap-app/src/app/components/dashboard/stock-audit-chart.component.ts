@@ -5,17 +5,9 @@ import {
   EventEmitter,
   OnChanges,
   SimpleChanges,
-  AfterViewInit,
-  OnDestroy,
-  ElementRef,
-  ViewChild,
-  NgZone,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { AuditHolding, AuditSummary } from '../../services/kite.service';
-import { Chart, registerables } from 'chart.js';
-
-Chart.register(...registerables);
 
 export interface AuditStep {
   step: number;
@@ -32,7 +24,7 @@ export interface AuditStep {
   templateUrl: './stock-audit-chart.component.html',
   styleUrls: ['./stock-audit-chart.component.scss'],
 })
-export class StockAuditChartComponent implements OnChanges, AfterViewInit, OnDestroy {
+export class StockAuditChartComponent implements OnChanges {
   @Input() holdings: AuditHolding[] = [];
   @Input() summary: AuditSummary | null = null;
   @Input() isRunning = false;
@@ -40,128 +32,42 @@ export class StockAuditChartComponent implements OnChanges, AfterViewInit, OnDes
   @Input() lastRunAt: string | null = null;
   @Input() pipelineMessage = '';
 
-  @Output() onRunAudit  = new EventEmitter<void>();
+  @Output() onRunAudit   = new EventEmitter<void>();
   @Output() onSelectStock = new EventEmitter<AuditHolding>();
 
-  @ViewChild('chartCanvas') chartCanvas!: ElementRef<HTMLCanvasElement>;
+  readonly componentKeys = [
+    'technical', 'fundamental', 'relative_strength', 'news', 'position',
+  ] as const;
 
-  private chart: Chart | null = null;
-  private viewInitialized = false;
+  readonly componentLabels: Record<string, string> = {
+    technical:         'Technical',
+    fundamental:       'Fundamental',
+    relative_strength: 'Rel. Str.',
+    news:              'News',
+    position:          'Position',
+  };
 
-  constructor(private ngZone: NgZone) {}
-
-  ngAfterViewInit(): void {
-    this.viewInitialized = true;
-    if (this.holdings.length > 0) {
-      this.renderChart();
-    }
+  get sortedHoldings(): AuditHolding[] {
+    return [...this.holdings].sort((a, b) => b.health_score - a.health_score);
   }
 
-  ngOnChanges(changes: SimpleChanges): void {
-    if (changes['holdings'] && this.viewInitialized) {
-      this.ngZone.runOutsideAngular(() => {
-        setTimeout(() => this.renderChart(), 50);
-      });
-    }
+  ngOnChanges(_: SimpleChanges): void {}
+
+  getCompVal(h: AuditHolding, key: string): number {
+    return (h.health_components as unknown as Record<string, number>)?.[key] ?? 0;
   }
 
-  ngOnDestroy(): void {
-    this.chart?.destroy();
+  // Each component is scored out of 2 (5 × 2 = 10 total)
+  getCompPct(h: AuditHolding, key: string): number {
+    return Math.min(100, (this.getCompVal(h, key) / 2) * 100);
   }
 
-  private renderChart(): void {
-    if (!this.chartCanvas || this.holdings.length === 0) return;
-
-    this.chart?.destroy();
-
-    const sorted = [...this.holdings].sort((a, b) => a.health_score - b.health_score);
-    const labels = sorted.map(h => h.symbol);
-
-    const componentColors = {
-      technical:         'rgba(108, 99, 255, 0.85)',
-      fundamental:       'rgba(34, 197, 94, 0.85)',
-      relative_strength: 'rgba(249, 115, 22, 0.85)',
-      news:              'rgba(234, 179, 8, 0.85)',
-      position:          'rgba(99, 195, 255, 0.85)',
-    };
-
-    const componentLabels: Record<string, string> = {
-      technical:         'Technical',
-      fundamental:       'Fundamental',
-      relative_strength: 'Rel. Strength',
-      news:              'News',
-      position:          'Position',
-    };
-
-    const datasets = (['technical', 'fundamental', 'relative_strength', 'news', 'position'] as const).map(key => ({
-      label: componentLabels[key],
-      data: sorted.map(h => h.health_components?.[key] ?? 0),
-      backgroundColor: componentColors[key],
-      borderWidth: 0,
-    }));
-
-    this.chart = new Chart(this.chartCanvas.nativeElement, {
-      type: 'bar',
-      data: { labels, datasets },
-      options: {
-        indexAxis: 'y',
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              color: '#a1a1aa',
-              boxWidth: 12,
-              font: { size: 11 },
-              padding: 16,
-            },
-          },
-          tooltip: {
-            callbacks: {
-              afterBody: (items: any[]) => {
-                const idx  = items[0]?.dataIndex;
-                const h    = sorted[idx];
-                if (!h) return [];
-                return [
-                  `Total: ${h.health_score}/10`,
-                  `Verdict: ${h.audit_verdict}`,
-                  h.ai_reasoning ? `AI: ${h.ai_reasoning.substring(0, 80)}…` : '',
-                ].filter(Boolean);
-              },
-            },
-          },
-        },
-        scales: {
-          x: {
-            stacked: true,
-            min: 0,
-            max: 10,
-            grid: { color: 'rgba(255,255,255,0.05)' },
-            ticks: { color: '#52525b', stepSize: 2 },
-          },
-          y: {
-            stacked: true,
-            grid: { display: false },
-            ticks: {
-              color: (ctx: any) => {
-                const h = sorted[ctx.index];
-                if (!h) return '#a1a1aa';
-                return this.getLabelColor(h.health_label);
-              },
-              font: { size: 12, weight: 'bold' },
-            },
-          },
-        },
-        onClick: (_: any, elements: any[]) => {
-          if (!elements.length) return;
-          const h = sorted[elements[0].index];
-          if (h) {
-            this.ngZone.run(() => this.onSelectStock.emit(h));
-          }
-        },
-      },
-    });
+  getCompColor(h: AuditHolding, key: string): string {
+    const pct = this.getCompVal(h, key) / 2;
+    if (pct >= 0.75) return '#22c55e';
+    if (pct >= 0.50) return '#eab308';
+    if (pct >= 0.25) return '#f97316';
+    return '#ef4444';
   }
 
   getLabelColor(label: string): string {
@@ -194,16 +100,16 @@ export class StockAuditChartComponent implements OnChanges, AfterViewInit, OnDes
     return map[label] ?? '';
   }
 
+  formatVerdict(v: string): string {
+    return v.replace(/_/g, ' ');
+  }
+
   formatDate(dt: string): string {
     if (!dt) return '';
     return new Date(dt).toLocaleDateString('en-IN', {
       day: '2-digit', month: 'short', year: 'numeric',
       hour: '2-digit', minute: '2-digit',
     });
-  }
-
-  get chartHeight(): number {
-    return Math.max(180, this.holdings.length * 36 + 60);
   }
 
   trackBySymbol(_: number, h: AuditHolding): string {

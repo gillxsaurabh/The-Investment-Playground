@@ -69,9 +69,10 @@
       background: $accent-dim;
       border: 1px solid rgba($accent, 0.3);
 
-      .material-icons {
-        font-size: 18px;
+      .cat-icon {
         color: $accent;
+        display: block;
+        flex-shrink: 0;
       }
     }
 
