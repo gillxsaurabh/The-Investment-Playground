@@ -2,7 +2,7 @@
 FROM node:20-slim AS frontend-builder
 WORKDIR /app/frontend/cognicap-app
 # Bump FRONTEND_VER to bust Railway's layer cache and force ng build
-ARG FRONTEND_VER=3
+ARG FRONTEND_VER=4
 COPY frontend/cognicap-app/package*.json ./
 RUN npm ci
 COPY frontend/cognicap-app/ ./
@@ -17,8 +17,8 @@ ARG DEPS_VER=3
 COPY backend/requirements.txt ./backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
-# Copy Gunicorn config
-COPY gunicorn.conf.py ./gunicorn.conf.py
+# Copy Gunicorn config into backend dir so it's accessible from WORKDIR
+COPY gunicorn.conf.py ./backend/gunicorn.conf.py
 
 # Copy backend source
 COPY backend/ ./backend/
@@ -37,5 +37,6 @@ USER appuser
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
     CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:${PORT:-5000}/health/live')"
 
-# Railway/Render inject PORT; config.py reads it
-CMD ["gunicorn", "-c", "gunicorn.conf.py", "backend.app:create_app()"]
+# Set working directory to backend so relative imports work
+WORKDIR /app/backend
+CMD ["gunicorn", "-c", "gunicorn.conf.py", "app:create_app()"]

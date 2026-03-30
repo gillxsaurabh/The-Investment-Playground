@@ -3,6 +3,6 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
-startCommand = "sh -c 'cd /app/backend && gunicorn -c ../gunicorn.conf.py \"app:create_app()\"'"
+# startCommand is omitted — Dockerfile CMD handles it
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
