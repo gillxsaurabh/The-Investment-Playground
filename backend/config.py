@@ -14,15 +14,20 @@ from dotenv import load_dotenv
 _BACKEND_ROOT = Path(__file__).resolve().parent
 _PROJECT_ROOT = _BACKEND_ROOT.parent
 
-# Load root .env first (no override) — sets any keys not yet in env
+# In production (Railway/Docker), env vars are injected by the platform.
+# Only load .env files in development (when they exist outside Docker).
 _root_env = _PROJECT_ROOT / ".env"
-if _root_env.exists():
-    load_dotenv(_root_env, override=False)
-
-# Load backend/.env second with override — its Kite keys take priority
 _backend_env = _BACKEND_ROOT / ".env"
-if _backend_env.exists():
-    load_dotenv(_backend_env, override=True)
+
+if os.getenv("RAILWAY_ENVIRONMENT") or os.getenv("RAILWAY_PROJECT_ID"):
+    # Running on Railway — trust platform-injected env vars, skip .env files
+    print("[Config] Railway detected — using platform environment variables")
+else:
+    # Local development — load .env files
+    if _root_env.exists():
+        load_dotenv(_root_env, override=False)
+    if _backend_env.exists():
+        load_dotenv(_backend_env, override=True)
 
 # --- Environment ---
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")  # development | staging | production
