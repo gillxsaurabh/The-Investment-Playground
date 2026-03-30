@@ -79,9 +79,9 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     },
     {
       badge: 'ZERO-RISK SANDBOX',
-      title: 'Test Theories.',
-      highlight: 'Risk Nothing.',
-      desc: 'Run the full AI pipeline with \u20B95,00,000 virtual capital before committing real money.',
+      title: 'Test before',
+      highlight: 'you invest.',
+      desc: 'Switch to Simulator mode',
       visual: 'simulator',
     },
   ];
