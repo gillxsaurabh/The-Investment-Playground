@@ -94,12 +94,27 @@
                 </div>
               </div>
 
-              <!-- Simulator bars -->
+              <!-- Simulator — paper trade ledger -->
               <div *ngSwitchCase="'simulator'" class="vis-simulator">
-                <div class="sim-bars">
-                  <div class="sbar" *ngFor="let h of [35,55,45,70,60,80,50,65,75,40]" [style.height.%]="h"></div>
+                <div class="sim-card">
+                  <div class="sim-card-header">
+                    <span class="sim-chip">PAPER TRADE</span>
+                    <span class="sim-balance">&#8377;5,00,000</span>
+                  </div>
+                  <div class="sim-row">
+                    <span class="sim-sym">TATAMOTORS</span>
+                    <span class="sim-pnl gain">+&#8377;2,805</span>
+                  </div>
+                  <div class="sim-row">
+                    <span class="sim-sym">ADANIENT</span>
+                    <span class="sim-pnl gain">+&#8377;1,825</span>
+                  </div>
+                  <div class="sim-row">
+                    <span class="sim-sym">LTIMINDTREE</span>
+                    <span class="sim-pnl loss">−&#8377;2,395</span>
+                  </div>
                 </div>
-                <span class="sim-label">&#8377;5,00,000 Virtual Capital</span>
+                <span class="sim-label">Zero real money at risk</span>
               </div>
 
             </div>
