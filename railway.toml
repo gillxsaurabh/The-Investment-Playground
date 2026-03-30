@@ -3,5 +3,6 @@ builder = "DOCKERFILE"
 dockerfilePath = "Dockerfile"
 
 [deploy]
+startCommand = "gunicorn -c gunicorn.conf.py --factory backend.app:create_app"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
