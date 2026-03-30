@@ -2,7 +2,7 @@
 FROM node:20-slim AS frontend-builder
 WORKDIR /app/frontend/cognicap-app
 # Bump FRONTEND_VER to bust Railway's layer cache and force ng build
-ARG FRONTEND_VER=2
+ARG FRONTEND_VER=3
 COPY frontend/cognicap-app/package*.json ./
 RUN npm ci
 COPY frontend/cognicap-app/ ./
@@ -13,7 +13,7 @@ FROM python:3.11-slim
 WORKDIR /app
 
 # Install Python dependencies (bump DEPS_VER to bust Railway's layer cache)
-ARG DEPS_VER=2
+ARG DEPS_VER=3
 COPY backend/requirements.txt ./backend/requirements.txt
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
