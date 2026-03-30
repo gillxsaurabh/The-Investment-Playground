@@ -60,7 +60,7 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       badge: 'THE AGENT ECOSYSTEM',
       title: 'Your AI',
       highlight: 'Analyst Army.',
-      desc: 'Four specialist AI agents analyse every stock across fundamentals, technicals, news, and sector dynamics — then score and rank.',
+      desc: 'Six specialist AI agents scan, analyse, and score every stock across market conditions, technicals, fundamentals, news, sector dynamics, and conviction — then rank and execute.',
       visual: 'agents',
     },
     {
@@ -87,10 +87,12 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
   ];
 
   agents = [
-    { name: 'Fundamental', icon: 'account_balance', color: '#22c55e' },
-    { name: 'Technical',   icon: 'show_chart',      color: '#6c63ff' },
-    { name: 'News',        icon: 'newspaper',       color: '#eab308' },
-    { name: 'Sector',      icon: 'pie_chart',       color: '#f97316' },
+    { name: 'Market Scanner',    icon: 'radar',           color: '#3b82f6' },
+    { name: 'Quant Analyst',     icon: 'show_chart',      color: '#6c63ff' },
+    { name: 'Fundamentals',      icon: 'account_balance', color: '#22c55e' },
+    { name: 'Sector Momentum',   icon: 'pie_chart',       color: '#f97316' },
+    { name: 'AI Conviction',     icon: 'psychology',      color: '#06b6d4' },
+    { name: 'Portfolio Analyst', icon: 'analytics',       color: '#ec4899' },
   ];
 
   gears = [
