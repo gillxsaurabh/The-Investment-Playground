@@ -1,8 +1,1 @@
-[build]
-builder = "DOCKERFILE"
-dockerfilePath = "Dockerfile"
 
-[deploy]
-# startCommand is omitted — Dockerfile CMD handles it
-restartPolicyType = "ON_FAILURE"
-restartPolicyMaxRetries = 3
