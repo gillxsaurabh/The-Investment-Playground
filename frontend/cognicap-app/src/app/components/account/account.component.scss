@@ -690,3 +690,318 @@
   .automation-section .two-col { grid-template-columns: 1fr; }
   .tab-btn { padding: 8px 10px; font-size: 12px; }
 }
+
+// ── Subscription / Plan Tab ───────────────────────────────────
+
+.plan-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 20px;
+
+  @media (max-width: 860px) { grid-template-columns: 1fr; }
+}
+
+.plan-card {
+  position: relative;
+  background: $bg-elevated;
+  border: 1px solid $border-subtle;
+  border-radius: 12px;
+  padding: 20px 18px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  transition: border-color 0.2s;
+
+  &.plan-active {
+    border-color: $accent;
+    background: rgba($accent, 0.05);
+  }
+
+  &.plan-rockstar.plan-active {
+    border-color: $green;
+    background: rgba($green, 0.05);
+  }
+}
+
+.plan-badge {
+  position: absolute;
+  top: -10px;
+  right: 14px;
+  background: $accent;
+  color: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 10px;
+  letter-spacing: 0.04em;
+
+  &.plan-badge-green { background: $green; }
+}
+
+.plan-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 14px;
+}
+
+.plan-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: $text-primary;
+}
+
+.plan-price {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: $accent;
+  small { font-size: 0.7rem; font-weight: 400; color: $text-muted; }
+
+  .plan-rockstar & { color: $green; }
+}
+
+.plan-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.8rem;
+    color: $text-secondary;
+
+    .material-icons { font-size: 14px; color: $green; }
+
+    &.plan-missing {
+      color: $text-muted;
+      .material-icons { color: $text-muted; }
+    }
+  }
+}
+
+.plan-requirements {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.req-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: $bg-card;
+  color: $text-muted;
+  border: 1px solid $border-subtle;
+
+  .material-icons { font-size: 12px; }
+
+  &.req-none { color: $text-muted; }
+  &.req-met { color: $green; border-color: rgba($green, 0.25); background: rgba($green, 0.08); }
+  &.req-unmet { color: $red; border-color: rgba($red, 0.25); background: rgba($red, 0.08); }
+}
+
+.plan-btn {
+  width: 100%;
+  background: $bg-card;
+  color: $text-secondary;
+  border: 1px solid $border-default;
+  border-radius: 8px;
+  padding: 9px 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+
+  &:hover:not(:disabled):not(.plan-btn-active) {
+    background: $accent-dim;
+    color: $accent;
+    border-color: rgba($accent, 0.3);
+  }
+
+  &.plan-btn-active {
+    background: $accent-dim;
+    color: $accent;
+    border-color: rgba($accent, 0.3);
+    cursor: default;
+  }
+
+  &.plan-btn-rockstar.plan-btn-active {
+    background: rgba($green, 0.1);
+    color: $green;
+    border-color: rgba($green, 0.3);
+  }
+
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.plan-warn {
+  display: flex;
+  align-items: flex-start;
+  gap: 4px;
+  font-size: 0.72rem;
+  color: $yellow;
+  margin-top: 8px;
+  line-height: 1.4;
+
+  .material-icons { font-size: 13px; margin-top: 1px; flex-shrink: 0; }
+}
+
+.plan-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  background: $bg-elevated;
+  border: 1px solid $border-subtle;
+  border-radius: 8px;
+  padding: 12px 14px;
+  font-size: 0.78rem;
+  color: $text-muted;
+  line-height: 1.5;
+
+  .material-icons { font-size: 15px; color: $accent; flex-shrink: 0; margin-top: 1px; }
+  strong { color: $text-secondary; }
+}
+
+// ── AI Models Tab ─────────────────────────────────────────────
+
+.card-desc {
+  color: $text-secondary;
+  font-size: 0.85rem;
+  margin: -8px 0 20px;
+  line-height: 1.5;
+}
+
+.tier-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.tier-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+
+  .material-icons { font-size: 14px; }
+
+  &.tier-rockstar {
+    background: rgba(34, 197, 94, 0.12);
+    color: $green;
+    border: 1px solid rgba(34, 197, 94, 0.25);
+  }
+  &.tier-ideal {
+    background: $accent-dim;
+    color: $accent;
+    border: 1px solid rgba($accent, 0.25);
+  }
+  &.tier-general {
+    background: $bg-elevated;
+    color: $text-secondary;
+    border: 1px solid $border-default;
+  }
+}
+
+.tier-hint {
+  font-size: 0.8rem;
+  color: $text-muted;
+
+  &.green-hint { color: $green; }
+}
+
+.llm-provider-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.llm-provider-card {
+  background: $bg-elevated;
+  border: 1px solid $border-subtle;
+  border-radius: 10px;
+  padding: 16px 18px;
+}
+
+.llm-provider-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.llm-icon {
+  font-size: 20px;
+  color: $accent;
+}
+
+.llm-label {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: $text-primary;
+  flex: 1;
+}
+
+.llm-status {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  .material-icons { font-size: 15px; }
+
+  &.configured { color: $green; }
+  &.not-configured { color: $text-muted; }
+}
+
+.llm-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  .token-input {
+    flex: 1;
+    background: $bg-input;
+    border: 1px solid $border-default;
+    border-radius: 7px;
+    padding: 9px 12px;
+    color: $text-primary;
+    font-size: 0.84rem;
+    outline: none;
+    transition: border-color 0.2s;
+    &:focus { border-color: $accent; }
+    &::placeholder { color: rgba(255,255,255,0.2); }
+  }
+}
+
+.llm-configured-row {
+  display: flex;
+  align-items: center;
+}
+
+.btn-sm {
+  padding: 8px 14px !important;
+  font-size: 0.82rem !important;
+  white-space: nowrap;
+}
+
+.llm-alert {
+  margin-top: 10px;
+}

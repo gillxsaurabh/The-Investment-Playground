@@ -1,19 +1,24 @@
-"""Market data endpoints — /api/market/*"""
+"""Market data endpoints — /api/market/*
+
+Market data uses an admin-token fallback: user's personal broker token is
+tried first; if absent, the global admin token is used. This allows
+Tier 1 users (no personal broker) to still see market data.
+"""
 
 import csv
 import logging
 from pathlib import Path
+from typing import Optional
 
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, jsonify, g
 
 from broker import get_broker
-from middleware.auth import require_auth, require_broker
+from middleware.auth import require_auth
 
 logger = logging.getLogger(__name__)
 
 market_bp = Blueprint("market", __name__, url_prefix="/api/market")
 
-# Path to nifty100 CSV — used for top gainers/losers
 _NIFTY100_CSV = Path(__file__).resolve().parents[1] / "data" / "nifty100.csv"
 
 
@@ -32,13 +37,37 @@ def _load_nifty100_symbols() -> list[str]:
     return symbols
 
 
+def _get_market_broker():
+    """Get a broker instance for market data.
+
+    Prefers the user's personal token; falls back to the admin token.
+    Returns None if neither is available.
+    """
+    user_token = getattr(g, "broker_token", None)
+    if user_token:
+        return get_broker(user_token)
+
+    from services.admin_token_service import get_admin_broker_token
+    admin_token = get_admin_broker_token()
+    if admin_token:
+        return get_broker(admin_token)
+
+    return None
+
+
 @market_bp.route("/indices", methods=["GET"])
 @require_auth
-@require_broker
 def get_market_indices():
-    """Get Nifty 50 and Sensex indices data using Kite API."""
+    """Get Nifty 50 and Sensex indices data. Uses admin token if user has no broker."""
     try:
-        broker = get_broker(g.broker_token)
+        broker = _get_market_broker()
+        if broker is None:
+            return jsonify({
+                "success": False,
+                "error": "Market data unavailable. Admin broker token not configured.",
+                "code": "NO_MARKET_TOKEN",
+            }), 503
+
         quotes = broker.get_quote(["NSE:NIFTY 50", "BSE:SENSEX"])
 
         nifty_quote = quotes.get("NSE:NIFTY 50", {})
@@ -74,15 +103,20 @@ def get_market_indices():
 
 @market_bp.route("/top-stocks", methods=["GET"])
 @require_auth
-@require_broker
 def get_top_stocks():
-    """Get top gainers and losers from Nifty 100 using live Kite API quotes."""
+    """Get top gainers and losers from Nifty 100. Uses admin token if user has no broker."""
     try:
         symbols = _load_nifty100_symbols()
         if not symbols:
             return jsonify({"success": False, "error": "Could not load Nifty 100 symbol list"}), 500
 
-        broker = get_broker(g.broker_token)
+        broker = _get_market_broker()
+        if broker is None:
+            return jsonify({
+                "success": False,
+                "error": "Market data unavailable. Admin broker token not configured.",
+                "code": "NO_MARKET_TOKEN",
+            }), 503
 
         instrument_keys = [f"NSE:{sym}" for sym in symbols]
         quotes = broker.get_quote(instrument_keys)

@@ -1,0 +1,101 @@
+.onboarding-wrap {
+  min-height: 100vh;
+  background: #0a0a0f;
+  color: #e2e8f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 48px 24px;
+}
+
+.onboarding-header {
+  text-align: center;
+  margin-bottom: 48px;
+
+  .logo-row {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 24px;
+  }
+
+  .logo-text { font-size: 1.5rem; font-weight: 700; color: #fff; }
+  .logo-sub { font-size: 0.75rem; color: #64748b; }
+
+  h1 { font-size: 2rem; font-weight: 700; margin: 0 0 12px; }
+  .subtitle { color: #94a3b8; font-size: 1rem; max-width: 480px; margin: 0 auto; }
+}
+
+.tiers-row {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  justify-content: center;
+  width: 100%;
+  max-width: 1000px;
+}
+
+.tier-card {
+  background: #12121a;
+  border: 2px solid #1e293b;
+  border-radius: 16px;
+  padding: 32px 28px;
+  width: 300px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+
+  &:hover { border-color: var(--accent, #6366f1); transform: translateY(-4px); }
+  &.selected { border-color: var(--accent, #6366f1); background: #15151f; }
+
+  .tier-badge {
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #fff;
+    margin-bottom: 16px;
+  }
+
+  .tier-name { font-size: 1.4rem; font-weight: 700; margin-bottom: 4px; }
+  .tier-tagline { color: #64748b; font-size: 0.85rem; margin-bottom: 16px; }
+  .tier-price { font-size: 1.6rem; font-weight: 700; color: var(--accent, #6366f1); margin-bottom: 24px; }
+
+  .feature-list { list-style: none; padding: 0; margin: 0 0 24px; }
+  .feature-yes { color: #94a3b8; margin: 8px 0; font-size: 0.85rem; .check { color: #22c55e; margin-right: 6px; } }
+  .feature-no { color: #475569; margin: 8px 0; font-size: 0.85rem; text-decoration: line-through; .cross { color: #ef4444; margin-right: 6px; } }
+
+  .select-indicator {
+    color: var(--accent, #6366f1);
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    .material-icons { font-size: 1.1rem; }
+  }
+}
+
+.proceed-row {
+  margin-top: 48px;
+  text-align: center;
+}
+
+.proceed-btn {
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px 40px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover:not(:disabled) { background: #4f46e5; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.skip-note { color: #475569; font-size: 0.8rem; margin-top: 16px; }

@@ -102,6 +102,12 @@ export class PositionsComponent implements OnInit, OnDestroy {
 
   switchToLive(): void {
     if (this.liveConfirmPhrase !== this.LIVE_CONFIRM_PHRASE) return;
+    if (!this.brokerLinked) {
+      // Redirect to connect-kite — live mode requires a personal broker
+      this.showModeConfirmDialog = false;
+      this.router.navigate(['/connect-kite']);
+      return;
+    }
     this.simulatorService.setTradingMode('live', true).subscribe({
       next: () => { this.showModeConfirmDialog = false; this.liveConfirmPhrase = ''; },
       error: () => {}

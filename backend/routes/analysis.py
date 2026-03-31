@@ -42,6 +42,7 @@ def analyze_stock(body: AnalyzeStockBody):
             "access_token": access_token,
             "instrument_token": instrument_token,
             "llm_provider": llm_provider,
+            "user_id": user_id,
             "stats_result": None,
             "company_health_result": None,
             "breaking_news_result": None,
@@ -134,7 +135,7 @@ def analyze_stock_stream(body: AnalyzeStockBody):
 
         def generate():
             final_data = None
-            for event in run_analysis_stream(symbol, access_token, instrument_token, llm_provider=llm_provider):
+            for event in run_analysis_stream(symbol, access_token, instrument_token, llm_provider=llm_provider, user_id=user_id):
                 yield event
                 if event.startswith("event: complete\n"):
                     try:
@@ -190,6 +191,7 @@ def analyze_all_stocks():
                 "access_token": access_token,
                 "instrument_token": instrument_token,
                 "llm_provider": llm_provider,
+                "user_id": user_id,
                 "stats_result": None,
                 "company_health_result": None,
                 "breaking_news_result": None,

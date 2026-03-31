@@ -1,0 +1,114 @@
+.paywall-wrap {
+  min-height: 100vh;
+  background: #0a0a0f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.paywall-card {
+  background: #12121a;
+  border: 1px solid #1e293b;
+  border-radius: 20px;
+  padding: 48px 40px;
+  max-width: 480px;
+  width: 100%;
+  text-align: center;
+  color: #e2e8f0;
+}
+
+.paywall-icon {
+  margin-bottom: 24px;
+  .material-icons { font-size: 3rem; color: #f59e0b; }
+}
+
+h1 { font-size: 1.6rem; font-weight: 700; margin: 0 0 8px; }
+
+.subtitle { color: #94a3b8; margin: 0 0 32px; }
+
+.price-block {
+  margin-bottom: 32px;
+  .price { font-size: 3rem; font-weight: 700; color: #6366f1; }
+  .period { font-size: 1rem; color: #64748b; margin-left: 4px; }
+}
+
+.benefits {
+  list-style: none;
+  padding: 0;
+  text-align: left;
+  margin: 0 0 32px;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    color: #94a3b8;
+    font-size: 0.9rem;
+    border-bottom: 1px solid #1e293b;
+
+    .material-icons { color: #22c55e; font-size: 1.1rem; }
+    &:last-child { border-bottom: none; }
+  }
+}
+
+.demo-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #1e293b;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #64748b;
+  font-size: 0.8rem;
+  margin-bottom: 24px;
+  .material-icons { font-size: 1rem; color: #f59e0b; }
+}
+
+.error-msg {
+  color: #ef4444;
+  font-size: 0.85rem;
+  margin-bottom: 16px;
+}
+
+.subscribe-btn {
+  width: 100%;
+  background: #6366f1;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 14px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: background 0.2s;
+
+  &:hover:not(:disabled) { background: #4f46e5; }
+  &:disabled { opacity: 0.5; cursor: not-allowed; }
+}
+
+.skip-btn {
+  width: 100%;
+  background: transparent;
+  color: #475569;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  padding: 12px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: color 0.2s;
+
+  &:hover { color: #94a3b8; }
+}
+
+.success-msg {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: #22c55e;
+  font-weight: 600;
+  .material-icons { font-size: 1.4rem; }
+}

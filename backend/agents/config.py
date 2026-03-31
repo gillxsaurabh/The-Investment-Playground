@@ -176,12 +176,35 @@ class ClaudeChatModel(BaseChatModel):
         return self.invoke(input, config=config, **kwargs)
 
 
+def _get_user_api_key(user_id: int, provider: str) -> str:
+    """Retrieve a per-user API key. Returns empty string if not configured."""
+    if user_id is None:
+        return ""
+    try:
+        from services.llm_key_service import get_llm_key
+        return get_llm_key(user_id, provider) or ""
+    except Exception:
+        return ""
+
+
+def _is_rockstar_plan(user_id: int) -> bool:
+    """Return True if the user has selected the Rockstar plan."""
+    if user_id is None:
+        return False
+    try:
+        from services.tier_service import get_user_plan
+        return get_user_plan(user_id) == "rockstar"
+    except Exception:
+        return False
+
+
 def get_llm(
     model_name: str = "gemini-2.5-flash",
     temperature: float = 0.1,
     provider: str = None,
     extended_thinking: bool = False,
     thinking_budget: int = 8000,
+    user_id: int = None,
 ):
     """Create an LLM instance.
 
@@ -195,36 +218,69 @@ def get_llm(
                            thinking mode for deeper multi-step reasoning.
         thinking_budget:   Token budget for the thinking phase (only used when
                            extended_thinking=True).
+        user_id:           When provided, per-user BYOK keys are checked first before
+                           falling back to the global environment variable.
     """
     from constants import LLM_PROVIDER_CLAUDE, LLM_PROVIDER_OPENAI, CLAUDE_MODEL_DEFAULT
 
+    is_rockstar = _is_rockstar_plan(user_id)
+
     if provider == LLM_PROVIDER_CLAUDE:
-        anthropic_key = os.getenv("ANTHROPIC_API_KEY", "")
-        if not anthropic_key:
-            print("[LLM] WARNING: ANTHROPIC_API_KEY not set — falling back to Gemini")
-        else:
-            print(
-                f"[LLM] Using Claude ({CLAUDE_MODEL_DEFAULT}), "
-                f"extended_thinking={extended_thinking}, budget={thinking_budget}"
-            )
+        user_key = _get_user_api_key(user_id, "anthropic")
+        if user_key:
+            print(f"[LLM] Using Claude ({CLAUDE_MODEL_DEFAULT}, user key)")
             return ClaudeChatModel(
                 model_name=CLAUDE_MODEL_DEFAULT,
                 temperature=temperature,
-                api_key=anthropic_key,
+                api_key=user_key,
+                extended_thinking=extended_thinking,
+                thinking_budget=thinking_budget,
+            )
+        if is_rockstar:
+            raise ValueError(
+                "BYOK_REQUIRED:anthropic — Lone Wolf plan requires your own Anthropic API key. "
+                "Configure it in Account › AI Models."
+            )
+        platform_key = os.getenv("ANTHROPIC_API_KEY", "")
+        if not platform_key:
+            print("[LLM] WARNING: ANTHROPIC_API_KEY not set — falling back to Gemini")
+        else:
+            print(f"[LLM] Using Claude ({CLAUDE_MODEL_DEFAULT}, platform key), extended_thinking={extended_thinking}")
+            return ClaudeChatModel(
+                model_name=CLAUDE_MODEL_DEFAULT,
+                temperature=temperature,
+                api_key=platform_key,
                 extended_thinking=extended_thinking,
                 thinking_budget=thinking_budget,
             )
 
     if provider == LLM_PROVIDER_OPENAI:
-        openai_key = os.getenv("OPENAI_API_KEY", "")
-        if not openai_key:
+        user_key = _get_user_api_key(user_id, "openai")
+        if user_key:
+            return ChatOpenAI(model="gpt-4o-mini", api_key=user_key, temperature=temperature)
+        if is_rockstar:
+            raise ValueError(
+                "BYOK_REQUIRED:openai — Lone Wolf plan requires your own OpenAI API key. "
+                "Configure it in Account › AI Models."
+            )
+        platform_key = os.getenv("OPENAI_API_KEY", "")
+        if not platform_key:
             print("[LLM] WARNING: OPENAI_API_KEY not set — falling back to Gemini")
         else:
-            return ChatOpenAI(model="gpt-4o-mini", api_key=openai_key, temperature=temperature)
+            return ChatOpenAI(model="gpt-4o-mini", api_key=platform_key, temperature=temperature)
 
-    # Default path: Gemini with automatic OpenAI fallback (original behaviour)
-    gemini_key = os.getenv("GEMINI_API_KEY")
-    openai_key = os.getenv("OPENAI_API_KEY")
+    # Default path: Gemini with automatic OpenAI fallback
+    gemini_user_key = _get_user_api_key(user_id, "gemini")
+    openai_user_key = _get_user_api_key(user_id, "openai")
+
+    if is_rockstar and not gemini_user_key and not openai_user_key:
+        raise ValueError(
+            "BYOK_REQUIRED:gemini — Lone Wolf plan requires your own Gemini API key. "
+            "Configure it in Account › AI Models."
+        )
+
+    gemini_key = gemini_user_key or os.getenv("GEMINI_API_KEY")
+    openai_key = openai_user_key or os.getenv("OPENAI_API_KEY")
 
     primary = ChatGoogleGenerativeAI(
         model=model_name,

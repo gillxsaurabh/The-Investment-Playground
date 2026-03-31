@@ -980,6 +980,7 @@ def ai_rank_stocks(
     market_regime: dict,
     log: Callable[[str], None] = print,
     llm_provider: Optional[str] = None,
+    user_id: Optional[int] = None,
 ) -> list[dict]:
     """AI-powered stock ranking with news sentiment analysis.
 
@@ -999,9 +1000,10 @@ def ai_rank_stocks(
             provider="claude",
             extended_thinking=True,
             thinking_budget=CLAUDE_CONVICTION_THINKING_BUDGET,
+            user_id=user_id,
         )
     else:
-        llm = get_llm(temperature=0.3)
+        llm = get_llm(temperature=0.3, user_id=user_id)
 
     # Step 1: Fetch news for all stocks (threaded)
     news_map: dict[str, list[dict]] = {}
@@ -1135,6 +1137,7 @@ def rank_final_shortlist(
     stocks: list[dict],
     log: Callable[[str], None] = print,
     llm_provider: Optional[str] = None,
+    user_id: Optional[int] = None,
 ) -> list[dict]:
     """Agent 6 — Portfolio Ranker.
 
@@ -1229,7 +1232,7 @@ def rank_final_shortlist(
     # LLM rank explanations
     try:
         from agents.config import get_llm
-        llm = get_llm(temperature=0.2, provider=llm_provider)
+        llm = get_llm(temperature=0.2, provider=llm_provider, user_id=user_id)
 
         summary_lines = []
         for s in stocks:

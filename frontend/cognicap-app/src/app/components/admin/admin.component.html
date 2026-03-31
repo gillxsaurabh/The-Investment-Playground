@@ -1,0 +1,89 @@
+<div class="admin-wrap">
+  <div class="admin-header">
+    <h1><span class="material-icons">admin_panel_settings</span> Admin Dashboard</h1>
+    <p class="subtitle">Platform administration — manage global Kite token and view system stats.</p>
+  </div>
+
+  <div class="admin-grid">
+    <!-- Admin Broker Token Card -->
+    <div class="admin-card">
+      <h2><span class="material-icons">link</span> Global Kite Token</h2>
+      <p class="card-desc">This token is used for all market data requests for users who haven't linked their personal Kite account. Refresh daily.</p>
+
+      <div class="status-row" *ngIf="brokerStatus">
+        <span class="status-dot" [class.green]="brokerStatus.active && brokerStatus.valid" [class.red]="!brokerStatus.active || !brokerStatus.valid"></span>
+        <span *ngIf="brokerStatus.active && brokerStatus.valid">Token active &amp; valid</span>
+        <span *ngIf="brokerStatus.active && !brokerStatus.valid" class="warn">Token expired — re-link now</span>
+        <span *ngIf="!brokerStatus.active" class="warn">No token configured</span>
+      </div>
+
+      <!-- Idle -->
+      <div *ngIf="kiteStep === 'idle'">
+        <button class="action-btn" (click)="openKiteLogin()">
+          <span class="material-icons">open_in_new</span>
+          {{ brokerStatus?.active ? 'Refresh Kite Token' : 'Link Kite Account' }}
+        </button>
+      </div>
+
+      <!-- Fetching URL -->
+      <div *ngIf="kiteStep === 'fetching-url'" class="loading-text">Opening Zerodha login...</div>
+
+      <!-- Awaiting token paste -->
+      <div *ngIf="kiteStep === 'awaiting-token'" class="token-step">
+        <p class="step-label"><span class="step-num">2</span> Paste the <code>request_token</code> from the redirect URL:</p>
+        <input type="text" [(ngModel)]="requestToken" placeholder="Paste request_token here" class="token-input" />
+        <div class="step-actions">
+          <button class="action-btn" (click)="linkAdminKite()" [disabled]="!requestToken.trim()">Link Token</button>
+          <button class="secondary-btn" (click)="resetKiteFlow()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Linking -->
+      <div *ngIf="kiteStep === 'linking'" class="loading-text">Linking admin token...</div>
+
+      <!-- Done -->
+      <div *ngIf="kiteStep === 'done'" class="success-msg">
+        <span class="material-icons">check_circle</span> Admin Kite token linked successfully!
+        <button class="secondary-btn" (click)="resetKiteFlow()">Done</button>
+      </div>
+
+      <!-- Error -->
+      <div *ngIf="kiteStep === 'error'" class="error-msg">
+        <span class="material-icons">error</span> {{ kiteError }}
+        <button class="secondary-btn" (click)="resetKiteFlow()">Try again</button>
+      </div>
+    </div>
+
+    <!-- System Stats Card -->
+    <div class="admin-card">
+      <h2><span class="material-icons">bar_chart</span> System Stats</h2>
+
+      <div *ngIf="statsLoading" class="loading-text">Loading stats...</div>
+
+      <div *ngIf="stats && !statsLoading">
+        <div class="stat-row">
+          <span class="stat-label">Total active users</span>
+          <span class="stat-val">{{ stats.total_users }}</span>
+        </div>
+
+        <div class="stat-section-title">Users by tier</div>
+        <div class="stat-row" *ngFor="let entry of stats.tiers | keyvalue">
+          <span class="stat-label">{{ entry.key }}</span>
+          <span class="stat-val">{{ entry.value }}</span>
+        </div>
+
+        <div class="stat-section-title">Admin broker</div>
+        <div class="stat-row">
+          <span class="stat-label">Status</span>
+          <span class="stat-val" [class.green-text]="stats.admin_broker?.valid" [class.red-text]="!stats.admin_broker?.valid">
+            {{ stats.admin_broker?.valid ? 'Valid' : (stats.admin_broker?.active ? 'Expired' : 'Not configured') }}
+          </span>
+        </div>
+      </div>
+
+      <button class="secondary-btn refresh-btn" (click)="loadStats()">
+        <span class="material-icons">refresh</span> Refresh
+      </button>
+    </div>
+  </div>
+</div>

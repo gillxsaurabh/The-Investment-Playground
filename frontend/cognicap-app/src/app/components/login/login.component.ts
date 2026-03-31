@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { DemoService } from '../../services/demo.service';
+import { TierService } from '../../services/tier.service';
 
 @Component({
   selector: 'app-login',
@@ -27,6 +28,7 @@ export class LoginComponent {
   constructor(
     private authService: AuthService,
     private demoService: DemoService,
+    private tierService: TierService,
     private router: Router
   ) {
     if (this.authService.isAuthenticated()) {
@@ -61,7 +63,7 @@ export class LoginComponent {
       next: (res) => {
         if (res.success) {
           this.demoService.exitDemo();
-          this.router.navigate(['/dashboard']);
+          this.navigateAfterAuth();
         } else {
           this.error = res.error || 'Login failed';
         }
@@ -86,7 +88,7 @@ export class LoginComponent {
       next: (res) => {
         if (res.success) {
           this.demoService.exitDemo();
-          this.router.navigate(['/dashboard']);
+          this.navigateAfterAuth();
         } else {
           this.error = res.error || 'Registration failed';
         }
@@ -95,6 +97,22 @@ export class LoginComponent {
       error: (err) => {
         this.error = err.error?.error || 'Registration failed. Please try again.';
         this.isLoading = false;
+      }
+    });
+  }
+
+  private navigateAfterAuth(): void {
+    this.tierService.getOnboardingStatus().subscribe({
+      next: (res) => {
+        if (res.onboarding_completed === false) {
+          this.router.navigate(['/onboarding']);
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
+      },
+      error: () => {
+        // On network error, proceed to dashboard (non-blocking)
+        this.router.navigate(['/dashboard']);
       }
     });
   }

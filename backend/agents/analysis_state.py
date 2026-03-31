@@ -15,6 +15,9 @@ class AnalysisState(TypedDict):
     # LLM provider selection ("gemini" | "claude" | "openai" | None → gemini default)
     llm_provider: Optional[str]
 
+    # User ID for per-user BYOK key lookup
+    user_id: Optional[int]
+
     # Agent outputs (each agent writes only its own key)
     stats_result: Optional[AgentResult]
     company_health_result: Optional[AgentResult]

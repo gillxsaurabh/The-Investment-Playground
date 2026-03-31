@@ -49,6 +49,7 @@ def _synthesizer_node(state: AnalysisState) -> dict:
                 provider="claude",
                 extended_thinking=True,
                 thinking_budget=CLAUDE_SYNTHESIS_THINKING_BUDGET,
+                user_id=state.get("user_id"),
             )
 
             conflict_instruction = ""
@@ -107,7 +108,7 @@ def _synthesizer_node(state: AnalysisState) -> dict:
 
         else:
             # Gemini path — original SCORE:/VERDICT: format unchanged
-            llm = get_llm(temperature=0.1)
+            llm = get_llm(temperature=0.1, user_id=state.get("user_id"))
             prompt = (
                 f"You are a senior stock analysis supervisor. Three specialist agents have analyzed {symbol}:\n\n"
                 f"**Stats Agent** (Technical Analysis): {stats['score']}/5\n{stats['explanation']}\n\n"

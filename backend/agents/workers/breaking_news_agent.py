@@ -21,7 +21,7 @@ def breaking_news_agent_node(state: AnalysisState) -> dict:
     symbol = state["symbol"]
     provider = state.get("llm_provider")
     try:
-        llm = get_llm(temperature=0.3, provider=provider)
+        llm = get_llm(temperature=0.3, provider=provider, user_id=state.get("user_id"))
 
         if provider == "claude":
             prompt = (

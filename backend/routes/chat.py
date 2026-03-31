@@ -27,6 +27,7 @@ def chat_send(body: ChatSendBody):
             message=body.message,
             session_id=session_id,
             access_token=access_token,
+            user_id=g.current_user["id"],
         )
 
         return jsonify({

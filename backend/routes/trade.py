@@ -15,6 +15,15 @@ logger = logging.getLogger(__name__)
 trade_bp = Blueprint("trade", __name__, url_prefix="/api/trade")
 
 
+def _resolve_broker_token():
+    """User's broker token, falling back to admin token."""
+    user_token = getattr(g, "broker_token", None)
+    if user_token:
+        return user_token
+    from services.admin_token_service import get_admin_broker_token
+    return get_admin_broker_token()
+
+
 @trade_bp.route("/funds", methods=["GET"])
 @require_auth
 @require_broker
@@ -31,7 +40,6 @@ def get_available_funds():
 
 @trade_bp.route("/calculate-exits", methods=["POST"])
 @require_auth
-@require_broker
 def calculate_trade_exits():
     """Calculate ATR-based stop loss and 2:1 R:R target for a stock."""
     try:
@@ -46,7 +54,10 @@ def calculate_trade_exits():
                 "error": "symbol, instrument_token, and ltp are required",
             }), 400
 
-        broker = get_broker(g.broker_token)
+        token = _resolve_broker_token()
+        if not token:
+            return jsonify({"success": False, "error": "No market data token available. Contact admin."}), 503
+        broker = get_broker(token)
 
         to_date = datetime.now()
         from_date = to_date - timedelta(days=30)

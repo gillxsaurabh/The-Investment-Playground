@@ -225,6 +225,7 @@ def ai_enrich_audit(
     holdings: list[dict],
     llm_provider: Optional[str],
     log: Callable[[str], None] = print,
+    user_id: Optional[int] = None,
 ) -> list[dict]:
     """Batch Claude call for news analysis + holistic health verdicts.
 
@@ -285,9 +286,10 @@ def ai_enrich_audit(
             provider="claude",
             extended_thinking=True,
             thinking_budget=AUDIT_AI_THINKING_BUDGET,
+            user_id=user_id,
         )
     else:
-        llm = get_llm(temperature=0.3, provider=effective_provider if effective_provider != "gemini" else None)
+        llm = get_llm(temperature=0.3, provider=effective_provider if effective_provider != "gemini" else None, user_id=user_id)
 
     prompt = (
         "You are a senior portfolio health analyst specializing in Indian NSE equity holdings.\n\n"
@@ -486,6 +488,7 @@ def run_stock_audit(
         holdings,
         llm_provider,
         log=lambda m: ai_logs.append(m),
+        user_id=user_id,
     )
     for msg in ai_logs:
         yield _log_event(msg)

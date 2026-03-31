@@ -16,6 +16,10 @@ const MOCK_MAP: Record<string, () => unknown> = {
   '/api/automation/status':       () => DEMO_DATA.automation_status,
   '/api/automation/history':      () => DEMO_DATA.automation_history,
   '/api/audit/results':           () => DEMO_DATA.audit_results,
+  '/api/auth/tier':               () => DEMO_DATA.tier_info,
+  '/api/auth/onboarding-status':  () => DEMO_DATA.onboarding_status,
+  '/api/auth/subscription':       () => DEMO_DATA.subscription,
+  '/api/auth/llm-keys':           () => DEMO_DATA.llm_keys,
 };
 
 // Endpoints that are blocked in demo -- show Kite prompt instead

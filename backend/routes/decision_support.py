@@ -11,9 +11,17 @@ logger = logging.getLogger(__name__)
 decision_support_bp = Blueprint("decision_support", __name__, url_prefix="/api/decision-support")
 
 
+def _get_broker_token():
+    """Return user's broker token, falling back to the admin token."""
+    user_token = getattr(g, "broker_token", None)
+    if user_token:
+        return user_token
+    from services.admin_token_service import get_admin_broker_token
+    return get_admin_broker_token()
+
+
 @decision_support_bp.route("/run", methods=["POST"])
 @require_auth
-@require_broker
 def run_decision_support():
     """SSE endpoint — runs the 4-2-1-1 stock selection pipeline."""
     try:
@@ -22,8 +30,13 @@ def run_decision_support():
         data = request.json or {}
         config = data.get("config", {})
 
+        user_id = g.current_user["id"]
+        broker_token = _get_broker_token()
+        if not broker_token:
+            return jsonify({"success": False, "error": "No market data token available. Contact admin.", "code": "NO_MARKET_TOKEN"}), 503
+
         def generate():
-            for event in run_decision_support_stream(g.broker_token, config=config):
+            for event in run_decision_support_stream(broker_token, config=config, user_id=user_id):
                 yield event
             yield "event: end\ndata: {}\n\n"
 
@@ -52,8 +65,10 @@ def run_sell_analysis():
         data = request.json or {}
         config = data.get("config", {})
 
+        user_id = g.current_user["id"]
+
         def generate():
-            for event in run_sell_pipeline_stream(g.broker_token, config=config):
+            for event in run_sell_pipeline_stream(g.broker_token, config=config, user_id=user_id):
                 yield event
             yield "event: end\ndata: {}\n\n"
 

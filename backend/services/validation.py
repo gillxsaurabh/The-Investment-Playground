@@ -180,3 +180,16 @@ class ForgotPasswordBody(BaseModel):
 class ResetPasswordBody(BaseModel):
     token: str = Field(..., min_length=10)
     new_password: str = Field(..., min_length=8, max_length=128)
+
+
+class LLMKeyBody(BaseModel):
+    provider: str = Field(...)
+    api_key: str = Field(..., min_length=10, max_length=500)
+
+    @field_validator("provider")
+    @classmethod
+    def provider_valid(cls, v: str) -> str:
+        allowed = {"gemini", "anthropic", "openai"}
+        if v not in allowed:
+            raise ValueError(f"provider must be one of {allowed}")
+        return v

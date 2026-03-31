@@ -9,7 +9,7 @@ from flask import Blueprint, request, jsonify, g
 
 from broker import get_broker
 from config import STATE_DIR
-from middleware.auth import require_auth, require_broker
+from middleware.auth import require_auth
 from services.simulator_engine import PaperTradingSimulator, start_position_monitor
 from services.validation import validate_request, SimulatorExecuteBody, SimulatorCloseBody, SimulatorResetBody
 from constants import DEFAULT_INITIAL_CAPITAL
@@ -28,6 +28,15 @@ def _user_simulator_files(user_id: int):
     data_file = STATE_DIR / f"simulator_data_{user_id}.json"
     history_file = STATE_DIR / f"simulator_price_history_{user_id}.json"
     return data_file, history_file
+
+
+def _resolve_broker_token() -> str | None:
+    """User's broker token, or admin token as fallback."""
+    user_token = getattr(g, "broker_token", None)
+    if user_token:
+        return user_token
+    from services.admin_token_service import get_admin_broker_token
+    return get_admin_broker_token()
 
 
 def _get_simulator(user_id: int, access_token: str) -> PaperTradingSimulator:
@@ -56,12 +65,14 @@ def _get_simulator(user_id: int, access_token: str) -> PaperTradingSimulator:
 
 @simulator_bp.route("/execute", methods=["POST"])
 @require_auth
-@require_broker
 @validate_request(SimulatorExecuteBody)
 def simulator_execute(body: SimulatorExecuteBody):
     """Execute a virtual buy order."""
     try:
-        sim = _get_simulator(g.current_user["id"], g.broker_token)
+        token = _resolve_broker_token()
+        if not token:
+            return jsonify({"success": False, "error": "No market data token available"}), 503
+        sim = _get_simulator(g.current_user["id"], token)
         result = sim.execute_order(
             symbol=body.symbol,
             quantity=body.quantity,
@@ -79,11 +90,13 @@ def simulator_execute(body: SimulatorExecuteBody):
 
 @simulator_bp.route("/positions", methods=["GET"])
 @require_auth
-@require_broker
 def simulator_positions():
     """Get active positions with live P&L."""
     try:
-        sim = _get_simulator(g.current_user["id"], g.broker_token)
+        token = _resolve_broker_token()
+        if not token:
+            return jsonify({"success": True, "positions": [], "trade_history": [], "account_summary": {}})
+        sim = _get_simulator(g.current_user["id"], token)
         result = sim.get_positions_with_pnl()
         return jsonify({"success": True, **result})
 
@@ -93,12 +106,14 @@ def simulator_positions():
 
 @simulator_bp.route("/close", methods=["POST"])
 @require_auth
-@require_broker
 @validate_request(SimulatorCloseBody)
 def simulator_close(body: SimulatorCloseBody):
     """Close a virtual position."""
     try:
-        sim = _get_simulator(g.current_user["id"], g.broker_token)
+        token = _resolve_broker_token()
+        if not token:
+            return jsonify({"success": False, "error": "No market data token available"}), 503
+        sim = _get_simulator(g.current_user["id"], token)
         result = sim.close_position(trade_id=body.trade_id)
         status = 200 if result.get("success") else 404
         return jsonify(result), status
@@ -109,12 +124,14 @@ def simulator_close(body: SimulatorCloseBody):
 
 @simulator_bp.route("/reset", methods=["POST"])
 @require_auth
-@require_broker
 @validate_request(SimulatorResetBody)
 def simulator_reset(body: SimulatorResetBody):
     """Reset the simulator."""
     try:
-        sim = _get_simulator(g.current_user["id"], g.broker_token)
+        token = _resolve_broker_token()
+        if not token:
+            return jsonify({"success": False, "error": "No market data token available"}), 503
+        sim = _get_simulator(g.current_user["id"], token)
         result = sim.reset(body.initial_capital)
         return jsonify(result)
 
@@ -124,11 +141,13 @@ def simulator_reset(body: SimulatorResetBody):
 
 @simulator_bp.route("/status", methods=["GET"])
 @require_auth
-@require_broker
 def simulator_status():
     """Get simulator account summary."""
     try:
-        sim = _get_simulator(g.current_user["id"], g.broker_token)
+        token = _resolve_broker_token()
+        if not token:
+            return jsonify({"success": False, "error": "No market data token available"}), 503
+        sim = _get_simulator(g.current_user["id"], token)
         summary = sim.get_account_summary()
         return jsonify({"success": True, **summary})
 
@@ -138,11 +157,13 @@ def simulator_status():
 
 @simulator_bp.route("/price-history", methods=["GET"])
 @require_auth
-@require_broker
 def simulator_price_history():
     """Get price history snapshots for charting."""
     try:
-        sim = _get_simulator(g.current_user["id"], g.broker_token)
+        token = _resolve_broker_token()
+        if not token:
+            return jsonify({"success": True, "history": []})
+        sim = _get_simulator(g.current_user["id"], token)
         minutes = request.args.get("minutes", 60, type=int)
         history = sim.get_price_history(minutes)
         return jsonify({"success": True, "history": history})

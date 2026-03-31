@@ -6,6 +6,7 @@ import { AuthService, User } from '../../services/auth.service';
 import { HeaderBannerComponent } from '../shared/header-banner/header-banner.component';
 import { KiteService, MarketIndex, Stock } from '../../services/kite.service';
 import { SimulatorService, AutomationStatus, AutomationRunRecord } from '../../services/simulator.service';
+import { TierService } from '../../services/tier.service';
 import { forkJoin, interval, Subscription } from 'rxjs';
 
 @Component({
@@ -16,7 +17,7 @@ import { forkJoin, interval, Subscription } from 'rxjs';
   styleUrls: ['./account.component.scss']
 })
 export class AccountComponent implements OnInit, OnDestroy {
-  activeTab: 'profile' | 'broker' | 'security' | 'automation' = 'profile';
+  activeTab: 'profile' | 'broker' | 'security' | 'automation' | 'ai-models' | 'subscription' = 'profile';
 
   user: User | null = null;
   brokerLinked = false;
@@ -57,6 +58,25 @@ export class AccountComponent implements OnInit, OnDestroy {
     1: 'Fortress', 2: 'Cautious', 3: 'Balanced', 4: 'Growth', 5: 'Turbo'
   };
 
+  // AI Models (BYOK)
+  readonly LLM_PROVIDERS = [
+    { id: 'gemini', label: 'Google Gemini', icon: 'auto_awesome' },
+    { id: 'anthropic', label: 'Anthropic Claude', icon: 'smart_toy' },
+    { id: 'openai', label: 'OpenAI GPT', icon: 'psychology' }
+  ];
+  configuredProviders: string[] = [];
+  llmKeyInputs: Record<string, string> = { gemini: '', anthropic: '', openai: '' };
+  llmSaveStatus: Record<string, 'idle' | 'loading' | 'success' | 'error'> = { gemini: 'idle', anthropic: 'idle', openai: 'idle' };
+  llmSaveError: Record<string, string> = { gemini: '', anthropic: '', openai: '' };
+  llmDeleteStatus: Record<string, 'idle' | 'loading'> = { gemini: 'idle', anthropic: 'idle', openai: 'idle' };
+  tierInfo: any = null;
+  private aiModelsLoaded = false;
+
+  // Subscription / Plan
+  planSwitching = false;
+  planSwitchError = '';
+  private subscriptionLoaded = false;
+
   // Market data for header banner
   nifty: MarketIndex | null = null;
   sensex: MarketIndex | null = null;
@@ -70,6 +90,7 @@ export class AccountComponent implements OnInit, OnDestroy {
     private authService: AuthService,
     private kiteService: KiteService,
     private simulatorService: SimulatorService,
+    private tierService: TierService,
     private router: Router
   ) {}
 
@@ -86,13 +107,21 @@ export class AccountComponent implements OnInit, OnDestroy {
     this.statusRefreshSub?.unsubscribe();
   }
 
-  selectTab(tab: 'profile' | 'broker' | 'security' | 'automation'): void {
+  selectTab(tab: 'profile' | 'broker' | 'security' | 'automation' | 'ai-models' | 'subscription'): void {
     this.activeTab = tab;
     if (tab === 'automation' && !this.automationLoaded) {
       this.loadAutomationStatus();
       this.loadAutomationHistory();
       this.automationLoaded = true;
       this.statusRefreshSub = interval(60000).subscribe(() => this.loadAutomationStatus());
+    }
+    if (tab === 'ai-models' && !this.aiModelsLoaded) {
+      this.loadAIModels();
+      this.aiModelsLoaded = true;
+    }
+    if (tab === 'subscription' && !this.subscriptionLoaded) {
+      this.loadSubscription();
+      this.subscriptionLoaded = true;
     }
   }
 
@@ -283,6 +312,91 @@ export class AccountComponent implements OnInit, OnDestroy {
   formatDate(dt: string): string {
     if (!dt) return '—';
     return new Date(dt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  // ── AI Models ─────────────────────────────────────────────────
+
+  loadAIModels(): void {
+    forkJoin({
+      keys: this.tierService.getLLMKeys(),
+      tier: this.tierService.fetchTier()
+    }).subscribe({
+      next: ({ keys, tier }) => {
+        this.configuredProviders = (keys as any).providers ?? [];
+        this.tierInfo = tier;
+      },
+      error: () => {}
+    });
+  }
+
+  saveLLMKey(provider: string): void {
+    const key = this.llmKeyInputs[provider]?.trim();
+    if (!key) return;
+    this.llmSaveStatus[provider] = 'loading';
+    this.llmSaveError[provider] = '';
+    this.tierService.saveLLMKey(provider, key).subscribe({
+      next: (res: any) => {
+        if (res.success) {
+          this.llmSaveStatus[provider] = 'success';
+          this.llmKeyInputs[provider] = '';
+          if (!this.configuredProviders.includes(provider)) {
+            this.configuredProviders = [...this.configuredProviders, provider];
+          }
+          setTimeout(() => { this.llmSaveStatus[provider] = 'idle'; }, 3000);
+        } else {
+          this.llmSaveStatus[provider] = 'error';
+          this.llmSaveError[provider] = res.error || 'Failed to save key.';
+        }
+      },
+      error: (err: any) => {
+        this.llmSaveStatus[provider] = 'error';
+        this.llmSaveError[provider] = err.error?.error || 'Failed to save key. Check it is valid.';
+      }
+    });
+  }
+
+  deleteLLMKey(provider: string): void {
+    this.llmDeleteStatus[provider] = 'loading';
+    this.tierService.deleteLLMKey(provider).subscribe({
+      next: () => {
+        this.configuredProviders = this.configuredProviders.filter(p => p !== provider);
+        this.llmDeleteStatus[provider] = 'idle';
+      },
+      error: () => { this.llmDeleteStatus[provider] = 'idle'; }
+    });
+  }
+
+  isProviderConfigured(provider: string): boolean {
+    return this.configuredProviders.includes(provider);
+  }
+
+  // ── Subscription / Plan ───────────────────────────────────────
+
+  loadSubscription(): void {
+    this.tierService.getPlan().subscribe({
+      next: (res) => {
+        this.tierInfo = res;
+        this.configuredProviders = res.llm_providers ?? [];
+      },
+      error: () => {}
+    });
+  }
+
+  switchPlan(plan: string): void {
+    if (this.tierInfo?.plan === plan || this.planSwitching) return;
+    this.planSwitching = true;
+    this.planSwitchError = '';
+    this.tierService.setPlan(plan).subscribe({
+      next: (res) => {
+        this.tierInfo = res;
+        this.configuredProviders = res.llm_providers ?? [];
+        this.planSwitching = false;
+      },
+      error: (err) => {
+        this.planSwitchError = err.error?.error || 'Failed to switch plan.';
+        this.planSwitching = false;
+      }
+    });
   }
 
   logout(): void {

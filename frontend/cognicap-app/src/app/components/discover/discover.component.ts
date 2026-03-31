@@ -6,6 +6,7 @@ import { KiteService, MarketIndex, Stock } from '../../services/kite.service';
 import { SimulatorService } from '../../services/simulator.service';
 import { AuthService, User } from '../../services/auth.service';
 import { DemoService } from '../../services/demo.service';
+import { TierService } from '../../services/tier.service';
 import { HeaderBannerComponent } from '../shared/header-banner/header-banner.component';
 import { forkJoin, interval, Observable, Subscription } from 'rxjs';
 import { map } from 'rxjs/operators';
@@ -166,6 +167,9 @@ export class DiscoverComponent implements OnInit, OnDestroy {
     stocks: Array<{ symbol: string; ltp: number; quantity: number; atr: number; status: 'pending' | 'success' | 'error'; instrument_token?: number; }>;
   } | null = null;
 
+  // Tier / plan info
+  tierInfo: any = null;
+
   // Market data
   user: User | null = null;
   brokerLinked = false;
@@ -192,13 +196,16 @@ export class DiscoverComponent implements OnInit, OnDestroy {
     private kiteService: KiteService,
     private simulatorService: SimulatorService,
     private authService: AuthService,
-    private demoService: DemoService
+    private demoService: DemoService,
+    private tierService: TierService
   ) {}
 
   ngOnInit(): void {
     this.authService.user$.subscribe(u => { this.user = u; });
     this.authService.brokerLinked$.subscribe(l => { this.brokerLinked = l; });
     this.simulatorService.tradingMode$.subscribe(m => { this.tradingMode = m; });
+    this.tierService.tier$.subscribe(t => { if (t) this.tierInfo = t; });
+    this.tierService.fetchTier().subscribe({ next: t => { this.tierInfo = t; }, error: () => {} });
     this.loadMarketData();
     this.marketRefreshSub = interval(30000).subscribe(() => this.loadMarketData());
     this.loadSavedResults();
@@ -237,6 +244,25 @@ export class DiscoverComponent implements OnInit, OnDestroy {
 
   async startPipeline(): Promise<void> {
     if (this.demoService.isDemo) { this.demoService.showKitePrompt(); return; }
+
+    // Sell pipeline always requires a real broker (audits live portfolio)
+    if (this.pipelineMode === 'sell' && !this.brokerLinked) {
+      this.pipelineMessage = 'Run Audit requires your Zerodha Kite account to be linked. Go to Account → Broker to connect.';
+      return;
+    }
+
+    // Rockstar plan: must have own LLM keys configured
+    if (this.tierInfo?.plan === 'rockstar' && !this.tierInfo?.has_llm_keys) {
+      this.pipelineMessage = 'Lone Wolf plan requires your own LLM API keys. Go to Account → AI Models to configure them.';
+      return;
+    }
+
+    // Ideal/Rockstar plan: must have Kite linked for buy pipeline too (live market data)
+    if ((this.tierInfo?.plan === 'ideal' || this.tierInfo?.plan === 'rockstar') && !this.brokerLinked) {
+      this.pipelineMessage = 'Your plan requires a linked Kite account for live market data. Go to Account → Broker to connect.';
+      return;
+    }
+
     this.isRunning = true;
     this.isCompleted = false;
     this.pipelineMessage = '';
@@ -366,6 +392,15 @@ export class DiscoverComponent implements OnInit, OnDestroy {
       case 'pipeline_complete':
         this.pipelineMessage = data.message || 'Pipeline complete.';
         break;
+      case 'error': {
+        const msg: string = data.error || data.message || '';
+        if (msg.startsWith('BYOK_REQUIRED')) {
+          this.pipelineMessage = 'Your Lone Wolf plan requires your own LLM API keys. Go to Account → AI Models to configure them.';
+        } else {
+          this.pipelineMessage = msg || 'Pipeline encountered an error.';
+        }
+        break;
+      }
     }
   }
 
@@ -482,6 +517,11 @@ export class DiscoverComponent implements OnInit, OnDestroy {
   }
 
   switchToLive(): void {
+    if (!this.brokerLinked) {
+      this.showLiveModeConfirm = false;
+      this.router.navigate(['/connect-kite']);
+      return;
+    }
     this.simulatorService.setTradingMode('live', true).subscribe({
       next: () => { this.showLiveModeConfirm = false; },
       error: () => {}

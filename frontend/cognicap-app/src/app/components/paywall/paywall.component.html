@@ -1,0 +1,43 @@
+<div class="paywall-wrap">
+  <div class="paywall-card">
+    <div class="paywall-icon">
+      <span class="material-icons">workspace_premium</span>
+    </div>
+
+    <h1>Activate Your Subscription</h1>
+    <p class="subtitle">Unlock full access to CogniCap's AI-powered trading tools.</p>
+
+    <div class="price-block">
+      <span class="price">₹499</span>
+      <span class="period">/ month</span>
+    </div>
+
+    <ul class="benefits">
+      <li><span class="material-icons">check_circle</span> Live market data & indices</li>
+      <li><span class="material-icons">check_circle</span> AI-powered stock discovery pipeline</li>
+      <li><span class="material-icons">check_circle</span> Portfolio analysis & sell audit</li>
+      <li><span class="material-icons">check_circle</span> Weekly automation system</li>
+      <li><span class="material-icons">check_circle</span> Platform LLM API included</li>
+    </ul>
+
+    <div class="demo-notice">
+      <span class="material-icons">info</span>
+      This is a demo paywall. No actual payment will be processed.
+    </div>
+
+    <div *ngIf="error" class="error-msg">{{ error }}</div>
+
+    <div *ngIf="!subscribed">
+      <button class="subscribe-btn" (click)="subscribe()" [disabled]="subscribing">
+        <span *ngIf="!subscribing">Activate Subscription →</span>
+        <span *ngIf="subscribing">Activating...</span>
+      </button>
+      <button class="skip-btn" (click)="skip()">Skip for now</button>
+    </div>
+
+    <div *ngIf="subscribed" class="success-msg">
+      <span class="material-icons">check_circle</span>
+      Subscription activated! Redirecting to dashboard...
+    </div>
+  </div>
+</div>

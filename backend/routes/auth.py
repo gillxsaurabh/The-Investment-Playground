@@ -13,7 +13,7 @@ from extensions import limiter
 from middleware.auth import require_auth
 from services.validation import (
     validate_request, RegisterBody, LoginBody, RefreshBody, BrokerLinkBody,
-    ChangePasswordBody, ForgotPasswordBody, ResetPasswordBody,
+    ChangePasswordBody, ForgotPasswordBody, ResetPasswordBody, LLMKeyBody,
 )
 from services.auth_service import (
     create_user,
@@ -30,6 +30,7 @@ from services.auth_service import (
     change_password,
     create_password_reset_token,
     reset_password,
+    complete_onboarding,
 )
 
 logger = logging.getLogger(__name__)
@@ -137,9 +138,11 @@ def refresh(body: RefreshBody):
 @auth_bp.route("/me", methods=["GET"])
 @require_auth
 def get_me():
-    """Get current user profile + broker link status."""
+    """Get current user profile + broker link status + tier."""
     user = g.current_user
     broker_info = get_broker_info(user["id"])
+    from services.tier_service import get_user_tier_info
+    tier_info = get_user_tier_info(user["id"])
 
     return jsonify({
         "success": True,
@@ -147,6 +150,8 @@ def get_me():
             "id": user["id"],
             "email": user["email"],
             "name": user["name"],
+            "is_admin": user.get("is_admin", False),
+            "onboarding_completed": user.get("onboarding_completed", False),
         },
         "broker_linked": broker_info is not None,
         "broker": {
@@ -154,6 +159,7 @@ def get_me():
             "broker_user_name": broker_info["broker_user_name"],
             "linked_at": broker_info["linked_at"],
         } if broker_info else None,
+        "tier": tier_info,
     })
 
 
@@ -298,3 +304,151 @@ def broker_status():
             "valid": False,
             "message": "Broker token expired. Please re-link your account.",
         })
+
+
+# ---------------------------------------------------------------------------
+# Tier & onboarding
+# ---------------------------------------------------------------------------
+
+@auth_bp.route("/tier", methods=["GET"])
+@require_auth
+def get_tier():
+    """Get current user's tier info."""
+    from services.tier_service import get_user_tier_info
+    return jsonify({"success": True, **get_user_tier_info(g.current_user["id"])})
+
+
+@auth_bp.route("/onboarding-status", methods=["GET"])
+@require_auth
+def onboarding_status():
+    """Get onboarding status + tier info."""
+    from services.tier_service import get_user_tier_info
+    user = g.current_user
+    return jsonify({
+        "success": True,
+        "onboarding_completed": user.get("onboarding_completed", False),
+        "tier_info": get_user_tier_info(user["id"]),
+    })
+
+
+@auth_bp.route("/onboarding-complete", methods=["POST"])
+@require_auth
+def onboarding_complete():
+    """Mark onboarding as completed for the current user."""
+    try:
+        complete_onboarding(g.current_user["id"])
+        return jsonify({"success": True, "message": "Onboarding completed"})
+    except Exception:
+        logger.exception("[Auth] Failed to complete onboarding")
+        return jsonify({"success": False, "error": "Failed to update onboarding status"}), 500
+
+
+# ---------------------------------------------------------------------------
+# Subscription (dummy paywall — swap out when payment gateway is ready)
+# ---------------------------------------------------------------------------
+
+@auth_bp.route("/subscription", methods=["GET"])
+@require_auth
+def get_subscription():
+    """Return subscription status. Currently always returns inactive (dummy)."""
+    return jsonify({
+        "success": True,
+        "active": False,
+        "plan": None,
+        "message": "No active subscription",
+    })
+
+
+@auth_bp.route("/subscription/activate", methods=["POST"])
+@require_auth
+def activate_subscription():
+    """Dummy subscription activation. Replace with real payment gateway later."""
+    return jsonify({
+        "success": True,
+        "active": True,
+        "message": "Subscription activated (demo mode — no charge applied)",
+    })
+
+
+# ---------------------------------------------------------------------------
+# Per-user LLM API keys (BYOK)
+# ---------------------------------------------------------------------------
+
+@auth_bp.route("/llm-keys", methods=["GET"])
+@require_auth
+def get_llm_keys():
+    """Return list of providers the user has configured. Never returns raw keys."""
+    from services.llm_key_service import get_user_llm_providers
+    providers = get_user_llm_providers(g.current_user["id"])
+    return jsonify({"success": True, "providers": providers})
+
+
+@auth_bp.route("/llm-keys", methods=["POST"])
+@require_auth
+@validate_request(LLMKeyBody)
+def save_llm_key(body: LLMKeyBody):
+    """Validate and store a user's LLM API key."""
+    from services.llm_key_service import store_llm_key, validate_llm_key
+    try:
+        if not validate_llm_key(body.provider, body.api_key):
+            return jsonify({
+                "success": False,
+                "error": f"API key validation failed for provider '{body.provider}'. "
+                         "Please check the key and try again.",
+            }), 400
+
+        store_llm_key(g.current_user["id"], body.provider, body.api_key)
+        return jsonify({"success": True, "message": f"{body.provider} key saved successfully"})
+
+    except Exception:
+        logger.exception("[Auth] Failed to save LLM key")
+        return jsonify({"success": False, "error": "Failed to save API key"}), 500
+
+
+@auth_bp.route("/llm-keys/<provider>", methods=["DELETE"])
+@require_auth
+def delete_llm_key(provider: str):
+    """Remove a user's stored LLM API key."""
+    from services.llm_key_service import delete_llm_key, VALID_PROVIDERS
+    if provider not in VALID_PROVIDERS:
+        return jsonify({"success": False, "error": f"Unknown provider '{provider}'"}), 400
+    try:
+        deleted = delete_llm_key(g.current_user["id"], provider)
+        if not deleted:
+            return jsonify({"success": False, "error": "No key found for that provider"}), 404
+        return jsonify({"success": True, "message": f"{provider} key removed"})
+    except Exception:
+        logger.exception("[Auth] Failed to delete LLM key")
+        return jsonify({"success": False, "error": "Failed to remove API key"}), 500
+
+
+# ---------------------------------------------------------------------------
+# User plan management
+# ---------------------------------------------------------------------------
+
+@auth_bp.route("/plan", methods=["GET"])
+@require_auth
+def get_plan():
+    """Return the user's selected plan and tier info."""
+    from services.tier_service import get_user_tier_info
+    info = get_user_tier_info(g.current_user["id"])
+    return jsonify({"success": True, **info})
+
+
+@auth_bp.route("/plan", methods=["POST"])
+@require_auth
+def set_plan():
+    """Set the user's selected plan."""
+    from services.tier_service import set_user_plan, VALID_PLANS
+    data = request.json or {}
+    plan = data.get("plan", "")
+    if plan not in VALID_PLANS:
+        return jsonify({"success": False, "error": f"Invalid plan. Must be one of: {sorted(VALID_PLANS)}"}), 400
+    try:
+        set_user_plan(g.current_user["id"], plan)
+        from services.tier_service import get_user_tier_info
+        info = get_user_tier_info(g.current_user["id"])
+        return jsonify({"success": True, "message": f"Plan updated to '{plan}'", **info})
+    except Exception:
+        logger.exception("[Auth] Failed to set plan")
+        return jsonify({"success": False, "error": "Failed to update plan"}), 500

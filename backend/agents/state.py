@@ -13,3 +13,4 @@ class AgentState(MessagesState):
     next_agent: Optional[str]
     access_token: Optional[str]
     session_id: Optional[str]
+    user_id: Optional[int]

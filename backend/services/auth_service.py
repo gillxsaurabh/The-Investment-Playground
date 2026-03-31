@@ -113,10 +113,24 @@ def get_user_by_id(user_id: int) -> Optional[Dict[str, Any]]:
     conn = get_conn()
     try:
         row = conn.execute(
-            "SELECT id, email, name, created_at, email_verified, is_active FROM users WHERE id = ?",
+            "SELECT id, email, name, created_at, email_verified, is_active, "
+            "is_admin, onboarding_completed FROM users WHERE id = ?",
             (user_id,),
         ).fetchone()
         return dict(row) if row else None
+    finally:
+        conn.close()
+
+
+def complete_onboarding(user_id: int) -> None:
+    """Mark a user's onboarding as completed."""
+    conn = get_conn()
+    try:
+        conn.execute(
+            "UPDATE users SET onboarding_completed = TRUE WHERE id = ?",
+            (user_id,),
+        )
+        conn.commit()
     finally:
         conn.close()
 

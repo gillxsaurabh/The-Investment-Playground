@@ -8,6 +8,8 @@ export interface User {
   id: number;
   email: string;
   name: string;
+  is_admin?: boolean;
+  onboarding_completed?: boolean;
 }
 
 export interface AuthTokens {
@@ -41,6 +43,9 @@ export interface MeResponse {
     broker_user_name: string;
     linked_at: string;
   } | null;
+  is_admin?: boolean;
+  onboarding_completed?: boolean;
+  tier?: number;
 }
 
 @Injectable({
@@ -120,6 +125,10 @@ export class AuthService {
 
   get currentUser(): User | null {
     return this.userSubject.value;
+  }
+
+  get isAdmin(): boolean {
+    return this.userSubject.value?.is_admin === true;
   }
 
   get isBrokerLinked(): boolean {

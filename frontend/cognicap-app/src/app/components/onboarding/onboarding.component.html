@@ -1,0 +1,50 @@
+<div class="onboarding-wrap">
+  <div class="onboarding-header">
+    <div class="logo-row">
+      <span class="logo-text">CogniCap</span>
+      <span class="logo-sub">The Investment Playground</span>
+    </div>
+    <h1>Choose your plan</h1>
+    <p class="subtitle">Select how you'd like to use the platform. You can change this later in Account settings.</p>
+  </div>
+
+  <div class="tiers-row">
+    <div
+      class="tier-card"
+      *ngFor="let tier of tiers"
+      [class.selected]="selectedTier === tier.id"
+      (click)="selectTier(tier.id)"
+      [style.--accent]="tier.accent"
+    >
+      <div class="tier-badge" [style.background]="tier.accent">{{ tier.badge }}</div>
+      <div class="tier-name">{{ tier.name }}</div>
+      <div class="tier-tagline">{{ tier.tagline }}</div>
+      <div class="tier-price">{{ tier.price }}</div>
+
+      <ul class="feature-list">
+        <li *ngFor="let f of tier.features" class="feature-yes">
+          <span class="check">✓</span> {{ f }}
+        </li>
+        <li *ngFor="let m of tier.missing" class="feature-no">
+          <span class="cross">✗</span> {{ m }}
+        </li>
+      </ul>
+
+      <div class="select-indicator" *ngIf="selectedTier === tier.id">
+        <span class="material-icons">check_circle</span> Selected
+      </div>
+    </div>
+  </div>
+
+  <div class="proceed-row">
+    <button
+      class="proceed-btn"
+      [disabled]="!selectedTier || completing"
+      (click)="proceed()"
+    >
+      <span *ngIf="!completing">Continue with {{ selectedTier ? tiers[selectedTier - 1].name : '...' }} plan →</span>
+      <span *ngIf="completing">Setting up...</span>
+    </button>
+    <p class="skip-note">Not sure yet? <a (click)="proceed()" style="cursor:pointer; color:#6366f1;" *ngIf="!selectedTier" (click)="selectedTier = 1">Start with General</a></p>
+  </div>
+</div>

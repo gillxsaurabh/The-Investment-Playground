@@ -200,6 +200,31 @@ export const DEMO_DATA = {
     ],
   },
 
+  tier_info: {
+    success: true,
+    tier: 2,
+    tier_name: 'Ideal',
+    has_broker: true,
+    has_llm_keys: false,
+    llm_providers: [],
+    needs_payment: true,
+  },
+
+  onboarding_status: {
+    success: true,
+    onboarding_completed: true,
+  },
+
+  subscription: {
+    success: true,
+    active: false,
+  },
+
+  llm_keys: {
+    success: true,
+    providers: [],
+  },
+
   audit_results: {
     success: true,
     total: 8,

@@ -29,6 +29,7 @@ def run_analysis_stream(
     access_token: str,
     instrument_token: int | None = None,
     llm_provider: str | None = None,
+    user_id: int | None = None,
 ):
     """Generator yielding SSE events as each agent completes.
 
@@ -44,6 +45,7 @@ def run_analysis_stream(
         "access_token": access_token,
         "instrument_token": instrument_token,
         "llm_provider": llm_provider,
+        "user_id": user_id,
         "stats_result": None,
         "company_health_result": None,
         "breaking_news_result": None,

@@ -189,10 +189,26 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   loadUserData(): void {
     this.authService.user$.subscribe(user => { this.user = user; });
-    this.authService.brokerLinked$.subscribe(linked => { this.brokerLinked = linked; });
+    this.authService.brokerLinked$.subscribe(linked => {
+      this.brokerLinked = linked;
+      // When broker becomes linked mid-session, kick off a portfolio load
+      if (linked && this.holdings.length === 0 && !this.isPortfolioRefreshing) {
+        this.loadPortfolioData();
+        this.loadAuditResults();
+      }
+    });
+    // Read initial value synchronously from the subject
+    this.brokerLinked = this.authService.isBrokerLinked;
   }
 
   loadPortfolioData(): void {
+    // Tier 1 users have no broker — skip portfolio calls, show link prompt
+    if (!this.brokerLinked) {
+      this.isLoading = false;
+      this.isPortfolioRefreshing = false;
+      return;
+    }
+
     // Set loading state only if this is the first load
     const isFirstLoad = this.holdings.length === 0 && !this.summary;
     if (isFirstLoad) {
@@ -609,6 +625,10 @@ export class DashboardComponent implements OnInit, OnDestroy {
   }
 
   runAudit(): void {
+    if (!this.brokerLinked) {
+      this.router.navigate(['/connect-kite']);
+      return;
+    }
     if (this.auditIsRunning) return;
     this.auditIsRunning = true;
     this.auditSteps = [];

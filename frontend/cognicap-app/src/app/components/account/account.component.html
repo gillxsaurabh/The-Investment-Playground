@@ -43,6 +43,14 @@
           {{ automationStatus?.enabled ? 'ON' : 'OFF' }}
         </span>
       </button>
+      <button class="tab-btn" [class.active]="activeTab === 'ai-models'" (click)="selectTab('ai-models')">
+        <span class="material-icons">psychology</span>
+        AI Models
+      </button>
+      <button class="tab-btn" [class.active]="activeTab === 'subscription'" (click)="selectTab('subscription')">
+        <span class="material-icons">workspace_premium</span>
+        Plan
+      </button>
     </div>
 
     <!-- ─── Profile Tab ────────────────────── -->
@@ -383,6 +391,191 @@
 
       </div>
     </div>
+
+    <!-- ─── Subscription / Plan Tab ──────── -->
+    <section class="settings-card" *ngIf="activeTab === 'subscription'">
+      <h2 class="card-title">
+        <span class="material-icons">workspace_premium</span>
+        Your Plan
+      </h2>
+      <p class="card-desc">Choose the plan that matches how you use CogniCap. You can switch anytime.</p>
+
+      <div class="plan-grid">
+
+        <!-- Stock Explorer (general) -->
+        <div class="plan-card" [class.plan-active]="tierInfo?.plan === 'general'">
+          <div class="plan-header">
+            <span class="plan-name">Stock Explorer</span>
+            <span class="plan-price">₹199<small>/mo</small></span>
+          </div>
+          <ul class="plan-features">
+            <li><span class="material-icons">check</span> Live market data (Nifty 100)</li>
+            <li><span class="material-icons">check</span> AI stock discovery (platform LLM)</li>
+            <li><span class="material-icons">check</span> Paper trading simulator</li>
+            <li class="plan-missing"><span class="material-icons">close</span> Live portfolio sync</li>
+            <li class="plan-missing"><span class="material-icons">close</span> Sell audit pipeline</li>
+            <li class="plan-missing"><span class="material-icons">close</span> Bring your own LLM</li>
+          </ul>
+          <div class="plan-requirements">
+            <span class="req-chip req-none">No accounts needed</span>
+          </div>
+          <button class="plan-btn"
+            [class.plan-btn-active]="tierInfo?.plan === 'general'"
+            [disabled]="tierInfo?.plan === 'general' || planSwitching"
+            (click)="switchPlan('general')">
+            {{ tierInfo?.plan === 'general' ? 'Current Plan' : 'Switch to Stock Explorer' }}
+          </button>
+        </div>
+
+        <!-- The Executer (ideal) -->
+        <div class="plan-card" [class.plan-active]="tierInfo?.plan === 'ideal'">
+          <div class="plan-badge">Popular</div>
+          <div class="plan-header">
+            <span class="plan-name">The Executer</span>
+            <span class="plan-price">₹499<small>/mo</small></span>
+          </div>
+          <ul class="plan-features">
+            <li><span class="material-icons">check</span> Everything in Stock Explorer</li>
+            <li><span class="material-icons">check</span> Live portfolio sync via Kite</li>
+            <li><span class="material-icons">check</span> Personal holdings analysis</li>
+            <li><span class="material-icons">check</span> Sell audit pipeline</li>
+            <li><span class="material-icons">check</span> Weekly automation</li>
+            <li class="plan-missing"><span class="material-icons">close</span> Bring your own LLM</li>
+          </ul>
+          <div class="plan-requirements">
+            <span class="req-chip" [class.req-met]="tierInfo?.has_broker" [class.req-unmet]="!tierInfo?.has_broker">
+              <span class="material-icons">{{ tierInfo?.has_broker ? 'check_circle' : 'link_off' }}</span>
+              Kite account
+            </span>
+          </div>
+          <button class="plan-btn"
+            [class.plan-btn-active]="tierInfo?.plan === 'ideal'"
+            [disabled]="tierInfo?.plan === 'ideal' || planSwitching"
+            (click)="switchPlan('ideal')">
+            {{ tierInfo?.plan === 'ideal' ? 'Current Plan' : 'Switch to The Executer' }}
+          </button>
+          <p class="plan-warn" *ngIf="tierInfo?.plan !== 'ideal' && !tierInfo?.has_broker">
+            <span class="material-icons">info</span> You'll need to connect Kite after switching.
+          </p>
+        </div>
+
+        <!-- Lone Wolf (rockstar) -->
+        <div class="plan-card plan-rockstar" [class.plan-active]="tierInfo?.plan === 'rockstar'">
+          <div class="plan-badge plan-badge-green">Free</div>
+          <div class="plan-header">
+            <span class="plan-name">Lone Wolf</span>
+            <span class="plan-price">Free</span>
+          </div>
+          <ul class="plan-features">
+            <li><span class="material-icons">check</span> Everything in The Executer</li>
+            <li><span class="material-icons">check</span> Bring your own LLM API keys</li>
+            <li><span class="material-icons">check</span> Runs on your API quotas</li>
+            <li><span class="material-icons">check</span> No platform AI charges</li>
+          </ul>
+          <div class="plan-requirements">
+            <span class="req-chip" [class.req-met]="tierInfo?.has_broker" [class.req-unmet]="!tierInfo?.has_broker">
+              <span class="material-icons">{{ tierInfo?.has_broker ? 'check_circle' : 'link_off' }}</span>
+              Kite account
+            </span>
+            <span class="req-chip" [class.req-met]="tierInfo?.has_llm_keys" [class.req-unmet]="!tierInfo?.has_llm_keys">
+              <span class="material-icons">{{ tierInfo?.has_llm_keys ? 'check_circle' : 'key_off' }}</span>
+              LLM API key
+            </span>
+          </div>
+          <button class="plan-btn plan-btn-rockstar"
+            [class.plan-btn-active]="tierInfo?.plan === 'rockstar'"
+            [disabled]="tierInfo?.plan === 'rockstar' || planSwitching"
+            (click)="switchPlan('rockstar')">
+            {{ tierInfo?.plan === 'rockstar' ? 'Current Plan' : 'Switch to Lone Wolf' }}
+          </button>
+          <p class="plan-warn" *ngIf="tierInfo?.plan !== 'rockstar' && (!tierInfo?.has_broker || !tierInfo?.has_llm_keys)">
+            <span class="material-icons">info</span>
+            <span *ngIf="!tierInfo?.has_broker && !tierInfo?.has_llm_keys">Connect Kite &amp; add LLM keys after switching.</span>
+            <span *ngIf="tierInfo?.has_broker && !tierInfo?.has_llm_keys">Add LLM API keys in the AI Models tab after switching.</span>
+            <span *ngIf="!tierInfo?.has_broker && tierInfo?.has_llm_keys">Connect your Kite account after switching.</span>
+          </p>
+        </div>
+
+      </div>
+
+      <div class="alert alert-error" *ngIf="planSwitchError" style="margin-top:16px">
+        <span class="material-icons">error</span> {{ planSwitchError }}
+      </div>
+
+      <div class="plan-note">
+        <span class="material-icons">info</span>
+        On the <strong>Lone Wolf</strong> plan, the platform's shared LLM quota is disabled — AI features use only your configured API keys. Switching to Lone Wolf without LLM keys will block AI pipelines until keys are added.
+      </div>
+    </section>
+
+    <!-- ─── AI Models Tab ─────────────────── -->
+    <section class="settings-card" *ngIf="activeTab === 'ai-models'">
+      <h2 class="card-title">
+        <span class="material-icons">psychology</span>
+        AI Model Configuration
+      </h2>
+      <p class="card-desc">
+        Add your own API keys to use your personal AI quota. If no key is provided, the platform's shared quota is used (subscription required).
+      </p>
+
+      <div *ngIf="tierInfo" class="tier-badge-row">
+        <span class="tier-badge" [class.tier-rockstar]="tierInfo.tier === 3" [class.tier-ideal]="tierInfo.tier === 2" [class.tier-general]="tierInfo.tier === 1">
+          <span class="material-icons">workspace_premium</span>
+          {{ tierInfo.tier_name }} Tier
+        </span>
+        <span class="tier-hint" *ngIf="tierInfo.tier < 3">Add your API keys below to unlock Rockstar tier (free)</span>
+        <span class="tier-hint green-hint" *ngIf="tierInfo.tier === 3">All AI keys configured — Rockstar tier active</span>
+      </div>
+
+      <div class="llm-provider-list">
+        <div class="llm-provider-card" *ngFor="let p of LLM_PROVIDERS">
+          <div class="llm-provider-header">
+            <span class="material-icons llm-icon">{{ p.icon }}</span>
+            <span class="llm-label">{{ p.label }}</span>
+            <span class="llm-status configured" *ngIf="isProviderConfigured(p.id)">
+              <span class="material-icons">check_circle</span> Configured
+            </span>
+            <span class="llm-status not-configured" *ngIf="!isProviderConfigured(p.id)">
+              Not configured
+            </span>
+          </div>
+
+          <div class="llm-input-row" *ngIf="!isProviderConfigured(p.id)">
+            <input
+              type="password"
+              class="token-input"
+              [(ngModel)]="llmKeyInputs[p.id]"
+              [placeholder]="'Paste ' + p.label + ' API key'"
+              (keyup.enter)="saveLLMKey(p.id)"
+            />
+            <button
+              class="btn-primary btn-sm"
+              (click)="saveLLMKey(p.id)"
+              [disabled]="!llmKeyInputs[p.id]?.trim() || llmSaveStatus[p.id] === 'loading'">
+              <span class="material-icons">{{ llmSaveStatus[p.id] === 'loading' ? 'hourglass_empty' : 'save' }}</span>
+              {{ llmSaveStatus[p.id] === 'loading' ? 'Saving...' : 'Save' }}
+            </button>
+          </div>
+
+          <div class="llm-configured-row" *ngIf="isProviderConfigured(p.id)">
+            <button
+              class="btn-outline btn-sm"
+              (click)="deleteLLMKey(p.id)"
+              [disabled]="llmDeleteStatus[p.id] === 'loading'">
+              <span class="material-icons">delete_outline</span>
+              {{ llmDeleteStatus[p.id] === 'loading' ? 'Removing...' : 'Remove Key' }}
+            </button>
+          </div>
+
+          <div class="alert alert-success llm-alert" *ngIf="llmSaveStatus[p.id] === 'success'">
+            <span class="material-icons">check_circle</span> Key saved successfully
+          </div>
+          <div class="alert alert-error llm-alert" *ngIf="llmSaveStatus[p.id] === 'error'">
+            <span class="material-icons">error</span> {{ llmSaveError[p.id] }}
+          </div>
+        </div>
+      </div>
+    </section>
 
   </div>
 </div>

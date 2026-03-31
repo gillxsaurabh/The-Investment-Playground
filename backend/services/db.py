@@ -25,7 +25,7 @@ def get_conn() -> sqlite3.Connection:
     return conn
 
 
-LATEST_SCHEMA_VERSION = 5
+LATEST_SCHEMA_VERSION = 7
 
 
 def init_db() -> None:
@@ -41,6 +41,8 @@ def init_db() -> None:
             (3, "003_add_user_id.sql"),
             (4, "004_analysis_cache.sql"),
             (5, "005_password_reset.sql"),
+            (6, "006_admin_and_tiers.sql"),
+            (7, "007_user_plan.sql"),
         ]
 
         for target_version, filename in migrations:

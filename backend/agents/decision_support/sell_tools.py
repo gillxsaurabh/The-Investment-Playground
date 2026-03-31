@@ -945,6 +945,7 @@ def ai_rank_sell_candidates(
     market_regime: dict,
     log: Callable[[str], None] = print,
     llm_provider: Optional[str] = None,
+    user_id: Optional[int] = None,
 ) -> list[dict]:
     """LLM-powered sell reasoning per holding.
 
@@ -966,9 +967,10 @@ def ai_rank_sell_candidates(
             provider="claude",
             extended_thinking=True,
             thinking_budget=CLAUDE_CONVICTION_THINKING_BUDGET,
+            user_id=user_id,
         )
     else:
-        llm = get_llm(temperature=0.3, provider=effective_provider if effective_provider != "gemini" else None)
+        llm = get_llm(temperature=0.3, provider=effective_provider if effective_provider != "gemini" else None, user_id=user_id)
 
     # Fetch news for all holdings (threaded)
     log(f"Fetching news for {len(holdings)} holdings...")

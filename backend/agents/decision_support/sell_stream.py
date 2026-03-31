@@ -34,7 +34,7 @@ def _sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
-def run_sell_pipeline_stream(access_token: str, config: dict | None = None):
+def run_sell_pipeline_stream(access_token: str, config: dict | None = None, user_id: int | None = None):
     """Generator yielding SSE events as the sell analysis pipeline runs.
 
     Args:
@@ -241,7 +241,7 @@ def run_sell_pipeline_stream(access_token: str, config: dict | None = None):
     try:
         log_fn = make_logger("sell_scoring")
         holdings = compute_sell_scores(holdings, log=log_fn)
-        holdings = ai_rank_sell_candidates(holdings, market_regime, log=log_fn, llm_provider=llm_provider)
+        holdings = ai_rank_sell_candidates(holdings, market_regime, log=log_fn, llm_provider=llm_provider, user_id=user_id)
     except Exception as e:
         log_fn = make_logger("sell_scoring")
         log_fn(f"Sell scoring failed, using rule-based scores only: {e}")

@@ -17,7 +17,7 @@ def _supervisor_node(state: AgentState) -> dict:
     for classification tasks.  Claude is reserved for financial analysis.
     Falls back to Gemini if OPENAI_API_KEY is not set.
     """
-    llm = get_llm(temperature=0, provider="openai")
+    llm = get_llm(temperature=0, provider="openai", user_id=state.get("user_id"))
     agent_descriptions = get_agent_descriptions()
     agent_names = list(get_registered_agents().keys())
 
@@ -52,13 +52,14 @@ def _make_worker_node(description: str, tools: list):
         "always pass it to tools that require it."
     )
 
-    agent = create_react_agent(
-        model=get_llm(),
-        tools=tools,
-        prompt=system_prompt,
-    )
-
     def worker(state: AgentState) -> dict:
+        # LLM is instantiated per-request so per-user BYOK keys are resolved correctly
+        agent = create_react_agent(
+            model=get_llm(user_id=state.get("user_id")),
+            tools=tools,
+            prompt=system_prompt,
+        )
+
         # Inject access token context if available
         messages = list(state["messages"])
         access_token = state.get("access_token")

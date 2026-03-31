@@ -15,7 +15,7 @@ def _get_graph():
     return _app_graph
 
 
-def run_agent(message: str, session_id: str, access_token: str = None) -> str:
+def run_agent(message: str, session_id: str, access_token: str = None, user_id: int = None) -> str:
     """Run the agent graph with a user message.
 
     This is the single entry point called by Flask routes.
@@ -34,6 +34,7 @@ def run_agent(message: str, session_id: str, access_token: str = None) -> str:
         "access_token": access_token,
         "session_id": session_id,
         "next_agent": None,
+        "user_id": user_id,
     })
 
     output_messages = result["messages"]

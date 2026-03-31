@@ -39,7 +39,7 @@ def _sse(event: str, data: dict) -> str:
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
 
 
-def run_decision_support_stream(access_token: str, config: dict | None = None):
+def run_decision_support_stream(access_token: str, config: dict | None = None, user_id: int | None = None):
     """Generator yielding SSE events as the pipeline runs.
 
     Args:
@@ -344,7 +344,7 @@ def run_decision_support_stream(access_token: str, config: dict | None = None):
         final_stocks = compute_composite_scores(final_stocks, log=log_fn)
 
         # AI ranking with news (LLM-powered)
-        final_stocks = ai_rank_stocks(final_stocks, market_regime, log=log_fn, llm_provider=llm_provider)
+        final_stocks = ai_rank_stocks(final_stocks, market_regime, log=log_fn, llm_provider=llm_provider, user_id=user_id)
     except Exception as e:
         log_fn = make_logger("ai_ranking")
         log_fn(f"AI ranking failed, using composite scores only: {e}")
@@ -378,7 +378,7 @@ def run_decision_support_stream(access_token: str, config: dict | None = None):
 
     try:
         log_fn = make_logger("final_ranking")
-        final_stocks = rank_final_shortlist(final_stocks, log=log_fn, llm_provider=llm_provider)
+        final_stocks = rank_final_shortlist(final_stocks, log=log_fn, llm_provider=llm_provider, user_id=user_id)
     except Exception as e:
         log_fn = make_logger("final_ranking")
         log_fn(f"Portfolio Ranker failed, stocks remain in AI conviction order: {e}")

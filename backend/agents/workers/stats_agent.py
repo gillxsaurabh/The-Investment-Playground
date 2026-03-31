@@ -54,7 +54,7 @@ def stats_agent_node(state: AnalysisState) -> dict:
         # Generate explanation via LLM (best-effort)
         provider = state.get("llm_provider")
         try:
-            llm = get_llm(temperature=0.2, provider=provider)
+            llm = get_llm(temperature=0.2, provider=provider, user_id=state.get("user_id"))
             if provider == "claude":
                 prompt = (
                     f"You are a technical analysis expert specializing in Indian equity markets.\n\n"

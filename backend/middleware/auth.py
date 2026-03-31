@@ -1,10 +1,10 @@
-"""Authentication middleware — @require_auth decorator for Flask routes.
+"""Authentication middleware — @require_auth, @require_broker, @require_admin decorators.
 
 Usage:
     @bp.route("/some-endpoint", methods=["POST"])
     @require_auth
     def some_endpoint():
-        user = g.current_user        # {"id": 1, "email": "...", "name": "..."}
+        user = g.current_user        # {"id": 1, "email": "...", "name": "...", "is_admin": False}
         broker_token = g.broker_token # Kite access token or None
         ...
 """
@@ -46,6 +46,8 @@ def require_auth(f):
             "id": user["id"],
             "email": user["email"],
             "name": user["name"],
+            "is_admin": bool(user.get("is_admin", False)),
+            "onboarding_completed": bool(user.get("onboarding_completed", False)),
         }
         g.broker_token = get_broker_token(user["id"])
 
@@ -71,3 +73,51 @@ def require_broker(f):
         return f(*args, **kwargs)
 
     return decorated
+
+
+def require_admin(f):
+    """Decorator that requires the current user to be an admin.
+    Must be used AFTER @require_auth.
+    """
+
+    @functools.wraps(f)
+    def decorated(*args, **kwargs):
+        if not getattr(g, "current_user", {}).get("is_admin"):
+            return jsonify({
+                "success": False,
+                "error": "Admin access required.",
+                "code": "ADMIN_REQUIRED",
+            }), 403
+
+        return f(*args, **kwargs)
+
+    return decorated
+
+
+def require_tier(min_tier: int):
+    """Decorator factory requiring user's derived tier >= min_tier.
+    Must be used AFTER @require_auth.
+
+    Usage:
+        @require_auth
+        @require_tier(2)
+        def some_endpoint(): ...
+    """
+
+    def decorator(f):
+        @functools.wraps(f)
+        def decorated(*args, **kwargs):
+            from services.tier_service import get_user_tier
+            tier = get_user_tier(g.current_user["id"])
+            if tier < min_tier:
+                return jsonify({
+                    "success": False,
+                    "error": "Upgrade required to access this feature.",
+                    "code": "TIER_INSUFFICIENT",
+                    "current_tier": tier,
+                    "required_tier": min_tier,
+                }), 403
+            return f(*args, **kwargs)
+        return decorated
+
+    return decorator
