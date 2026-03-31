@@ -126,6 +126,22 @@ def create_app(testing=False):
     except Exception as e:
         logger.warning("[App] DB init failed: %s", e)
 
+    # Auto-promote ADMIN_EMAIL to admin on startup (for Railway/Docker deploys without shell access)
+    _admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
+    if _admin_email:
+        try:
+            from services.db import get_conn
+            conn = get_conn()
+            result = conn.execute(
+                "UPDATE users SET is_admin = TRUE WHERE LOWER(email) = ?", (_admin_email,)
+            )
+            conn.commit()
+            conn.close()
+            if result.rowcount:
+                logger.info("[App] Promoted %s to admin via ADMIN_EMAIL env var", _admin_email)
+        except Exception as e:
+            logger.warning("[App] ADMIN_EMAIL auto-promote failed: %s", e)
+
     register_blueprints(app)
 
     # Start the weekly automation scheduler (Monday 10:00 AM IST)
