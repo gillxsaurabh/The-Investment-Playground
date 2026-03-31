@@ -95,6 +95,8 @@ def login(body: LoginBody):
                 "id": user["id"],
                 "email": user["email"],
                 "name": user["name"],
+                "is_admin": bool(user.get("is_admin", False)),
+                "onboarding_completed": bool(user.get("onboarding_completed", False)),
             },
             "broker_linked": broker_info is not None,
         })
