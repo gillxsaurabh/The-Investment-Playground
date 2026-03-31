@@ -17,9 +17,9 @@ export class OnboardingComponent implements OnInit {
   tiers = [
     {
       id: 1,
-      name: 'General',
-      tagline: 'Try the platform',
-      price: '₹499/mo',
+      name: 'Stock Explorer',
+      tagline: 'Explore the market',
+      price: '₹199/mo',
       features: [
         'Live market data (Nifty 100)',
         'Market indices (Nifty & Sensex)',
@@ -33,11 +33,11 @@ export class OnboardingComponent implements OnInit {
     },
     {
       id: 2,
-      name: 'Ideal',
+      name: 'The Executer',
       tagline: 'Full experience',
       price: '₹499/mo',
       features: [
-        'Everything in General',
+        'Everything in Stock Explorer',
         'Live portfolio sync via Kite',
         'Personal holdings analysis',
         'Sell audit pipeline',
@@ -50,11 +50,11 @@ export class OnboardingComponent implements OnInit {
     },
     {
       id: 3,
-      name: 'Rockstar',
+      name: 'Lone Wolf',
       tagline: 'Full control, zero cost',
       price: 'Free',
       features: [
-        'Everything in Ideal',
+        'Everything in The Executer',
         'Bring Your Own LLM API',
         'Runs on your API quotas',
         'No platform charges',

@@ -45,6 +45,6 @@
       <span *ngIf="!completing">Continue with {{ selectedTier ? tiers[selectedTier - 1].name : '...' }} plan →</span>
       <span *ngIf="completing">Setting up...</span>
     </button>
-    <p class="skip-note">Not sure yet? <a (click)="proceed()" style="cursor:pointer; color:#6366f1;" *ngIf="!selectedTier" (click)="selectedTier = 1">Start with General</a></p>
+    <p class="skip-note">Not sure yet? <a (click)="selectedTier = 1; proceed()" style="cursor:pointer; color:#6366f1;">Start with Stock Explorer</a></p>
   </div>
 </div>

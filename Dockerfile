@@ -2,7 +2,7 @@
 FROM node:20-slim AS frontend-builder
 WORKDIR /app/frontend/cognicap-app
 # Bump FRONTEND_VER to bust Railway's layer cache and force ng build
-ARG FRONTEND_VER=5
+ARG FRONTEND_VER=6
 COPY frontend/cognicap-app/package*.json ./
 RUN npm ci
 COPY frontend/cognicap-app/ ./
