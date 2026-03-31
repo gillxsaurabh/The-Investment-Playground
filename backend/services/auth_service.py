@@ -110,6 +110,7 @@ def authenticate_user(email: str, password: str) -> Optional[Dict[str, Any]]:
 
 
 def get_user_by_id(user_id: int) -> Optional[Dict[str, Any]]:
+    import os
     conn = get_conn()
     try:
         row = conn.execute(
@@ -117,7 +118,14 @@ def get_user_by_id(user_id: int) -> Optional[Dict[str, Any]]:
             "is_admin, onboarding_completed FROM users WHERE id = ?",
             (user_id,),
         ).fetchone()
-        return dict(row) if row else None
+        if not row:
+            return None
+        user = dict(row)
+        # Ensure ADMIN_EMAIL user is always treated as admin
+        admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
+        if admin_email and user["email"].lower() == admin_email:
+            user["is_admin"] = True
+        return user
     finally:
         conn.close()
 
