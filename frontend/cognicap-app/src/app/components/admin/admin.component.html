@@ -8,7 +8,7 @@
   <div *ngIf="whoami && !whoami.emails_match" style="background:#1a0000;border:1px solid #ff4444;border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:0.82rem;color:#ff6666;">
     <strong style="color:#ff4444;">Debug: ADMIN_EMAIL mismatch</strong><br>
     Your login email: <code>{{ whoami.user_email }}</code><br>
-    ADMIN_EMAIL env starts with: <code>{{ whoami.admin_email_first3 }}***@{{ whoami.admin_email_domain }}</code>
+    ADMIN_EMAIL env starts with: <code>{{ whoami.admin_email_first3 }}***&#64;{{ whoami.admin_email_domain }}</code>
     (length: {{ whoami.admin_email_raw_length }})<br>
     Env var set: {{ whoami.admin_email_env_set }}<br>
     DB is_admin flag: {{ whoami.is_admin_db }}
