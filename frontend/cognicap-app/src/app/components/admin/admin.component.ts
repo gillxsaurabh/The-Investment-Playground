@@ -16,6 +16,7 @@ export class AdminComponent implements OnInit {
   brokerStatusLoading = false;
   brokerStatusError = '';
   statsError = '';
+  whoami: any = null;
 
   // Kite linking flow
   kiteStep: 'idle' | 'fetching-url' | 'awaiting-token' | 'linking' | 'done' | 'error' = 'idle';
@@ -30,8 +31,16 @@ export class AdminComponent implements OnInit {
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
+    this.loadWhoami();
     this.loadBrokerStatus();
     this.loadStats();
+  }
+
+  loadWhoami(): void {
+    this.http.get<any>('/api/admin/whoami').subscribe({
+      next: res => { this.whoami = res; },
+      error: () => {}
+    });
   }
 
   loadBrokerStatus(): void {

@@ -4,6 +4,7 @@ Admin-only operations: global broker token management, system stats.
 """
 
 import logging
+import os
 
 from flask import Blueprint, jsonify, g
 
@@ -19,6 +20,25 @@ from services.admin_token_service import (
 logger = logging.getLogger(__name__)
 
 admin_bp = Blueprint("admin", __name__, url_prefix="/api/admin")
+
+
+@admin_bp.route("/whoami", methods=["GET"])
+@require_auth
+def whoami():
+    """Diagnostic endpoint — shows whether current user is seen as admin. No admin required."""
+    user = g.current_user
+    admin_email_raw = os.getenv("ADMIN_EMAIL", "")
+    admin_email = admin_email_raw.strip().lower()
+    user_email = user.get("email", "").lower()
+    return jsonify({
+        "user_email": user_email,
+        "is_admin_db": bool(user.get("is_admin", False)),
+        "admin_email_env_set": bool(admin_email),
+        "admin_email_first3": admin_email[:3] if admin_email else "",
+        "admin_email_domain": admin_email.split("@")[1] if "@" in admin_email else "",
+        "emails_match": user_email == admin_email,
+        "admin_email_raw_length": len(admin_email_raw),
+    })
 
 
 @admin_bp.route("/broker/login-url", methods=["GET"])
