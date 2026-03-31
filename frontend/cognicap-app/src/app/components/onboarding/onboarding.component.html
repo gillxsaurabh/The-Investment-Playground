@@ -1,8 +1,7 @@
 <div class="onboarding-wrap">
   <div class="onboarding-header">
     <div class="logo-row">
-      <span class="logo-text">CogniCap</span>
-      <span class="logo-sub">The Investment Playground</span>
+      <span class="logo-text">The Investment Playground</span>
     </div>
     <h1>Choose your plan</h1>
     <p class="subtitle">Select how you'd like to use the platform. You can change this later in Account settings.</p>
@@ -42,7 +41,7 @@
       [disabled]="!selectedTier || completing"
       (click)="proceed()"
     >
-      <span *ngIf="!completing">Continue with {{ selectedTier ? tiers[selectedTier - 1].name : '...' }} plan →</span>
+      <span *ngIf="!completing">Continue →</span>
       <span *ngIf="completing">Setting up...</span>
     </button>
     <p class="skip-note">Not sure yet? <a (click)="selectedTier = 1; proceed()" style="cursor:pointer; color:#6366f1;">Start with Stock Explorer</a></p>
