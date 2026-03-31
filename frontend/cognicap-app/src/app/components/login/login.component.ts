@@ -4,7 +4,6 @@ import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService } from '../../services/auth.service';
 import { DemoService } from '../../services/demo.service';
-import { TierService } from '../../services/tier.service';
 
 @Component({
   selector: 'app-login',
@@ -28,7 +27,6 @@ export class LoginComponent {
   constructor(
     private authService: AuthService,
     private demoService: DemoService,
-    private tierService: TierService,
     private router: Router
   ) {
     if (this.authService.isAuthenticated()) {
@@ -102,19 +100,8 @@ export class LoginComponent {
   }
 
   private navigateAfterAuth(): void {
-    this.tierService.getOnboardingStatus().subscribe({
-      next: (res) => {
-        if (res.onboarding_completed === false) {
-          this.router.navigate(['/onboarding']);
-        } else {
-          this.router.navigate(['/dashboard']);
-        }
-      },
-      error: () => {
-        // On network error, proceed to dashboard (non-blocking)
-        this.router.navigate(['/dashboard']);
-      }
-    });
+    // Navigate to dashboard — OnboardingGuard will redirect to /onboarding if needed
+    this.router.navigate(['/dashboard']);
   }
 
   sendForgotPassword(): void {
