@@ -78,11 +78,24 @@ def require_broker(f):
 def require_admin(f):
     """Decorator that requires the current user to be an admin.
     Must be used AFTER @require_auth.
+
+    Checks both the DB is_admin flag and the ADMIN_EMAIL env var as a fallback,
+    so admin access works even if the DB promotion hasn't run yet.
     """
+    import os
 
     @functools.wraps(f)
     def decorated(*args, **kwargs):
-        if not getattr(g, "current_user", {}).get("is_admin"):
+        user = getattr(g, "current_user", {})
+        is_admin = bool(user.get("is_admin", False))
+
+        # Fallback: check ADMIN_EMAIL env var directly against user's email
+        if not is_admin:
+            admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
+            if admin_email and user.get("email", "").lower() == admin_email:
+                is_admin = True
+
+        if not is_admin:
             return jsonify({
                 "success": False,
                 "error": "Admin access required.",
