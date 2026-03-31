@@ -27,11 +27,11 @@ export const routes: Routes = [
     loadComponent: () => import('./components/paywall/paywall.component').then(m => m.PaywallComponent),
     canActivate: [AuthGuard]
   },
-  // Admin panel — admin users only
+  // Admin panel — auth check only, admin check handled inside component
   {
     path: 'admin',
     loadComponent: () => import('./components/admin/admin.component').then(m => m.AdminComponent),
-    canActivate: [AuthGuard, AdminGuard]
+    canActivate: [AuthGuard]
   },
   // Connect Kite — accessible without BrokerGuard (user may not have broker yet)
   {

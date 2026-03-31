@@ -2,6 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient } from '@angular/common/http';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-admin',
@@ -11,6 +12,9 @@ import { HttpClient } from '@angular/common/http';
   styleUrls: ['./admin.component.scss']
 })
 export class AdminComponent implements OnInit {
+  isAdmin = false;
+  checkingAdmin = true;
+
   // Admin broker token state
   brokerStatus: { active: boolean; valid: boolean } | null = null;
   brokerStatusLoading = false;
@@ -25,11 +29,26 @@ export class AdminComponent implements OnInit {
   stats: any = null;
   statsLoading = false;
 
-  constructor(private http: HttpClient) {}
+  constructor(private http: HttpClient, private router: Router) {}
 
   ngOnInit(): void {
-    this.loadBrokerStatus();
-    this.loadStats();
+    // Check admin status fresh from server
+    this.http.get<any>('/api/auth/me').subscribe({
+      next: res => {
+        this.checkingAdmin = false;
+        if (res.success && res.user?.is_admin) {
+          this.isAdmin = true;
+          this.loadBrokerStatus();
+          this.loadStats();
+        } else {
+          this.router.navigate(['/dashboard']);
+        }
+      },
+      error: () => {
+        this.checkingAdmin = false;
+        this.router.navigate(['/dashboard']);
+      }
+    });
   }
 
   loadBrokerStatus(): void {
