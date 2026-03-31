@@ -91,7 +91,7 @@ def require_admin(f):
 
         # Fallback: check ADMIN_EMAIL env var directly against user's email
         if not is_admin:
-            admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
+            admin_email = os.getenv("ADMIN_EMAIL", "").strip().strip('"\'').lower()
             if admin_email and user.get("email", "").lower() == admin_email:
                 is_admin = True
 

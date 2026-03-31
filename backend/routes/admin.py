@@ -28,7 +28,7 @@ def whoami():
     """Diagnostic endpoint — shows whether current user is seen as admin. No admin required."""
     user = g.current_user
     admin_email_raw = os.getenv("ADMIN_EMAIL", "")
-    admin_email = admin_email_raw.strip().lower()
+    admin_email = admin_email_raw.strip().strip('"\'').lower()
     user_email = user.get("email", "").lower()
     return jsonify({
         "user_email": user_email,

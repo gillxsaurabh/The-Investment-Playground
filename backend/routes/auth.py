@@ -86,7 +86,7 @@ def login(body: LoginBody):
 
         # Auto-promote to admin if email matches ADMIN_EMAIL env var
         import os
-        admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
+        admin_email = os.getenv("ADMIN_EMAIL", "").strip().strip('"\'').lower()
         if admin_email and user["email"].lower() == admin_email and not user.get("is_admin"):
             try:
                 from services.db import get_conn

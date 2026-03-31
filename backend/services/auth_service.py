@@ -122,7 +122,7 @@ def get_user_by_id(user_id: int) -> Optional[Dict[str, Any]]:
             return None
         user = dict(row)
         # Ensure ADMIN_EMAIL user is always treated as admin
-        admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
+        admin_email = os.getenv("ADMIN_EMAIL", "").strip().strip('"\'').lower()
         if admin_email and user["email"].lower() == admin_email:
             user["is_admin"] = True
         return user

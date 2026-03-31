@@ -128,7 +128,7 @@ def create_app(testing=False):
         logger.warning("[App] DB init failed: %s", e)
 
     # Auto-promote ADMIN_EMAIL to admin on startup (for Railway/Docker deploys without shell access)
-    _admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
+    _admin_email = os.getenv("ADMIN_EMAIL", "").strip().strip('"\'').lower()
     if _admin_email:
         try:
             from services.db import get_conn
