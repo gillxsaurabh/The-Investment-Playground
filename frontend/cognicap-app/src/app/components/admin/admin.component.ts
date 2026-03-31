@@ -11,6 +11,9 @@ import { HttpClient } from '@angular/common/http';
   styleUrls: ['./admin.component.scss']
 })
 export class AdminComponent implements OnInit {
+  bootstrapping = false;
+  bootstrapMsg = '';
+
   // Admin broker token state
   brokerStatus: { active: boolean; valid: boolean } | null = null;
   brokerStatusLoading = false;
@@ -110,6 +113,24 @@ export class AdminComponent implements OnInit {
       error: () => {
         this.kiteError = 'Linking failed. Check the token and try again.';
         this.kiteStep = 'error';
+      }
+    });
+  }
+
+  bootstrapAdmin(): void {
+    this.bootstrapping = true;
+    this.bootstrapMsg = '';
+    this.http.post<any>('/api/admin/bootstrap', {}).subscribe({
+      next: res => {
+        this.bootstrapMsg = res.message || 'Done';
+        this.bootstrapping = false;
+        this.loadWhoami();
+        this.loadBrokerStatus();
+        this.loadStats();
+      },
+      error: (err) => {
+        this.bootstrapMsg = err?.error?.error || 'Bootstrap failed.';
+        this.bootstrapping = false;
       }
     });
   }

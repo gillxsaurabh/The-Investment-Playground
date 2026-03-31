@@ -41,6 +41,30 @@ def whoami():
     })
 
 
+@admin_bp.route("/bootstrap", methods=["POST"])
+@require_auth
+def bootstrap_admin():
+    """One-time endpoint to promote current user to admin.
+    Only works when NO admin users exist yet — self-disables after first use.
+    """
+    from services.db import get_conn
+    conn = get_conn()
+    try:
+        existing = conn.execute(
+            "SELECT id FROM users WHERE is_admin = TRUE LIMIT 1"
+        ).fetchone()
+        if existing:
+            return jsonify({"success": False, "error": "An admin already exists. Bootstrap is disabled."}), 403
+
+        user_id = g.current_user["id"]
+        conn.execute("UPDATE users SET is_admin = TRUE WHERE id = ?", (user_id,))
+        conn.commit()
+        logger.info("[Admin] Bootstrapped admin for user_id=%s via /bootstrap endpoint", user_id)
+        return jsonify({"success": True, "message": "You are now admin. Refresh the page."})
+    finally:
+        conn.close()
+
+
 @admin_bp.route("/broker/login-url", methods=["GET"])
 @require_auth
 @require_admin
