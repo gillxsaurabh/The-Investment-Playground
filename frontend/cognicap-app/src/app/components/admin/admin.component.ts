@@ -14,6 +14,8 @@ export class AdminComponent implements OnInit {
   // Admin broker token state
   brokerStatus: { active: boolean; valid: boolean } | null = null;
   brokerStatusLoading = false;
+  brokerStatusError = '';
+  statsError = '';
 
   // Kite linking flow
   kiteStep: 'idle' | 'fetching-url' | 'awaiting-token' | 'linking' | 'done' | 'error' = 'idle';
@@ -34,20 +36,32 @@ export class AdminComponent implements OnInit {
 
   loadBrokerStatus(): void {
     this.brokerStatusLoading = true;
+    this.brokerStatusError = '';
     this.http.get<any>('/api/admin/broker/status').subscribe({
       next: res => {
         this.brokerStatus = { active: res.active, valid: res.valid };
         this.brokerStatusLoading = false;
       },
-      error: () => { this.brokerStatusLoading = false; }
+      error: (err) => {
+        this.brokerStatusLoading = false;
+        if (err?.status === 403) {
+          this.brokerStatusError = 'Access denied — ADMIN_EMAIL may not match your account email.';
+        }
+      }
     });
   }
 
   loadStats(): void {
     this.statsLoading = true;
+    this.statsError = '';
     this.http.get<any>('/api/admin/dashboard').subscribe({
       next: res => { this.stats = res; this.statsLoading = false; },
-      error: () => { this.statsLoading = false; }
+      error: (err) => {
+        this.statsLoading = false;
+        if (err?.status === 403) {
+          this.statsError = 'Access denied — ADMIN_EMAIL may not match your account email.';
+        }
+      }
     });
   }
 
@@ -59,8 +73,12 @@ export class AdminComponent implements OnInit {
         window.open(res.login_url, '_blank');
         this.kiteStep = 'awaiting-token';
       },
-      error: () => {
-        this.kiteError = 'Failed to get login URL.';
+      error: (err) => {
+        if (err?.status === 403) {
+          this.kiteError = 'Access denied. Your account is not recognized as admin. Check that ADMIN_EMAIL matches your login email on Railway.';
+        } else {
+          this.kiteError = 'Failed to get login URL. Check that KITE_API_KEY and KITE_API_SECRET are set in Railway environment variables.';
+        }
         this.kiteStep = 'error';
       }
     });

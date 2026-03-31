@@ -16,6 +16,10 @@
         <span *ngIf="brokerStatus.active && !brokerStatus.valid" class="warn">Token expired — re-link now</span>
         <span *ngIf="!brokerStatus.active" class="warn">No token configured</span>
       </div>
+      <div *ngIf="brokerStatusError" class="error-msg" style="font-size:0.85rem; margin-bottom:8px;">
+        <span class="material-icons" style="font-size:1rem;vertical-align:middle;">warning</span>
+        {{ brokerStatusError }}
+      </div>
 
       <!-- Idle -->
       <div *ngIf="kiteStep === 'idle'">
@@ -59,6 +63,10 @@
       <h2><span class="material-icons">bar_chart</span> System Stats</h2>
 
       <div *ngIf="statsLoading" class="loading-text">Loading stats...</div>
+      <div *ngIf="statsError" class="error-msg" style="font-size:0.85rem; margin-bottom:8px;">
+        <span class="material-icons" style="font-size:1rem;vertical-align:middle;">warning</span>
+        {{ statsError }}
+      </div>
 
       <div *ngIf="stats && !statsLoading">
         <div class="stat-row">
