@@ -33,7 +33,7 @@ else:
 ENVIRONMENT = os.getenv("ENVIRONMENT", "development")  # development | staging | production
 
 # --- App Security ---
-JWT_SECRET = os.getenv("JWT_SECRET", "")
+JWT_SECRET = os.getenv("JWT_SECRET", "").strip().strip('"\'')  # strip Railway-added quotes
 JWT_ACCESS_EXPIRY_MINUTES = int(os.getenv("JWT_ACCESS_EXPIRY_MINUTES", "15"))
 JWT_REFRESH_EXPIRY_DAYS = int(os.getenv("JWT_REFRESH_EXPIRY_DAYS", "7"))
 
@@ -45,8 +45,9 @@ CORS_ORIGINS = [
 ]
 
 # --- Broker credentials ---
-KITE_API_KEY = os.getenv("KITE_API_KEY", "")
-KITE_API_SECRET = os.getenv("KITE_API_SECRET", "")
+# Strip surrounding quotes — Railway sometimes stores values with quotes if entered in .env format
+KITE_API_KEY = os.getenv("KITE_API_KEY", "").strip().strip('"\'')
+KITE_API_SECRET = os.getenv("KITE_API_SECRET", "").strip().strip('"\'')
 
 # --- AI API keys ---
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
