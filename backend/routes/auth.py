@@ -84,6 +84,21 @@ def login(body: LoginBody):
         raw_refresh, refresh_hash = create_refresh_token(user["id"])
         store_refresh_token(user["id"], refresh_hash)
 
+        # Auto-promote to admin if email matches ADMIN_EMAIL env var
+        import os
+        admin_email = os.getenv("ADMIN_EMAIL", "").strip().lower()
+        if admin_email and user["email"].lower() == admin_email and not user.get("is_admin"):
+            try:
+                from services.db import get_conn
+                conn = get_conn()
+                conn.execute("UPDATE users SET is_admin = TRUE WHERE id = ?", (user["id"],))
+                conn.commit()
+                conn.close()
+                user["is_admin"] = True
+                logger.info("[Auth] Auto-promoted %s to admin via ADMIN_EMAIL", user["email"])
+            except Exception:
+                pass
+
         # Include broker link status
         broker_info = get_broker_info(user["id"])
 
