@@ -31,7 +31,7 @@
 .platform-icon {
   font-size: 22px;
   color: $accent;
-  filter: drop-shadow(0 0 6px rgba(108, 99, 255, 0.5));
+  filter: drop-shadow(0 0 6px rgba($accent, 0.5));
 }
 
 .platform-name {

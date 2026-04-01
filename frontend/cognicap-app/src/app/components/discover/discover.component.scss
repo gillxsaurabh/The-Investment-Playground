@@ -1,17 +1,4 @@
-$bg-primary:   #0d0d0d;
-$bg-card:      #161616;
-$bg-elevated:  #1e1e1e;
-$bg-hover:     #252525;
-$border-subtle:  rgba(255, 255, 255, 0.06);
-$border-default: rgba(255, 255, 255, 0.1);
-$accent:       #6c63ff;
-$accent-dim:   rgba(108, 99, 255, 0.12);
-$text-primary:   #f5f5f5;
-$text-secondary: #a1a1aa;
-$text-muted:     #52525b;
-$green:  #22c55e;
-$red:    #ef4444;
-$orange: #f97316;
+@use '../../styles/tokens' as *;
 
 .discover-container {
   min-height: 100vh;
@@ -48,11 +35,11 @@ $orange: #f97316;
   letter-spacing: 0.05em;
   transition: all 0.2s;
   &:disabled { opacity: 0.4; cursor: not-allowed; }
-  &.active-buy { background: rgba(34,197,94,0.12); border-color: #22c55e; color: #22c55e; }
-  &.active-sell { background: rgba(239,68,68,0.12); border-color: #ef4444; color: #ef4444; }
+  &.active-buy { background: $green-dim; border-color: $green; color: $green; }
+  &.active-sell { background: $red-dim; border-color: $red; color: $red; }
 }
 .mode-desc { font-size: 0.78rem; color: $text-muted; }
-.sell-desc { color: rgba(239,68,68,0.7); }
+.sell-desc { color: rgba($red, 0.7); }
 
 // ---- Gear slider ----
 .gear-section {
@@ -61,7 +48,7 @@ $orange: #f97316;
   border-radius: 12px;
   padding: 14px 16px;
   margin-bottom: 14px;
-  &.turbo { border-color: rgba(239,68,68,0.3); animation: turbo-shake 0.4s ease-in-out; }
+  &.turbo { border-color: rgba($red, 0.3); animation: turbo-shake 0.4s ease-in-out; }
 }
 @keyframes turbo-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
 
@@ -73,8 +60,8 @@ $orange: #f97316;
   border-radius: 2px;
   background: linear-gradient(to right, #22c55e, #2dd4bf, #3b82f6, #f97316, #ef4444);
   outline: none; cursor: pointer;
-  &::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--slider-color, #6c63ff); cursor: pointer; transition: transform 0.2s; &:hover { transform: scale(1.2); } }
-  &::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--slider-color, #6c63ff); cursor: pointer; border: none; }
+  &::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--slider-color, #{$accent}); cursor: pointer; transition: transform 0.2s; &:hover { transform: scale(1.2); } }
+  &::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--slider-color, #{$accent}); cursor: pointer; border: none; }
 }
 .gear-labels { display: flex; justify-content: space-between; }
 .gear-label { font-size: 0.7rem; color: $text-muted; cursor: pointer; &.active { font-weight: 700; } }
@@ -180,8 +167,8 @@ $orange: #f97316;
 }
 
 .step.running .step-dot { border-color: $accent; background: $accent-dim; color: $accent; }
-.step.completed .step-dot { border-color: $green; background: rgba(34,197,94,0.12); color: $green; }
-.step.error .step-dot { border-color: $red; background: rgba(239,68,68,0.12); color: $red; }
+.step.completed .step-dot { border-color: $green; background: $green-dim; color: $green; }
+.step.error .step-dot { border-color: $red; background: $red-dim; color: $red; }
 
 // Horizontal connector between dots
 .step-line {
@@ -239,7 +226,7 @@ $orange: #f97316;
 .stock-sector { font-size: 0.7rem; color: $text-muted; }
 .score-badge { background: $accent-dim; color: $accent; border-radius: 6px; padding: 3px 8px; font-size: 0.75rem; font-weight: 700; }
 .news-dot { width: 8px; height: 8px; border-radius: 50%; background: $text-muted; &.warning { background: $red; } &.clear { background: $green; } }
-.btn-add { background: $accent-dim; border: none; border-radius: 6px; color: $accent; cursor: pointer; padding: 4px; display: flex; align-items: center; .material-icons { font-size: 16px; } &:hover { background: rgba(108,99,255,0.2); } }
+.btn-add { background: $accent-dim; border: none; border-radius: 6px; color: $accent; cursor: pointer; padding: 4px; display: flex; align-items: center; .material-icons { font-size: 16px; } &:hover { background: $accent-glow; } }
 .card-expanded { margin-top: 10px; border-top: 1px solid $border-subtle; padding-top: 10px; display: flex; flex-direction: column; gap: 6px; }
 .detail-row { display: flex; justify-content: space-between; font-size: 0.78rem; color: $text-secondary; .pos { color: $green; } .neg { color: $red; } }
 .why-selected { font-size: 0.75rem; color: $text-muted; font-style: italic; line-height: 1.4; }
@@ -251,10 +238,10 @@ $orange: #f97316;
 .sell-top { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
 .sell-sym { font-size: 0.9rem; font-weight: 700; color: $text-primary; flex: 1; }
 .urgency-badge { border-radius: 4px; padding: 2px 8px; font-size: 0.7rem; font-weight: 800; letter-spacing: 0.04em; }
-.urgent-strong { background: rgba(239,68,68,0.2); color: $red; border: 1px solid rgba(239,68,68,0.3); }
-.urgent-sell { background: rgba(249,115,22,0.15); color: $orange; border: 1px solid rgba(249,115,22,0.2); }
-.urgent-watch { background: rgba(234,179,8,0.12); color: #eab308; border: 1px solid rgba(234,179,8,0.2); }
-.urgent-hold { background: rgba(34,197,94,0.1); color: $green; border: 1px solid rgba(34,197,94,0.2); }
+.urgent-strong { background: $red-dim; color: $red; border: 1px solid rgba($red, 0.3); }
+.urgent-sell { background: $orange-dim; color: $orange; border: 1px solid rgba($orange, 0.2); }
+.urgent-watch { background: $yellow-dim; color: $yellow; border: 1px solid rgba($yellow, 0.2); }
+.urgent-hold { background: $green-dim; color: $green; border: 1px solid rgba($green, 0.2); }
 .pnl { font-size: 0.8rem; font-weight: 700; &.pos { color: $green; } &.neg { color: $red; } }
 .sell-signals { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
 .signal-tag { background: $bg-elevated; border-radius: 4px; padding: 2px 7px; font-size: 0.68rem; color: $text-muted; }
@@ -276,7 +263,7 @@ $orange: #f97316;
 .staging-item { display: flex; align-items: center; gap: 8px; background: $bg-elevated; border-radius: 8px; padding: 8px 10px; }
 .staging-sym { flex: 1; font-size: 0.85rem; font-weight: 700; color: $text-primary; }
 .staging-price { font-size: 0.75rem; color: $text-muted; }
-.btn-stage-trade { background: $accent-dim; color: $accent; border: none; border-radius: 6px; padding: 4px 10px; font-size: 0.73rem; font-weight: 600; cursor: pointer; &:hover { background: rgba(108,99,255,0.2); } }
+.btn-stage-trade { background: $accent-dim; color: $accent; border: none; border-radius: 6px; padding: 4px 10px; font-size: 0.73rem; font-weight: 600; cursor: pointer; &:hover { background: $accent-glow; } }
 .btn-remove { background: none; border: none; color: $text-muted; cursor: pointer; display: flex; padding: 2px; .material-icons { font-size: 16px; } &:hover { color: $red; } }
 .btn-bulk { width: 100%; margin-top: 8px; padding: 9px; background: $accent; color: #fff; border: none; border-radius: 8px; font-size: 0.8rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; &:hover { filter: brightness(1.1); } }
 
@@ -288,7 +275,7 @@ $orange: #f97316;
 .modal-body { display: flex; flex-direction: column; gap: 12px; align-items: center; }
 .trade-grid { width: 100%; display: flex; flex-direction: column; gap: 8px; }
 .trow { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; color: $text-secondary; .qty { font-size: 1.1rem; font-weight: 700; color: $accent; } }
-.error-box { width: 100%; background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 8px; padding: 10px; font-size: 0.8rem; color: $text-primary; }
+.error-box { width: 100%; background: $red-dim; border: 1px solid rgba($red, 0.3); border-radius: 8px; padding: 10px; font-size: 0.8rem; color: $text-primary; }
 .btn-execute { width: 100%; padding: 11px; background: $accent; color: #fff; border: none; border-radius: 8px; font-size: 0.875rem; font-weight: 700; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; &:hover:not(:disabled) { filter: brightness(1.1); } &:disabled { opacity: 0.5; cursor: not-allowed; } }
 .spin-lg { animation: spin 0.8s linear infinite; font-size: 32px; color: $accent; }
 .error-state { color: $red; font-size: 0.85rem; }
@@ -307,7 +294,7 @@ $orange: #f97316;
 
 // ---- Staged button state ----
 .btn-add.btn-staged {
-  background: rgba(34, 197, 94, 0.12);
+  background: $green-dim;
   border-color: $green;
   color: $green;
 }
@@ -335,7 +322,7 @@ $orange: #f97316;
   cursor: pointer;
   transition: all 0.15s;
   &.active-sim { background: $accent-dim; border-color: $accent; color: $accent; }
-  &.active-live { background: rgba(239,68,68,0.12); border-color: $red; color: $red; }
+  &.active-live { background: $red-dim; border-color: $red; color: $red; }
   &:hover:not(.active-sim):not(.active-live) { border-color: $text-muted; }
 }
 .live-dot {
@@ -343,7 +330,7 @@ $orange: #f97316;
   border-radius: 50%;
   background: $text-muted;
   flex-shrink: 0;
-  &.live { background: $red; box-shadow: 0 0 5px rgba(239,68,68,0.6); }
+  &.live { background: $red; box-shadow: 0 0 5px rgba($red, 0.6); }
 }
 
 // ---- Bulk trade modal ----

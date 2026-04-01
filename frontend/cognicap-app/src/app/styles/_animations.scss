@@ -1,43 +1,55 @@
 // ============================================================
-// CogniCap Shared Animations — single source of truth
+// CogniCap Animations v2 — functional, not decorative
 // ============================================================
 
+// Loading spinner
 @keyframes spin {
   from { transform: rotate(0deg); }
   to   { transform: rotate(360deg); }
 }
 
-@keyframes pulse-dot {
-  0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.4; transform: scale(0.85); }
+// Skeleton loading pulse
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50%       { opacity: 0.8; }
 }
 
+// Shimmer sweep (skeleton loaders)
 @keyframes shimmer {
   0%   { background-position: -200% 0; }
   100% { background-position:  200% 0; }
 }
 
-@keyframes slideUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to   { transform: translateY(0);    opacity: 1; }
-}
-
-@keyframes slideDown {
-  from { transform: translateY(-10px); opacity: 0; }
-  to   { transform: translateY(0);     opacity: 1; }
-}
-
+// Entrance animations
 @keyframes fadeIn {
   from { opacity: 0; }
   to   { opacity: 1; }
 }
 
+@keyframes slideUp {
+  from { transform: translateY(16px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+@keyframes slideDown {
+  from { transform: translateY(-8px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+// Modal scale-in
+@keyframes scale-in {
+  from { transform: scale(0.96); opacity: 0; }
+  to   { transform: scale(1);    opacity: 1; }
+}
+
+// Side panel slide-in
+@keyframes slide-in-right {
+  from { transform: translateX(100%); opacity: 0; }
+  to   { transform: translateX(0);    opacity: 1; }
+}
+
+// Data update pulse (non-decorative — communicates state change)
 @keyframes pulse-update {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.5; }
-}
-
-@keyframes breathe {
-  0%, 100% { transform: scale(1); opacity: 0.3; }
-  50%       { transform: scale(1.1); opacity: 0.5; }
 }

@@ -51,7 +51,7 @@
       left: -100%;
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, transparent, rgba(108, 99, 255, 0.06), transparent);
+      background: linear-gradient(90deg, transparent, rgba($accent, 0.06), transparent);
       animation: shimmer-portfolio 2s infinite;
       z-index: 1;
       pointer-events: none;
