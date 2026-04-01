@@ -1,0 +1,79 @@
+@use '../../../styles/tokens' as *;
+
+.skeleton {
+  display: block;
+
+  // ---- Shimmer animation ----
+  @keyframes skeleton-shimmer {
+    0%   { background-position: -400px 0; }
+    100% { background-position: 400px 0; }
+  }
+
+  $shimmer-gradient: linear-gradient(
+    90deg,
+    $bg-elevated 25%,
+    $bg-hover 37%,
+    $bg-elevated 63%
+  );
+
+  // ---- Text variant: stacked lines ----
+  &--text {
+    display: flex;
+    flex-direction: column;
+    gap: $space-2;
+
+    .skeleton-line {
+      height: 12px;
+      border-radius: $radius-sm;
+      background: $shimmer-gradient;
+      background-size: 800px 100%;
+      animation: skeleton-shimmer 1.4s ease infinite;
+
+      &:nth-child(1) { width: 88%; }
+      &:nth-child(2) { width: 76%; }
+      &:nth-child(3) { width: 60%; }
+      &:nth-child(4) { width: 82%; }
+      &:nth-child(5) { width: 70%; }
+      &:nth-child(n+6) { width: 80%; }
+    }
+  }
+
+  // ---- Circle variant ----
+  &--circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: $shimmer-gradient;
+    background-size: 800px 100%;
+    animation: skeleton-shimmer 1.4s ease infinite;
+  }
+
+  // ---- Card variant ----
+  &--card {
+    height: 120px;
+    border-radius: $radius-lg;
+    background: $shimmer-gradient;
+    background-size: 800px 100%;
+    animation: skeleton-shimmer 1.4s ease infinite;
+  }
+
+  // ---- Table row variant ----
+  &--table-row {
+    display: flex;
+    align-items: center;
+    gap: $space-4;
+    padding: $space-3 0;
+    border-bottom: 1px solid $border-subtle;
+
+    .skeleton-cell {
+      height: 12px;
+      flex-shrink: 0;
+      border-radius: $radius-xs;
+      background: $shimmer-gradient;
+      background-size: 800px 100%;
+      animation: skeleton-shimmer 1.4s ease infinite;
+
+      &:first-child { flex: 1; }
+    }
+  }
+}

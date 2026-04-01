@@ -1,0 +1,84 @@
+@use '../../../styles/tokens' as *;
+
+.toast-container {
+  position: fixed;
+  top: calc(var(--shell-top, 76px) + #{$space-3});
+  right: $space-4;
+  z-index: 9000;
+  display: flex;
+  flex-direction: column;
+  gap: $space-2;
+  max-width: 360px;
+  width: calc(100vw - #{$space-8});
+  pointer-events: none;
+}
+
+.toast {
+  display: flex;
+  align-items: flex-start;
+  gap: $space-3;
+  padding: $space-3 $space-4;
+  border-radius: $radius-md;
+  border: 1px solid $border-default;
+  background: $bg-elevated;
+  box-shadow: $shadow-lg;
+  pointer-events: all;
+  animation: slideDown 0.2s ease;
+
+  @keyframes slideDown {
+    from { transform: translateY(-8px); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  &--success {
+    border-color: rgba($green, 0.3);
+    background: mix($bg-elevated, $green, 94%);
+    .toast-icon { color: $green; }
+  }
+
+  &--error {
+    border-color: rgba($red, 0.3);
+    background: mix($bg-elevated, $red, 94%);
+    .toast-icon { color: $red; }
+  }
+
+  &--warning {
+    border-color: rgba($orange, 0.3);
+    background: mix($bg-elevated, $orange, 94%);
+    .toast-icon { color: $orange; }
+  }
+
+  &--info {
+    border-color: rgba($accent, 0.3);
+    background: mix($bg-elevated, $accent, 96%);
+    .toast-icon { color: $accent; }
+  }
+}
+
+.toast-icon {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.toast-message {
+  flex: 1;
+  font-size: $text-sm;
+  color: $text-primary;
+  line-height: 1.5;
+}
+
+.toast-close {
+  background: none;
+  border: none;
+  color: $text-muted;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  flex-shrink: 0;
+  transition: color $transition-fast;
+
+  .material-icons { font-size: 16px; }
+
+  &:hover { color: $text-primary; }
+}

@@ -1,0 +1,13 @@
+<div class="toast-container" role="region" aria-live="polite" aria-label="Notifications">
+  <div
+    *ngFor="let toast of toasts$ | async; trackBy: trackById"
+    class="toast"
+    [class]="'toast--' + toast.type"
+    role="alert">
+    <span class="material-icons toast-icon">{{ iconFor(toast.type) }}</span>
+    <span class="toast-message">{{ toast.message }}</span>
+    <button class="toast-close" (click)="dismiss(toast.id)" aria-label="Dismiss">
+      <span class="material-icons">close</span>
+    </button>
+  </div>
+</div>

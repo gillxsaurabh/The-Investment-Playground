@@ -1,0 +1,10 @@
+<div class="empty-state">
+  <div class="empty-icon">
+    <span class="material-icons">{{ icon }}</span>
+  </div>
+  <h3 class="empty-title">{{ title }}</h3>
+  <p class="empty-desc" *ngIf="description">{{ description }}</p>
+  <button *ngIf="ctaLabel" class="empty-cta" (click)="ctaClick.emit()">
+    {{ ctaLabel }}
+  </button>
+</div>

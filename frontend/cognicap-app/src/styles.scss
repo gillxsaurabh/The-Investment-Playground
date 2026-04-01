@@ -2,6 +2,12 @@
 /* DM Sans · IBM Plex Mono · Warm gold on near-black */
 
 :root {
+  /* Sidebar layout */
+  --sidebar-w:           240px;
+  --topbar-h:            48px;
+  --ticker-h:            28px;
+  --shell-top:           calc(var(--topbar-h) + var(--ticker-h));
+
   /* Accent */
   --accent:              #d4a843;
   --accent-hover:        #c49a3a;
@@ -124,3 +130,35 @@ body {
 .text-muted   { color: var(--text-muted); }
 .text-label   { color: var(--text-label); }
 .text-secondary { color: var(--text-secondary); }
+
+/* ---- Sidebar shell: authenticated page layout offset ---- */
+/*
+ * Pages that include <app-header-banner> get the sidebar + top-bar layout.
+ * The sidebar (240px fixed left) and top-bar (48px fixed top) plus market
+ * ticker (28px) means content starts at: left=var(--sidebar-w), top=76px.
+ * Targeting Angular host elements avoids touching each page's inner markup.
+ */
+app-dashboard,
+app-discover,
+app-positions,
+app-account,
+app-connect-kite,
+app-admin {
+  display: block;
+  margin-left: var(--sidebar-w);
+  padding-top: var(--shell-top);
+  min-height: 100vh;
+  box-sizing: border-box;
+  transition: margin-left 0.18s ease;
+}
+
+@media (max-width: 768px) {
+  app-dashboard,
+  app-discover,
+  app-positions,
+  app-account,
+  app-connect-kite,
+  app-admin {
+    margin-left: 0;
+  }
+}

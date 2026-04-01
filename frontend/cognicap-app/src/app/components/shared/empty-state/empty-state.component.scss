@@ -1,0 +1,62 @@
+@use '../../../styles/tokens' as *;
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: $space-12 $space-6;
+  gap: $space-3;
+}
+
+.empty-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: $radius-xl;
+  background: $bg-elevated;
+  border: 1px solid $border-subtle;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: $space-2;
+
+  .material-icons {
+    font-size: 24px;
+    color: $text-muted;
+  }
+}
+
+.empty-title {
+  font-size: $text-md;
+  font-weight: 700;
+  color: $text-secondary;
+  margin: 0;
+}
+
+.empty-desc {
+  font-size: $text-sm;
+  color: $text-muted;
+  line-height: 1.6;
+  max-width: 360px;
+  margin: 0;
+}
+
+.empty-cta {
+  margin-top: $space-2;
+  padding: $space-2 $space-5;
+  background: $accent-dim;
+  border: 1px solid rgba($accent, 0.3);
+  border-radius: $radius-md;
+  color: $accent;
+  font-size: $text-sm;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: $font-display;
+  transition: all $transition-fast;
+
+  &:hover {
+    background: rgba($accent, 0.15);
+    border-color: rgba($accent, 0.5);
+  }
+}

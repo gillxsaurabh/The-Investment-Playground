@@ -3,21 +3,23 @@ import { CommonModule } from '@angular/common';
 import { RouterOutlet, Router } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { DemoService } from './services/demo.service';
+import { ToastComponent } from './components/shared/toast/toast.component';
 
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [CommonModule, RouterOutlet],
+  imports: [CommonModule, RouterOutlet, ToastComponent],
   template: `
     <router-outlet></router-outlet>
+    <app-toast></app-toast>
 
     <!-- Kite sign-in prompt (demo mode) -->
     <div class="kite-prompt-overlay" *ngIf="showPrompt" (click)="dismiss()">
       <div class="kite-prompt-card" (click)="$event.stopPropagation()">
         <div class="kp-icon">
           <svg width="26" height="26" fill="none" viewBox="0 0 24 24">
-            <rect x="3" y="11" width="18" height="11" rx="2" stroke="#6c63ff" stroke-width="2"/>
-            <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#6c63ff" stroke-width="2" stroke-linecap="round"/>
+            <rect x="3" y="11" width="18" height="11" rx="2" stroke="#d4a843" stroke-width="2"/>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4" stroke="#d4a843" stroke-width="2" stroke-linecap="round"/>
           </svg>
         </div>
         <h3 class="kp-title">Live data required</h3>
@@ -59,8 +61,8 @@ import { DemoService } from './services/demo.service';
     }
 
     .kite-prompt-card {
-      background: #12121e;
-      border: 1px solid rgba(108, 99, 255, 0.25);
+      background: #111111;
+      border: 1px solid rgba(212, 168, 67, 0.25);
       border-radius: 20px;
       padding: 2rem;
       max-width: 420px;
@@ -77,8 +79,8 @@ import { DemoService } from './services/demo.service';
     .kp-icon {
       width: 56px;
       height: 56px;
-      background: rgba(108, 99, 255, 0.1);
-      border: 1px solid rgba(108, 99, 255, 0.25);
+      background: rgba(212, 168, 67, 0.1);
+      border: 1px solid rgba(212, 168, 67, 0.25);
       border-radius: 16px;
       display: flex;
       align-items: center;
@@ -95,7 +97,7 @@ import { DemoService } from './services/demo.service';
 
     .kp-body {
       font-size: 0.88rem;
-      color: #7777a0;
+      color: #8a8a8a;
       line-height: 1.6;
       margin: 0 0 1.5rem;
     }
@@ -111,7 +113,7 @@ import { DemoService } from './services/demo.service';
       padding: 0.8rem 1.5rem;
       border-radius: 10px;
       border: none;
-      background: linear-gradient(135deg, #6c63ff, #00d4aa);
+      background: #d4a843;
       color: #fff;
       font-size: 0.9rem;
       font-weight: 700;
@@ -126,7 +128,7 @@ import { DemoService } from './services/demo.service';
       border-radius: 10px;
       border: 1px solid rgba(255,255,255,0.08);
       background: transparent;
-      color: #7777a0;
+      color: #8a8a8a;
       font-size: 0.88rem;
       cursor: pointer;
       transition: border-color 0.2s, color 0.2s;
@@ -140,7 +142,7 @@ import { DemoService } from './services/demo.service';
       justify-content: center;
       gap: 0.4rem;
       font-size: 0.72rem;
-      color: #44445a;
+      color: #4a4a4a;
     }
   `]
 })

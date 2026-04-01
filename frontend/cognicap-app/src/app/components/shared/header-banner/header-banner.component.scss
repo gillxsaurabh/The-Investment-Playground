@@ -1,190 +1,153 @@
 @use '../../../styles/tokens' as *;
 
 // ============================================================
-// Header Banner — Dark Purple Theme
+// Slim top bar — fixed, right of sidebar
 // ============================================================
 
-// ============================================================
-// Top Banner
-// ============================================================
-
-.tip-banner {
+.top-bar {
+  position: fixed;
+  top: 0;
+  left: var(--sidebar-w, #{$sidebar-width});
+  right: 0;
+  height: $header-height;
   background: $bg-primary;
   border-bottom: 1px solid $border-subtle;
-  padding: 12px 28px;
-}
-
-.banner-content {
-  max-width: 1800px;
-  margin: 0 auto;
   display: flex;
+  align-items: center;
   justify-content: space-between;
-  align-items: center;
+  padding: 0 $space-6;
+  z-index: 100;
+  transition: left $transition-normal;
 }
 
-.banner-left {
+.top-bar-left {
   display: flex;
   align-items: center;
-  gap: 10px;
-}
-
-.platform-icon {
-  font-size: 22px;
-  color: $accent;
-  filter: drop-shadow(0 0 6px rgba($accent, 0.5));
+  gap: $space-3;
 }
 
 .platform-name {
-  font-size: 20px;
-  font-weight: 800;
+  font-size: $text-sm;
+  font-weight: 700;
   color: $text-primary;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.2px;
+  white-space: nowrap;
 }
 
 .platform-tagline {
-  font-size: 12px;
-  font-weight: 400;
+  font-size: $text-xs;
   color: $text-muted;
-  letter-spacing: 0.2px;
-  padding-left: 4px;
   border-left: 1px solid $border-subtle;
-  margin-left: 2px;
+  padding-left: $space-3;
+  white-space: nowrap;
 }
 
-.banner-right {
+.top-bar-right {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: $space-2;
 }
 
-.user-name {
+// Broker status chip
+.broker-chip {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: $bg-elevated;
-  color: $text-secondary;
-  padding: 5px 12px;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 500;
+  gap: $space-1;
+  padding: 3px 8px;
+  border-radius: $radius-full;
   border: 1px solid $border-default;
-  cursor: pointer;
-  transition: border-color 0.2s ease;
+  color: $text-muted;
 
-  &:hover { border-color: rgba($accent, 0.4); }
+  .broker-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: $orange;
+    flex-shrink: 0;
+  }
 
-  .material-icons {
-    font-size: 15px;
-    color: $accent;
+  .broker-text {
+    font-size: $text-xs;
+    font-weight: 600;
+  }
+
+  &.linked {
+    border-color: rgba($green, 0.3);
+    color: $green;
+
+    .broker-dot {
+      background: $green;
+      box-shadow: 0 0 4px rgba($green, 0.6);
+    }
   }
 }
 
-.broker-dot {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  flex-shrink: 0;
+// User chip
+.user-chip {
+  display: flex;
+  align-items: center;
+  gap: $space-1;
+  padding: 4px 10px;
+  border-radius: $radius-sm;
+  border: 1px solid $border-default;
+  background: $bg-elevated;
+  color: $text-secondary;
+  font-size: $text-xs;
+  font-weight: 500;
+  cursor: pointer;
+  transition: border-color $transition-fast;
+  white-space: nowrap;
 
-  &.linked { background: #22c55e; box-shadow: 0 0 4px rgba(34, 197, 94, 0.6); }
-  &.unlinked { background: #f97316; }
+  .material-icons { font-size: 13px; color: $accent; }
+
+  &:hover { border-color: rgba($accent, 0.4); }
 }
 
+// Logout
 .logout-btn {
   display: flex;
   align-items: center;
-  gap: 5px;
-  background: transparent;
-  color: $text-secondary;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: none;
   border: 1px solid $border-default;
-  padding: 5px 12px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 500;
+  border-radius: $radius-sm;
+  color: $text-muted;
   cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
+  transition: all $transition-fast;
 
-  .material-icons {
-    font-size: 15px;
-  }
+  .material-icons { font-size: 15px; }
 
   &:hover {
     background: $red-dim;
-    color: $red;
     border-color: rgba($red, 0.3);
-
-    .material-icons { color: $red; }
+    color: $red;
   }
 }
 
 // ============================================================
-// Navigation Bar
+// Market ticker row — fixed below top bar
 // ============================================================
 
-.tip-nav {
-  background: $bg-card;
-  border-bottom: 1px solid $border-subtle;
-  padding: 0 28px;
-}
-
-.nav-content {
-  max-width: 1800px;
-  margin: 0 auto;
-  display: flex;
-  gap: 4px;
-}
-
-.nav-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: transparent;
-  color: $text-muted;
-  border: none;
-  padding: 9px 16px;
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  border-bottom: 2px solid transparent;
-  font-family: inherit;
-
-  .material-icons {
-    font-size: 16px;
-  }
-
-  &:hover {
-    color: $text-secondary;
-    background: rgba(255, 255, 255, 0.02);
-  }
-
-  &.active {
-    color: $accent;
-    border-bottom-color: $accent;
-    font-weight: 600;
-
-    .material-icons { color: $accent; }
-  }
-}
-
-.kite-status-badge {
-  display: inline-flex;
-  align-items: center;
-  margin-left: 2px;
-
-  .material-icons {
-    font-size: 13px;
-    color: #f97316;
-  }
+.ticker-row {
+  position: fixed;
+  top: $header-height;
+  left: var(--sidebar-w, #{$sidebar-width});
+  right: 0;
+  z-index: 100;
+  transition: left $transition-normal;
 }
 
 // ============================================================
-// Responsive
+// Mobile: full width (sidebar is overlay, not inline)
 // ============================================================
 
 @media (max-width: 768px) {
-  .tip-banner { padding: 10px 16px; }
+  .top-bar,
+  .ticker-row {
+    left: 0;
+  }
+
   .platform-tagline { display: none; }
-  .tip-nav { padding: 0 16px; }
-  .nav-btn { padding: 8px 10px; font-size: 12px; }
 }

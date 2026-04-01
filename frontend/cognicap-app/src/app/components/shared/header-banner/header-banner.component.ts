@@ -2,12 +2,13 @@ import { Component, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { MarketBannerComponent } from '../../market-banner/market-banner.component';
+import { SidebarComponent } from '../sidebar/sidebar.component';
 import { MarketIndex, Stock } from '../../../services/kite.service';
 
 @Component({
   selector: 'app-header-banner',
   standalone: true,
-  imports: [CommonModule, MarketBannerComponent],
+  imports: [CommonModule, MarketBannerComponent, SidebarComponent],
   templateUrl: './header-banner.component.html',
   styleUrls: ['./header-banner.component.scss']
 })

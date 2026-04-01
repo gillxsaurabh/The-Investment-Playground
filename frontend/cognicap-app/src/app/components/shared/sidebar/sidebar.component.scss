@@ -1,0 +1,262 @@
+@use '../../../styles/tokens' as *;
+
+:host {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+  z-index: 200;
+}
+
+// ============================================================
+// Sidebar shell
+// ============================================================
+
+.sidebar {
+  width: 240px;
+  height: 100%;
+  background: $bg-surface;
+  border-right: 1px solid $border-subtle;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: width $transition-normal;
+
+  &.collapsed {
+    width: $sidebar-collapsed;
+
+    .logo-text,
+    .nav-label,
+    .nav-section-label,
+    .footer-label,
+    .warn-dot { display: none; }
+
+    .nav-item {
+      padding: $space-3;
+      justify-content: center;
+    }
+
+    .broker-row,
+    .user-row,
+    .logout-btn {
+      padding: $space-2 0;
+      justify-content: center;
+    }
+  }
+}
+
+// ============================================================
+// Logo
+// ============================================================
+
+.sidebar-logo {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: 0 $space-4;
+  height: $header-height;
+  border-bottom: 1px solid $border-subtle;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.logo-mark {
+  width: 28px;
+  height: 28px;
+  background: $accent-dim;
+  border: 1px solid rgba($accent, 0.3);
+  border-radius: $radius-sm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+
+  .material-icons { font-size: 14px; color: $accent; }
+}
+
+.logo-text {
+  font-size: $text-sm;
+  font-weight: 800;
+  color: $text-primary;
+  letter-spacing: 0.14em;
+  white-space: nowrap;
+  font-family: $font-mono;
+}
+
+// ============================================================
+// Navigation
+// ============================================================
+
+.sidebar-nav {
+  display: flex;
+  flex-direction: column;
+  padding: $space-3 0 $space-2;
+  flex-shrink: 0;
+}
+
+.sidebar-spacer { flex: 1; }
+
+.sidebar-bottom-nav {
+  border-top: 1px solid $border-subtle;
+}
+
+.nav-section-label {
+  font-size: $text-xs;
+  font-weight: 600;
+  color: $text-muted;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0 $space-4 $space-1;
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: $space-3;
+  padding: $space-2 $space-3 $space-2 $space-4;
+  color: $text-secondary;
+  text-decoration: none;
+  font-size: $text-sm;
+  font-weight: 500;
+  border-left: 2px solid transparent;
+  transition: all $transition-fast;
+  white-space: nowrap;
+  overflow: hidden;
+  cursor: pointer;
+  position: relative;
+
+  .nav-icon { font-size: 18px; flex-shrink: 0; }
+
+  &:hover {
+    background: $bg-hover;
+    color: $text-primary;
+    border-left-color: $border-strong;
+  }
+
+  &.active {
+    background: $accent-dim;
+    color: $accent;
+    border-left-color: $accent;
+    font-weight: 600;
+
+    .nav-icon { color: $accent; }
+  }
+}
+
+.warn-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: $orange;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+// ============================================================
+// Footer
+// ============================================================
+
+.sidebar-footer {
+  border-top: 1px solid $border-subtle;
+  padding: $space-2 0 $space-1;
+  display: flex;
+  flex-direction: column;
+  flex-shrink: 0;
+}
+
+.broker-row,
+.user-row,
+.logout-btn {
+  display: flex;
+  align-items: center;
+  gap: $space-2;
+  padding: $space-2 $space-4;
+  overflow: hidden;
+  font-size: $text-xs;
+  white-space: nowrap;
+
+  .material-icons { font-size: 14px; flex-shrink: 0; }
+}
+
+.broker-row {
+  color: $text-muted;
+
+  &.linked {
+    color: $green;
+    .material-icons { color: $green; }
+  }
+}
+
+.user-row {
+  color: $text-label;
+  .material-icons { color: $text-muted; }
+}
+
+.user-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 160px;
+}
+
+.logout-btn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: $font-display;
+  text-align: left;
+  color: $text-muted;
+  width: 100%;
+  transition: color $transition-fast;
+
+  &:hover { color: $red; }
+}
+
+// ============================================================
+// Collapse toggle
+// ============================================================
+
+.collapse-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: $space-2;
+  background: none;
+  border: none;
+  border-top: 1px solid $border-subtle;
+  color: $text-muted;
+  cursor: pointer;
+  transition: all $transition-fast;
+  flex-shrink: 0;
+
+  .material-icons { font-size: 18px; }
+
+  &:hover {
+    background: $bg-hover;
+    color: $text-primary;
+  }
+}
+
+// ============================================================
+// Mobile: slide-in overlay
+// ============================================================
+
+@media (max-width: 768px) {
+  :host {
+    transform: translateX(-100%);
+    transition: transform $transition-normal;
+
+    &.mobile-open {
+      transform: translateX(0);
+    }
+  }
+
+  .sidebar {
+    width: $sidebar-width;
+    box-shadow: $shadow-xl;
+  }
+}

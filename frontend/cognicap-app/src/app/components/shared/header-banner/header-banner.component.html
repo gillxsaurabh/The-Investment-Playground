@@ -1,68 +1,40 @@
-<!-- Top Banner -->
-<header class="tip-banner">
-  <div class="banner-content">
-    <div class="banner-left">
-      <span class="platform-name">The Investment Playground</span>
-      <span class="platform-tagline">Intelligent Portfolio</span>
+<!-- Sidebar (fixed left) -->
+<app-sidebar
+  [userName]="userName"
+  [brokerLinked]="brokerLinked"
+  (onLogout)="logout()">
+</app-sidebar>
+
+<!-- Slim top bar (fixed, offset by sidebar via CSS var) -->
+<header class="top-bar">
+  <div class="top-bar-left">
+    <span class="platform-name">The Investment Playground</span>
+    <span class="platform-tagline">Portfolio Intelligence</span>
+  </div>
+  <div class="top-bar-right">
+    <div class="broker-chip" [class.linked]="brokerLinked"
+         [title]="brokerLinked ? 'Kite linked — live data' : 'Demo mode'">
+      <span class="broker-dot"></span>
+      <span class="broker-text">{{ brokerLinked ? 'Live' : 'Demo' }}</span>
     </div>
-    <div class="banner-right">
-      <span class="user-name" *ngIf="userName" (click)="navigateTo('account')" title="Account settings">
-        <span class="material-icons">person</span>
-        {{ userName }}
-        <span class="broker-dot" [class.linked]="brokerLinked" [class.unlinked]="!brokerLinked"
-              [title]="brokerLinked ? 'Kite linked' : 'Kite not linked'"></span>
-      </span>
-      <button class="logout-btn" (click)="logout()">
-        <span class="material-icons">logout</span>
-        Logout
-      </button>
-    </div>
+    <span class="user-chip" *ngIf="userName" (click)="navigateTo('account')" title="Account settings">
+      <span class="material-icons">person</span>
+      {{ userName }}
+    </span>
+    <button class="logout-btn" (click)="logout()" title="Logout">
+      <span class="material-icons">logout</span>
+    </button>
   </div>
 </header>
 
-<!-- Navigation Bar -->
-<nav class="tip-nav">
-  <div class="nav-content">
-    <button
-      class="nav-btn"
-      [class.active]="activePage === 'dashboard'"
-      (click)="navigateTo('dashboard')">
-      <span class="material-icons">dashboard</span>
-      Dashboard
-    </button>
-    <button
-      class="nav-btn"
-      [class.active]="activePage === 'discover'"
-      (click)="navigateTo('discover')">
-      <span class="material-icons">search</span>
-      Discover
-    </button>
-    <button
-      class="nav-btn"
-      [class.active]="activePage === 'positions'"
-      (click)="navigateTo('positions')">
-      <span class="material-icons">candlestick_chart</span>
-      Positions
-    </button>
-    <button
-      class="nav-btn"
-      [class.active]="activePage === 'account'"
-      (click)="navigateTo('account')">
-      <span class="material-icons">settings</span>
-      Account
-      <span class="kite-status-badge" *ngIf="!brokerLinked" title="Kite not linked">
-        <span class="material-icons">link_off</span>
-      </span>
-    </button>
-  </div>
-</nav>
-
-<!-- Live Market Ticker -->
-<app-market-banner
-  [nifty]="nifty"
-  [sensex]="sensex"
-  [marketGainers]="marketGainers"
-  [marketLosers]="marketLosers"
-  [isLoading]="isMarketLoading"
-  [error]="marketError">
-</app-market-banner>
+<!-- Market ticker (compact, fixed below top bar) -->
+<div class="ticker-row">
+  <app-market-banner
+    [nifty]="nifty"
+    [sensex]="sensex"
+    [marketGainers]="marketGainers"
+    [marketLosers]="marketLosers"
+    [isLoading]="isMarketLoading"
+    [error]="marketError">
+  </app-market-banner>
+</div>

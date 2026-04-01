@@ -1,0 +1,64 @@
+<aside class="sidebar" [class.collapsed]="isCollapsed">
+
+  <!-- Logo -->
+  <div class="sidebar-logo">
+    <div class="logo-mark">
+      <span class="material-icons">show_chart</span>
+    </div>
+    <span class="logo-text">TIP</span>
+  </div>
+
+  <!-- Main navigation -->
+  <nav class="sidebar-nav">
+    <p class="nav-section-label">Main</p>
+    <a *ngFor="let item of navMain"
+       class="nav-item"
+       [routerLink]="item.route"
+       routerLinkActive="active"
+       [title]="isCollapsed ? item.label : ''">
+      <span class="material-icons nav-icon">{{ item.icon }}</span>
+      <span class="nav-label">{{ item.label }}</span>
+    </a>
+  </nav>
+
+  <div class="sidebar-spacer"></div>
+
+  <!-- Settings navigation -->
+  <nav class="sidebar-nav sidebar-bottom-nav">
+    <p class="nav-section-label">Settings</p>
+    <a *ngFor="let item of navSettings"
+       class="nav-item"
+       [routerLink]="item.route"
+       routerLinkActive="active"
+       [title]="isCollapsed ? item.label : ''">
+      <span class="material-icons nav-icon">{{ item.icon }}</span>
+      <span class="nav-label">{{ item.label }}</span>
+      <span *ngIf="!brokerLinked && item.route === '/account'" class="warn-dot" title="Kite not linked"></span>
+    </a>
+  </nav>
+
+  <!-- Footer: broker status + user + logout -->
+  <div class="sidebar-footer">
+    <div class="broker-row" [class.linked]="brokerLinked"
+         [title]="brokerLinked ? 'Kite linked — live data' : 'Demo mode — no broker linked'">
+      <span class="material-icons">{{ brokerLinked ? 'link' : 'link_off' }}</span>
+      <span class="footer-label">{{ brokerLinked ? 'Kite Live' : 'Demo Mode' }}</span>
+    </div>
+
+    <div class="user-row" *ngIf="userName">
+      <span class="material-icons">person</span>
+      <span class="footer-label user-name">{{ userName }}</span>
+    </div>
+
+    <button class="logout-btn" (click)="logout()" title="Logout">
+      <span class="material-icons">logout</span>
+      <span class="footer-label">Logout</span>
+    </button>
+  </div>
+
+  <!-- Collapse toggle -->
+  <button class="collapse-toggle" (click)="toggle()" [title]="isCollapsed ? 'Expand sidebar' : 'Collapse sidebar'">
+    <span class="material-icons">{{ isCollapsed ? 'chevron_right' : 'chevron_left' }}</span>
+  </button>
+
+</aside>
