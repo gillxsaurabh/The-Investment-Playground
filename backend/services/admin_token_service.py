@@ -18,11 +18,12 @@ _CACHE_TTL = 60  # seconds
 
 
 def get_admin_broker_token(broker: str = "kite") -> Optional[str]:
-    """Fetch the currently active admin broker token. Cached for 60s."""
+    """Fetch the currently active admin broker token (decrypted). Cached for 60s."""
     now = time.time()
     if _cache["token"] and (now - _cache["fetched_at"]) < _CACHE_TTL:
-        return _cache["token"]
+        return _cache["token"]  # cache stores decrypted value
 
+    from services.broker_key_service import decrypt_broker_token
     conn = get_conn()
     try:
         row = conn.execute(
@@ -31,10 +32,15 @@ def get_admin_broker_token(broker: str = "kite") -> Optional[str]:
             "ORDER BY created_at DESC LIMIT 1",
             (broker,),
         ).fetchone()
-        token = row["access_token"] if row else None
-        _cache["token"] = token
+        if not row:
+            _cache["token"] = None
+            _cache["fetched_at"] = now
+            return None
+        token = decrypt_broker_token(row["access_token"])
+        decrypted = token if token else None
+        _cache["token"] = decrypted
         _cache["fetched_at"] = now
-        return token
+        return decrypted
     finally:
         conn.close()
 
@@ -44,7 +50,10 @@ def set_admin_broker_token(
     access_token: str,
     broker: str = "kite",
 ) -> None:
-    """Deactivate previous admin tokens and store a new one."""
+    """Deactivate previous admin tokens and store a new one (encrypted at rest)."""
+    from services.broker_key_service import encrypt_broker_token, is_encryption_enabled
+    stored_token = encrypt_broker_token(access_token)
+    encrypted_flag = is_encryption_enabled()
     conn = get_conn()
     try:
         conn.execute(
@@ -52,12 +61,12 @@ def set_admin_broker_token(
             (broker,),
         )
         conn.execute(
-            "INSERT INTO admin_broker_tokens (broker, access_token, set_by_user_id) "
-            "VALUES (?, ?, ?)",
-            (broker, access_token, user_id),
+            "INSERT INTO admin_broker_tokens (broker, access_token, set_by_user_id, encrypted) "
+            "VALUES (?, ?, ?, ?)",
+            (broker, stored_token, user_id, encrypted_flag),
         )
         conn.commit()
-        # Invalidate cache
+        # Cache stores the DECRYPTED value so repeated reads are fast
         _cache["token"] = access_token
         _cache["fetched_at"] = time.time()
         logger.info("[AdminToken] New admin broker token set by user %s", user_id)

@@ -60,15 +60,14 @@ export class AccountComponent implements OnInit, OnDestroy {
 
   // AI Models (BYOK)
   readonly LLM_PROVIDERS = [
-    { id: 'gemini', label: 'Google Gemini', icon: 'auto_awesome' },
     { id: 'anthropic', label: 'Anthropic Claude', icon: 'smart_toy' },
     { id: 'openai', label: 'OpenAI GPT', icon: 'psychology' }
   ];
   configuredProviders: string[] = [];
-  llmKeyInputs: Record<string, string> = { gemini: '', anthropic: '', openai: '' };
-  llmSaveStatus: Record<string, 'idle' | 'loading' | 'success' | 'error'> = { gemini: 'idle', anthropic: 'idle', openai: 'idle' };
-  llmSaveError: Record<string, string> = { gemini: '', anthropic: '', openai: '' };
-  llmDeleteStatus: Record<string, 'idle' | 'loading'> = { gemini: 'idle', anthropic: 'idle', openai: 'idle' };
+  llmKeyInputs: Record<string, string> = { anthropic: '', openai: '' };
+  llmSaveStatus: Record<string, 'idle' | 'loading' | 'success' | 'error'> = { anthropic: 'idle', openai: 'idle' };
+  llmSaveError: Record<string, string> = { anthropic: '', openai: '' };
+  llmDeleteStatus: Record<string, 'idle' | 'loading'> = { anthropic: 'idle', openai: 'idle' };
   tierInfo: any = null;
   private aiModelsLoaded = false;
 

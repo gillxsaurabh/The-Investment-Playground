@@ -7,7 +7,7 @@ Agents in the pipeline:
   1. Market Scanner       — screens universe by volume, 200-EMA and relative strength
   2. Quant Analyst        — validates RSI entry triggers with ADX trend confirmation
   3. Fundamentals Analyst — checks quarterly profit growth, ROE and D/E via Screener.in
-  4. Sector Momentum      — confirms 5-day sector index tailwind
+  4. Sector Monitor       — confirms 5-day sector index tailwind
   5. AI Conviction Engine — composite scoring + LLM news sentiment ranking
   6. Portfolio Ranker     — multi-factor final ranking with LLM rank explanations
 """
@@ -18,7 +18,6 @@ from datetime import datetime
 
 from agents.decision_support.strategy_config import STRATEGY_GEARS, DEFAULT_GEAR
 from agents.decision_support.tools import (
-    clear_session_cache,
     filter_market_universe,
     analyze_technicals,
     check_fundamentals,
@@ -27,6 +26,7 @@ from agents.decision_support.tools import (
     ai_rank_stocks,
     rank_final_shortlist,
 )
+from agents.shared.data_infra import PipelineSession
 from broker import get_broker
 from constants import (
     VIX_TIER1_THRESHOLD, VIX_TIER2_THRESHOLD, VIX_TIER3_THRESHOLD,
@@ -66,7 +66,7 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
     # llm_provider flows automatically: frontend sends it in config dict
     llm_provider = resolved.get("llm_provider", None)
 
-    clear_session_cache()
+    session = PipelineSession()
     started_at = datetime.now().isoformat()
     yield _sse("step_start", {
         "step": "pipeline",
@@ -152,6 +152,7 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
             min_turnover=resolved.get("min_turnover", 50_000_000),
             ema_period=resolved.get("ema_period", 200),
             universe=universe_key,
+            session=session,
         )
     except Exception as e:
         yield _sse("error", {"step": "universe_filter", "message": str(e)})
@@ -209,6 +210,7 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
             universe_stocks,
             log=log_fn,
             rsi_buy_limit=resolved.get("rsi_buy_limit", 30),
+            session=session,
         )
     except Exception as e:
         yield _sse("error", {"step": "technical_setup", "message": str(e)})
@@ -255,6 +257,7 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
             technical_stocks,
             log=log_fn,
             fundamental_check=resolved.get("fundamental_check", "standard"),
+            session=session,
         )
     except Exception as e:
         yield _sse("error", {"step": "fundamentals", "message": str(e)})
@@ -284,11 +287,11 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
         })
         return
 
-    # ── Step 4: Sector Momentum ──────────────────────────────────────────
+    # ── Step 4: Sector Monitor ───────────────────────────────────────────
     step4_started = time.monotonic()
     yield _sse("step_start", {
         "step": "sector_health",
-        "agent_name": "Sector Momentum",
+        "agent_name": "Sector Monitor",
         "agent_role": "Confirms positive 5-day sector index tailwind via Kite API",
         "description": f"Measuring sector momentum for {len(fundamental_stocks)} stocks — fetching 5-day sector index performance from Kite API...",
         "started_at": datetime.now().isoformat(),
@@ -297,7 +300,7 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
     sector_stocks = []
     try:
         log_fn = make_logger("sector_health")
-        sector_stocks = check_sector_health(access_token, fundamental_stocks, log=log_fn)
+        sector_stocks = check_sector_health(access_token, fundamental_stocks, log=log_fn, session=session)
     except Exception as e:
         yield _sse("error", {"step": "sector_health", "message": str(e)})
         return
@@ -341,10 +344,10 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
         log_fn = make_logger("ai_ranking")
 
         # Composite scoring (rule-based, fast)
-        final_stocks = compute_composite_scores(final_stocks, log=log_fn)
+        final_stocks = compute_composite_scores(final_stocks, log=log_fn, session=session)
 
         # AI ranking with news (LLM-powered)
-        final_stocks = ai_rank_stocks(final_stocks, market_regime, log=log_fn, llm_provider=llm_provider, user_id=user_id)
+        final_stocks = ai_rank_stocks(final_stocks, market_regime, log=log_fn, llm_provider=llm_provider, user_id=user_id, session=session)
     except Exception as e:
         log_fn = make_logger("ai_ranking")
         log_fn(f"AI ranking failed, using composite scores only: {e}")
@@ -378,7 +381,7 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
 
     try:
         log_fn = make_logger("final_ranking")
-        final_stocks = rank_final_shortlist(final_stocks, log=log_fn, llm_provider=llm_provider, user_id=user_id)
+        final_stocks = rank_final_shortlist(final_stocks, log=log_fn, llm_provider=llm_provider, user_id=user_id, session=session)
     except Exception as e:
         log_fn = make_logger("final_ranking")
         log_fn(f"Portfolio Ranker failed, stocks remain in AI conviction order: {e}")

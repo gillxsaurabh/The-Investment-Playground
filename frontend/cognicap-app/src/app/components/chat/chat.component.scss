@@ -1,39 +1,336 @@
 @use '../../styles/tokens' as *;
 
 // ============================================================
-// AI Chat — Dark Purple Theme
+// Tipsy — Oracle Cat FAB + Chat Window
+// Terminal Luxe: warm black · gold · IBM Plex Mono
 // ============================================================
 
+
 // ============================================================
-// Container
+// FAB Wrapper
 // ============================================================
 
-.chat-container {
+.fab-wrap {
   position: fixed;
-  right: 20px;
+  bottom: 24px;
+  right: 24px;
+  z-index: 1001;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+
+// ============================================================
+// Speech Bubble
+// ============================================================
+
+.cat-bubble {
+  position: absolute;
+  right: calc(100% + 14px);
+  bottom: 12px;
+  background: $bg-elevated;
+  border: 1px solid rgba($accent, 0.4);
+  border-radius: 12px 12px 4px 12px;
+  padding: 9px 14px 9px 12px;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow:
+    0 8px 24px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba($accent, 0.08) inset;
+
+  // Lifecycle: pop in → type → hold → fade out
+  animation: bubble-life 5.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+  // Tail pointing right toward cat
+  &::after {
+    content: '';
+    position: absolute;
+    right: -7px;
+    bottom: 10px;
+    width: 0;
+    height: 0;
+    border-top: 6px solid transparent;
+    border-bottom: 0px solid transparent;
+    border-left: 7px solid rgba($accent, 0.4);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    right: -5px;
+    bottom: 11px;
+    width: 0;
+    height: 0;
+    border-top: 5px solid transparent;
+    border-bottom: 0px solid transparent;
+    border-left: 6px solid $bg-elevated;
+    z-index: 1;
+  }
+}
+
+@keyframes bubble-life {
+  0%   { opacity: 0; transform: translateX(8px) scale(0.94); }
+  10%  { opacity: 1; transform: translateX(0) scale(1); }
+  80%  { opacity: 1; transform: translateX(0) scale(1); }
+  100% { opacity: 0; transform: translateX(6px) scale(0.96); }
+}
+
+.bubble-text {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: $text-primary;
+  font-family: $font-display;
+  letter-spacing: 0.01em;
+  display: inline-block;
+  overflow: hidden;
+  // Typewriter: clip text width from 0 → full over the first 45% of animation
+  animation: bubble-type 5.5s steps(26, end) forwards;
+  max-width: 0;
+
+  @keyframes bubble-type {
+    0%   { max-width: 0; }
+    10%  { max-width: 0; }
+    45%  { max-width: 220px; }
+    100% { max-width: 220px; }
+  }
+}
+
+.bubble-cursor {
+  display: inline-block;
+  width: 1.5px;
+  height: 13px;
+  background: $accent;
+  margin-left: 2px;
+  vertical-align: middle;
+  border-radius: 1px;
+  animation: blink-cursor 0.65s step-end infinite, cursor-hide 5.5s forwards;
+}
+
+@keyframes blink-cursor {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+@keyframes cursor-hide {
+  0%, 75% { opacity: 1; }
+  90%      { opacity: 0; }
+}
+
+
+// ============================================================
+// FAB Button
+// ============================================================
+
+.chat-fab {
+  position: relative;
+  width: 56px;
+  height: 66px;        // extra height for ears above head
+  background: transparent;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  outline: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  &:hover {
+    transform: scale(1.1) translateY(-3px);
+
+    .fab-eye-aura { opacity: 0.35; }
+    .fab-whisker  { stroke: rgba(232, 230, 227, 0.5); }
+    .fab-tip      { opacity: 1; transform: translateX(0); }
+    .fab-ear-l    { transform: translateY(-2px) rotate(-4deg); }
+    .fab-ear-r    { transform: translateY(-2px) rotate(4deg); }
+
+    .fab-cat {
+      filter:
+        drop-shadow(0 8px 28px rgba(0, 0, 0, 0.95))
+        drop-shadow(0 0 28px rgba(212, 168, 67, 0.28));
+    }
+  }
+
+  &:active {
+    transform: scale(0.93) translateY(0);
+  }
+}
+
+// Breathing life animation on the SVG itself
+.fab-cat {
+  display: block;
+  overflow: visible;
+  animation: cat-breathe 4.8s ease-in-out infinite;
+  // Lift cat off the dark background with shadow + subtle gold ambient glow
+  filter:
+    drop-shadow(0 6px 24px rgba(0, 0, 0, 0.95))
+    drop-shadow(0 2px 6px rgba(0, 0, 0, 0.9))
+    drop-shadow(0 0 18px rgba(212, 168, 67, 0.15));
+}
+
+@keyframes cat-breathe {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50%       { transform: translateY(-2px) scale(1.025); }
+}
+
+
+// ============================================================
+// Cat SVG Elements
+// ============================================================
+
+.fab-ear-l,
+.fab-ear-r {
+  transform-box: fill-box;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.fab-ear-l { transform-origin: right bottom; }
+.fab-ear-r { transform-origin: left bottom; }
+
+.fab-eye-aura {
+  fill: $accent;
+  opacity: 0.18;
+  filter: blur(4px);
+  transition: opacity 0.3s ease;
+}
+
+.fab-whisker {
+  stroke: rgba(232, 230, 227, 0.28);
+  stroke-width: 0.85;
+  stroke-linecap: round;
+  transition: stroke 0.3s ease;
+}
+.fab-whisker-faint { opacity: 0.6; }
+
+
+// ============================================================
+// Eye Blink Animation
+// ============================================================
+
+.fab-eye-l,
+.fab-eye-r {
+  transform-box: fill-box;
+  transform-origin: 50% 62%;   // blink from slightly below center (upper lid drops)
+  animation: cat-blink 5s ease-in-out infinite;
+}
+.fab-eye-r { animation-delay: 0.07s; }
+
+@keyframes cat-blink {
+  0%, 80%, 100% { transform: scaleY(1); }
+  84%           { transform: scaleY(0.05); }
+  88%           { transform: scaleY(1); }
+}
+
+// Squinting happy eyes when chat is open
+.fab-is-open .fab-eye-l { animation: cat-squint 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; }
+.fab-is-open .fab-eye-r { animation: cat-squint 0.38s cubic-bezier(0.34, 1.56, 0.64, 1) 0.05s forwards; }
+
+@keyframes cat-squint {
+  to { transform: scaleY(0.18); }
+}
+
+
+// ============================================================
+// Unread Indicator
+// ============================================================
+
+.fab-unread {
+  position: absolute;
+  top: 16px;         // sits near the right ear area
+  right: -2px;
+  width: 10px;
+  height: 10px;
+  background: $green;
+  border-radius: 50%;
+  border: 1.5px solid #0a0a0a;
+  animation: unread-pulse 2s ease-in-out infinite;
+}
+
+@keyframes unread-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba($green, 0.5); }
+  50%       { box-shadow: 0 0 0 5px rgba($green, 0); }
+}
+
+
+// ============================================================
+// Tooltip Label
+// ============================================================
+
+.fab-tip {
+  position: absolute;
+  right: calc(100% + 12px);
   bottom: 20px;
+  background: $bg-elevated;
+  border: 1px solid rgba($accent, 0.3);
+  color: $text-secondary;
+  font-size: 10px;
+  font-weight: 600;
+  font-family: $font-mono;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border-radius: $radius-md;
+  white-space: nowrap;
+  opacity: 0;
+  transform: translateX(6px);
+  transition: opacity 0.2s ease, transform 0.2s ease;
+  pointer-events: none;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    border: 5px solid transparent;
+    border-left-color: rgba($accent, 0.3);
+  }
+}
+
+
+// ============================================================
+// Chat Window
+// ============================================================
+
+.chat-window {
+  position: fixed;
+  bottom: 104px;     // 24 (wrap bottom) + 66 (FAB height) + 14 (gap)
+  right: 24px;
   width: 380px;
-  max-height: 600px;
+  max-height: 560px;
   background: $bg-card;
   border-radius: 16px;
+  border: 1px solid rgba($accent, 0.18);
   box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.8),
-    0 0 28px rgba($accent, 0.18),
-    inset 0 0 1px rgba($accent, 0.3);
-  border: 1px solid rgba($accent, 0.2);
+    0 24px 56px rgba(0, 0, 0, 0.88),
+    0 0 0 1px rgba($accent, 0.06) inset,
+    0 0 40px rgba($accent, 0.07);
   display: flex;
   flex-direction: column;
   z-index: 1000;
-  transition: max-height 0.3s cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 0.3s ease;
 
-  &.minimized {
-    max-height: 58px;
-    box-shadow:
-      0 4px 16px rgba(0, 0, 0, 0.6),
-      0 0 16px rgba($accent, 0.12);
+  // Hidden state (default)
+  opacity: 0;
+  transform: translateY(16px) scale(0.96);
+  transform-origin: bottom right;
+  pointer-events: none;
+  visibility: hidden;
+  transition:
+    opacity    0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    transform  0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    visibility 0s linear 0.3s;
+
+  // Open state
+  &.chat-is-open {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+    visibility: visible;
+    transition:
+      opacity    0.3s cubic-bezier(0.16, 1, 0.3, 1),
+      transform  0.3s cubic-bezier(0.16, 1, 0.3, 1),
+      visibility 0s linear 0s;
   }
 }
+
 
 // ============================================================
 // Header
@@ -47,12 +344,7 @@
   border-bottom: 1px solid $border-subtle;
   background: $bg-elevated;
   border-radius: 16px 16px 0 0;
-  transition: border-radius 0.3s ease;
-
-  .minimized & {
-    border-radius: 16px;
-    border-bottom-color: transparent;
-  }
+  flex-shrink: 0;
 
   .header-info {
     display: flex;
@@ -83,6 +375,7 @@
         font-weight: 600;
         color: $text-primary;
         line-height: 1.2;
+        font-family: $font-display;
       }
 
       .status {
@@ -111,7 +404,7 @@
   }
 
   .btn-icon {
-    background: rgba(255, 255, 255, 0.06);
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid $border-subtle;
     color: $text-secondary;
     width: 30px;
@@ -121,29 +414,30 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
+    transition: all 0.18s ease;
     font-family: inherit;
 
     .material-icons { font-size: 17px; }
 
     &:hover {
-      background: rgba(255, 255, 255, 0.1);
+      background: rgba(255, 255, 255, 0.09);
       color: $text-primary;
       border-color: $border-default;
     }
 
-    &.btn-toggle:hover {
-      background: $accent-dim;
-      color: $accent;
-      border-color: rgba($accent, 0.3);
+    &.btn-close:hover {
+      background: rgba(214, 69, 69, 0.14);
+      color: $red;
+      border-color: rgba($red, 0.3);
     }
   }
 }
 
 @keyframes pulse-status {
   0%, 100% { opacity: 1; transform: scale(1); }
-  50%       { opacity: 0.5; transform: scale(1.3); }
+  50%       { opacity: 0.5; transform: scale(1.35); }
 }
+
 
 // ============================================================
 // Chat Body
@@ -152,7 +446,9 @@
 .chat-body {
   display: flex;
   flex-direction: column;
-  height: 500px;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
 }
 
 .messages-container {
@@ -162,16 +458,17 @@
   display: flex;
   flex-direction: column;
   gap: 10px;
+  max-height: 390px;
 
-  &::-webkit-scrollbar { width: 5px; }
+  &::-webkit-scrollbar { width: 4px; }
   &::-webkit-scrollbar-track { background: transparent; }
   &::-webkit-scrollbar-thumb {
-    background: rgba($accent, 0.25);
-    border-radius: 3px;
-
-    &:hover { background: rgba($accent, 0.4); }
+    background: rgba($accent, 0.2);
+    border-radius: 2px;
+    &:hover { background: rgba($accent, 0.38); }
   }
 }
+
 
 // ============================================================
 // Messages
@@ -179,7 +476,7 @@
 
 .message {
   display: flex;
-  animation: slideIn 0.2s ease-out;
+  animation: msg-in 0.22s ease-out;
 
   &.user-message {
     justify-content: flex-end;
@@ -204,7 +501,7 @@
   }
 
   .message-content {
-    max-width: 80%;
+    max-width: 82%;
     padding: 10px 14px;
     font-size: 13.5px;
     line-height: 1.55;
@@ -220,10 +517,11 @@
   }
 }
 
-@keyframes slideIn {
-  from { opacity: 0; transform: translateY(8px); }
+@keyframes msg-in {
+  from { opacity: 0; transform: translateY(7px); }
   to   { opacity: 1; transform: translateY(0); }
 }
+
 
 // ============================================================
 // Typing Indicator
@@ -239,7 +537,7 @@
     height: 7px;
     background: $accent;
     border-radius: 50%;
-    opacity: 0.6;
+    opacity: 0.55;
     animation: typing 1.4s infinite;
 
     &:nth-child(2) { animation-delay: 0.2s; }
@@ -249,8 +547,110 @@
 
 @keyframes typing {
   0%, 60%, 100% { opacity: 0.3; transform: translateY(0); }
-  30%            { opacity: 1; transform: translateY(-4px); }
+  30%           { opacity: 1; transform: translateY(-4px); }
 }
+
+
+// ============================================================
+// @Mention Hint
+// ============================================================
+
+.mention-hint {
+  padding: 6px 14px 4px;
+  font-size: 11px;
+  color: $text-muted;
+  border-top: 1px solid $border-subtle;
+  line-height: 1.65;
+  flex-shrink: 0;
+
+  code {
+    color: $accent;
+    font-size: 10.5px;
+    font-family: $font-mono;
+    background: $accent-dim;
+    padding: 1px 4px;
+    border-radius: 3px;
+  }
+}
+
+// @mention token highlight in user messages
+:host ::ng-deep .mention {
+  color: $accent;
+  font-weight: 600;
+}
+
+// AI message formatted content
+.ai-body {
+  font-size: 13px;
+  line-height: 1.6;
+  word-wrap: break-word;
+}
+
+:host ::ng-deep {
+  .chat-p {
+    margin: 0 0 6px;
+    &:last-child { margin-bottom: 0; }
+  }
+
+  .chat-heading {
+    display: block;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: $text-primary;
+    margin-bottom: 2px;
+  }
+
+  .chat-bullet {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    padding: 1px 0;
+    font-size: 12.5px;
+    color: $text-secondary;
+    line-height: 1.5;
+
+    &::before {
+      content: '▸';
+      color: $accent;
+      font-size: 11px;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+  }
+
+  .score-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 12px;
+    padding: 2px 0;
+
+    .score-label { color: $text-secondary; font-weight: 500; }
+    .score-bar {
+      font-family: $font-mono;
+      font-size: 11px;
+      color: $accent;
+      letter-spacing: 1px;
+    }
+  }
+
+  .chat-divider {
+    display: block;
+    height: 1px;
+    background: $border-subtle;
+    margin: 4px 0;
+  }
+
+  .message-content code {
+    background: rgba(255, 255, 255, 0.07);
+    padding: 1px 5px;
+    border-radius: 3px;
+    font-size: 11.5px;
+    font-family: $font-mono;
+    color: $accent;
+  }
+}
+
 
 // ============================================================
 // Input
@@ -259,19 +659,20 @@
 .chat-input {
   display: flex;
   gap: 8px;
-  padding: 14px;
+  padding: 12px 14px;
   border-top: 1px solid $border-subtle;
   background: $bg-card;
   border-radius: 0 0 16px 16px;
+  flex-shrink: 0;
 
   .input-field {
     flex: 1;
     padding: 9px 13px;
     border: 1px solid $border-default;
-    border-radius: 9px;
+    border-radius: $radius-lg;
     font-size: 13px;
     outline: none;
-    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    transition: border-color 0.18s ease, box-shadow 0.18s ease;
     background: $bg-elevated;
     color: $text-primary;
     font-family: inherit;
@@ -283,46 +684,58 @@
       box-shadow: 0 0 0 2px $accent-dim;
     }
 
-    &:disabled { opacity: 0.45; cursor: not-allowed; }
+    &:disabled { opacity: 0.42; cursor: not-allowed; }
   }
 
   .btn-send {
     width: 38px;
     height: 38px;
     background: $accent;
-    color: white;
+    color: $bg-primary;
     border: none;
-    border-radius: 9px;
+    border-radius: $radius-lg;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: all 0.2s ease;
-    box-shadow: 0 3px 10px rgba($accent, 0.35);
+    transition: all 0.18s ease;
+    box-shadow: 0 3px 12px rgba($accent, 0.3);
     font-family: inherit;
     flex-shrink: 0;
+    font-weight: 700;
 
     .material-icons { font-size: 17px; }
 
     &:hover:not(:disabled) {
-      background: lighten($accent, 6%);
-      box-shadow: 0 4px 14px rgba($accent, 0.5);
+      background: $accent-hover;
+      box-shadow: 0 4px 18px rgba($accent, 0.48);
       transform: translateY(-1px);
     }
 
-    &:disabled { opacity: 0.35; cursor: not-allowed; transform: none; box-shadow: none; }
+    &:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
   }
 }
+
 
 // ============================================================
 // Responsive
 // ============================================================
 
-@media (max-width: 768px) {
-  .chat-container {
+@media (max-width: 440px) {
+  .chat-window {
     right: 10px;
-    bottom: 10px;
+    bottom: 96px;
     width: calc(100vw - 20px);
     max-width: 380px;
+  }
+
+  .fab-wrap {
+    right: 16px;
+    bottom: 16px;
   }
 }

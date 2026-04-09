@@ -182,3 +182,52 @@
 }
 
 .refresh-btn { margin-top: 16px; }
+
+// LLM usage table
+.usage-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+  margin-top: 8px;
+
+  th {
+    text-align: left;
+    color: #666;
+    font-weight: 500;
+    padding: 6px 8px;
+    border-bottom: 1px solid #2a2a2a;
+    white-space: nowrap;
+  }
+
+  td {
+    padding: 7px 8px;
+    border-bottom: 1px solid #1e1e1e;
+    color: #ccc;
+  }
+
+  tfoot td {
+    border-top: 1px solid #333;
+    border-bottom: none;
+  }
+}
+
+.pipeline-badge {
+  background: #1e2a1e;
+  color: #4caf82;
+  border: 1px solid #2a4a2a;
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 0.78rem;
+  font-family: monospace;
+}
+
+.cost-val {
+  color: #c8a84b;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.total-cost {
+  font-weight: 600;
+  color: #e8c870;
+}

@@ -21,11 +21,9 @@
       <!-- Mode Toggle -->
       <div class="mode-bar">
         <div class="mode-pills">
-          <button class="mode-pill" [class.active-buy]="pipelineMode === 'buy'" [disabled]="isRunning" (click)="togglePipelineMode('buy')">&#9650; BUY</button>
-          <button class="mode-pill" [class.active-sell]="pipelineMode === 'sell'" [disabled]="isRunning" (click)="togglePipelineMode('sell')">&#9660; SELL</button>
+          <button class="mode-pill active-buy" [disabled]="isRunning">&#9650; BUY</button>
         </div>
-        <span class="mode-desc" *ngIf="pipelineMode === 'buy'">Find new stocks to enter</span>
-        <span class="mode-desc sell-desc" *ngIf="pipelineMode === 'sell'">Audit portfolio for exits</span>
+        <span class="mode-desc">Find new stocks to enter</span>
       </div>
 
       <!-- Gear Slider (buy only) -->
@@ -53,10 +51,10 @@
       <div class="provider-row">
         <span class="provider-label"><span class="material-icons">smart_toy</span> AI Provider</span>
         <div class="provider-chips">
-          <button *ngFor="let p of ['gemini', 'claude', 'openai']"
+          <button *ngFor="let p of ['claude', 'openai']"
             class="provider-chip" [class.active]="selectedProvider === p"
             [disabled]="isRunning" (click)="selectedProvider = $any(p)">
-            {{ p === 'gemini' ? 'Gemini' : p === 'claude' ? 'Claude' : 'GPT-4o' }}
+            {{ p === 'claude' ? 'Claude' : 'GPT-4o' }}
           </button>
         </div>
       </div>
@@ -64,8 +62,8 @@
       <!-- Run Button -->
       <div class="run-row">
         <button class="btn-run" *ngIf="!isRunning" (click)="startPipeline()">
-          <span class="material-icons">{{ pipelineMode === 'buy' ? 'search' : 'assessment' }}</span>
-          {{ pipelineMode === 'buy' ? 'Discover Stocks' : 'Audit Portfolio' }}
+          <span class="material-icons">search</span>
+          Discover Stocks
         </button>
         <button class="btn-cancel" *ngIf="isRunning" (click)="cancelPipeline()">
           <span class="material-icons">stop</span> Cancel
@@ -144,29 +142,6 @@
         </div>
       </div>
 
-      <!-- SELL Results -->
-      <div class="results-section" *ngIf="pipelineMode === 'sell' && sellResults.length > 0">
-        <div class="results-header">
-          <span class="results-title">{{ sellResults.length }} Holdings Audited</span>
-        </div>
-        <div class="sell-cards">
-          <div *ngFor="let result of sellResults" class="sell-card">
-            <div class="sell-top">
-              <span class="sell-sym">{{ result.symbol }}</span>
-              <span class="urgency-badge" [class]="getUrgencyClass(result.sell_urgency_label)">
-                {{ result.sell_urgency_label }}
-              </span>
-              <span class="pnl" [class.pos]="result.pnl >= 0" [class.neg]="result.pnl < 0">
-                {{ result.pnl >= 0 ? '+' : '' }}{{ result.pnl_percentage?.toFixed(1) }}%
-              </span>
-            </div>
-            <div class="sell-signals" *ngIf="result.sell_signals?.length">
-              <span *ngFor="let sig of result.sell_signals.slice(0, 2)" class="signal-tag">{{ sig }}</span>
-            </div>
-            <div class="sell-reason" *ngIf="result.sell_reason">{{ result.sell_reason }}</div>
-          </div>
-        </div>
-      </div>
 
     </div>
 

@@ -3,7 +3,10 @@
   <!-- Logo -->
   <div class="sidebar-logo">
     <div class="logo-mark">
-      <span class="material-icons">show_chart</span>
+      <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
+        <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+        <polyline points="16 7 22 7 22 13" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
     </div>
     <span class="logo-text">TIP</span>
   </div>
@@ -34,6 +37,14 @@
       <span class="material-icons nav-icon">{{ item.icon }}</span>
       <span class="nav-label">{{ item.label }}</span>
       <span *ngIf="!brokerLinked && item.route === '/account'" class="warn-dot" title="Kite not linked"></span>
+    </a>
+    <a *ngIf="auth.isAdmin"
+       class="nav-item admin-item"
+       routerLink="/admin"
+       routerLinkActive="active"
+       [title]="isCollapsed ? 'Admin' : ''">
+      <span class="material-icons nav-icon">admin_panel_settings</span>
+      <span class="nav-label">Admin</span>
     </a>
   </nav>
 

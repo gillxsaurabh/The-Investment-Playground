@@ -29,7 +29,6 @@ from constants import (
 )
 from agents.decision_support.strategy_config import STRATEGY_GEARS
 from agents.decision_support.tools import (
-    clear_session_cache,
     filter_market_universe,
     analyze_technicals,
     check_fundamentals,
@@ -38,6 +37,7 @@ from agents.decision_support.tools import (
     ai_rank_stocks,
     rank_final_shortlist,
 )
+from agents.shared.data_infra import PipelineSession
 from automation.nse_holidays import is_trading_day
 from broker import get_broker
 
@@ -117,7 +117,6 @@ def _run_sell_audit(access_token: str) -> list[dict]:
     Returns list of closed trade results.
     """
     from agents.decision_support.sell_tools import (
-        clear_sell_session_cache,
         fetch_portfolio_holdings,
         enrich_holdings_with_technicals,
         enrich_holdings_with_fundamentals,
@@ -125,12 +124,13 @@ def _run_sell_audit(access_token: str) -> list[dict]:
         compute_sell_scores,
         ai_rank_sell_candidates,
     )
+    from agents.shared.data_infra import PipelineSession
 
     def log_fn(msg: str):
         logger.info(f"[Automation][SellAudit] {msg}")
 
     try:
-        clear_sell_session_cache()
+        sell_session = PipelineSession()
 
         # Fetch VIX for market regime
         broker = get_broker(access_token)
@@ -149,16 +149,16 @@ def _run_sell_audit(access_token: str) -> list[dict]:
         except Exception:
             pass
 
-        holdings = fetch_portfolio_holdings(access_token, log=log_fn)
+        holdings = fetch_portfolio_holdings(access_token, log=log_fn, session=sell_session)
         if not holdings:
             log_fn("No holdings found — skipping sell audit")
             return []
 
-        holdings = enrich_holdings_with_technicals(holdings, kite, log=log_fn)
-        holdings = enrich_holdings_with_fundamentals(holdings, log=log_fn)
-        holdings = enrich_holdings_with_sector(holdings, access_token, log=log_fn)
-        holdings = compute_sell_scores(holdings, log=log_fn)
-        holdings = ai_rank_sell_candidates(holdings, market_regime, log=log_fn)
+        holdings = enrich_holdings_with_technicals(holdings, kite, log=log_fn, session=sell_session)
+        holdings = enrich_holdings_with_fundamentals(holdings, log=log_fn, session=sell_session)
+        holdings = enrich_holdings_with_sector(holdings, access_token, log=log_fn, session=sell_session)
+        holdings = compute_sell_scores(holdings, log=log_fn, session=sell_session)
+        holdings = ai_rank_sell_candidates(holdings, market_regime, log=log_fn, session=sell_session)
 
         # Auto-close positions flagged as STRONG SELL
         strong_sell = [
@@ -213,8 +213,8 @@ def _run_pipeline_for_gear(access_token: str, gear_number: int) -> list[dict]:
     label = config.get("label", f"Gear{gear_number}")
     logger.info(f"[Automation] Starting pipeline for {label} (Gear {gear_number})")
 
-    # Clear cached session data so gears don't bleed into each other
-    clear_session_cache()
+    # Create a fresh request-scoped cache so gears don't bleed into each other
+    session = PipelineSession()
 
     def log_fn(msg: str):
         logger.info(f"[Automation][{label}] {msg}")
@@ -266,35 +266,36 @@ def _run_pipeline_for_gear(access_token: str, gear_number: int) -> list[dict]:
             log=log_fn,
             min_turnover=config["min_turnover"],
             universe=config["universe"],
+            session=session,
         )
         if not stocks:
             logger.info(f"[Automation][{label}] Stage 1 returned 0 stocks — skipping gear")
             return []
 
         # Stage 2: Technicals
-        stocks = analyze_technicals(stocks, log=log_fn, rsi_buy_limit=rsi_buy_limit)
+        stocks = analyze_technicals(stocks, log=log_fn, rsi_buy_limit=rsi_buy_limit, session=session)
         if not stocks:
             logger.info(f"[Automation][{label}] Stage 2 returned 0 stocks — skipping gear")
             return []
 
         # Stage 3: Fundamentals
-        stocks = check_fundamentals(stocks, log=log_fn, fundamental_check=config["fundamental_check"])
+        stocks = check_fundamentals(stocks, log=log_fn, fundamental_check=config["fundamental_check"], session=session)
         if not stocks:
             logger.info(f"[Automation][{label}] Stage 3 returned 0 stocks — skipping gear")
             return []
 
         # Stage 4: Sector Health
-        stocks = check_sector_health(access_token, stocks, log=log_fn)
+        stocks = check_sector_health(access_token, stocks, log=log_fn, session=session)
         if not stocks:
             logger.info(f"[Automation][{label}] Stage 4 returned 0 stocks — skipping gear")
             return []
 
         # Stage 5: Composite Scores + AI Conviction
-        stocks = compute_composite_scores(stocks, log=log_fn)
-        stocks = ai_rank_stocks(stocks, market_regime, log=log_fn)
+        stocks = compute_composite_scores(stocks, log=log_fn, session=session)
+        stocks = ai_rank_stocks(stocks, market_regime, log=log_fn, session=session)
 
         # Stage 6: Portfolio Ranker
-        stocks = rank_final_shortlist(stocks, log=log_fn)
+        stocks = rank_final_shortlist(stocks, log=log_fn, session=session)
 
         logger.info(f"[Automation][{label}] Pipeline complete — {len(stocks)} stocks ranked")
         return stocks

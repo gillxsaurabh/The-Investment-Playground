@@ -78,19 +78,6 @@ $teal:         $accent-secondary; // maps old teal to new blue secondary
 }
 
 // ============================================================
-// Hero Canvas
-// ============================================================
-.hero-canvas {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  pointer-events: none;
-  z-index: 0;
-}
-
-// ============================================================
 // Navigation
 // ============================================================
 .nav {

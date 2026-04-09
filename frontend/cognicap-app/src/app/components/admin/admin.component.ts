@@ -31,12 +31,30 @@ export class AdminComponent implements OnInit {
   stats: any = null;
   statsLoading = false;
 
+  // LLM usage
+  llmUsage: any[] = [];
+  llmUsageLoading = false;
+  llmTotalCost = 0;
+
   constructor(private http: HttpClient) {}
 
   ngOnInit(): void {
     this.loadWhoami();
     this.loadBrokerStatus();
     this.loadStats();
+    this.loadLlmUsage();
+  }
+
+  loadLlmUsage(): void {
+    this.llmUsageLoading = true;
+    this.http.get<any>('/api/admin/llm-usage').subscribe({
+      next: res => {
+        this.llmUsage = res.usage || [];
+        this.llmTotalCost = this.llmUsage.reduce((sum: number, r: any) => sum + (r.total_cost_usd || 0), 0);
+        this.llmUsageLoading = false;
+      },
+      error: () => { this.llmUsageLoading = false; }
+    });
   }
 
   loadWhoami(): void {

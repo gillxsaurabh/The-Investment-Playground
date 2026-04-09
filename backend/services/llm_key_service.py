@@ -16,15 +16,24 @@ from typing import Optional
 logger = logging.getLogger(__name__)
 
 # Supported providers
-VALID_PROVIDERS = {"gemini", "anthropic", "openai"}
+VALID_PROVIDERS = {"anthropic", "openai"}
 
 
 def _get_cipher():
-    """Build a Fernet cipher from the configured secret."""
+    """Build a Fernet cipher from the configured secret.
+
+    In production, LLM_KEY_ENCRYPTION_SECRET is required (validated by config.py).
+    In development, falls back to JWT_SECRET with a warning.
+    """
     from cryptography.fernet import Fernet
-    secret = os.getenv("LLM_KEY_ENCRYPTION_SECRET") or os.getenv("JWT_SECRET", "")
+    from config import LLM_KEY_ENCRYPTION_SECRET, JWT_SECRET, ENVIRONMENT
+    secret = LLM_KEY_ENCRYPTION_SECRET
     if not secret:
-        raise RuntimeError("JWT_SECRET or LLM_KEY_ENCRYPTION_SECRET must be set")
+        if ENVIRONMENT == "production":
+            raise RuntimeError("LLM_KEY_ENCRYPTION_SECRET must be set in production")
+        secret = JWT_SECRET
+        if not secret:
+            raise RuntimeError("LLM_KEY_ENCRYPTION_SECRET or JWT_SECRET must be set")
     key = base64.urlsafe_b64encode(hashlib.sha256(secret.encode()).digest())
     return Fernet(key)
 
@@ -102,13 +111,7 @@ def get_user_llm_providers(user_id: int) -> list:
 def validate_llm_key(provider: str, api_key: str) -> bool:
     """Test a key with a minimal API call. Returns True if valid."""
     try:
-        if provider == "gemini":
-            import google.generativeai as genai
-            genai.configure(api_key=api_key)
-            model = genai.GenerativeModel("gemini-2.0-flash")
-            model.generate_content("ping", generation_config={"max_output_tokens": 1})
-            return True
-        elif provider == "anthropic":
+        if provider == "anthropic":
             from anthropic import Anthropic
             client = Anthropic(api_key=api_key)
             client.messages.create(

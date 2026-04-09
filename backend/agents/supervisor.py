@@ -15,9 +15,8 @@ def _supervisor_node(state: AgentState) -> dict:
 
     Uses OpenAI (GPT-4o-mini) for routing — it's fast, cheap, and well-suited
     for classification tasks.  Claude is reserved for financial analysis.
-    Falls back to Gemini if OPENAI_API_KEY is not set.
     """
-    llm = get_llm(temperature=0, provider="openai", user_id=state.get("user_id"))
+    llm = get_llm(temperature=0, provider="openai", user_id=state.get("user_id"), pipeline="chat")
     agent_descriptions = get_agent_descriptions()
     agent_names = list(get_registered_agents().keys())
 
@@ -55,7 +54,7 @@ def _make_worker_node(description: str, tools: list):
     def worker(state: AgentState) -> dict:
         # LLM is instantiated per-request so per-user BYOK keys are resolved correctly
         agent = create_react_agent(
-            model=get_llm(user_id=state.get("user_id")),
+            model=get_llm(provider="openai", user_id=state.get("user_id"), pipeline="chat"),
             tools=tools,
             prompt=system_prompt,
         )

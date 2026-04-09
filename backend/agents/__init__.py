@@ -1,4 +1,4 @@
-from langchain_core.messages import HumanMessage
+from langchain_core.messages import HumanMessage, AIMessage
 
 # Per-session conversation history
 _graph_sessions: dict[str, list] = {}
@@ -23,6 +23,15 @@ def run_agent(message: str, session_id: str, access_token: str = None, user_id: 
 
     Returns the assistant's text response.
     """
+    # @mention shortcut — bypass LangGraph for direct agent invocations
+    from agents.mention_handler import handle_mention
+    mention_result = handle_mention(message, access_token or "", user_id)
+    if mention_result is not None:
+        hist = _graph_sessions.setdefault(session_id, [])
+        hist.append(HumanMessage(content=message))
+        hist.append(AIMessage(content=mention_result))
+        return mention_result
+
     if session_id not in _graph_sessions:
         _graph_sessions[session_id] = []
 

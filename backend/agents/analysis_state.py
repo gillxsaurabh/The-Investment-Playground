@@ -12,7 +12,7 @@ class AnalysisState(TypedDict):
     access_token: str
     instrument_token: Optional[int]
 
-    # LLM provider selection ("gemini" | "claude" | "openai" | None → gemini default)
+    # LLM provider selection ("claude" | "openai" | None → openai default)
     llm_provider: Optional[str]
 
     # User ID for per-user BYOK key lookup

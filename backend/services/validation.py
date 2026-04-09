@@ -140,7 +140,7 @@ class AnalyzeStockBody(BaseModel):
     def provider_valid(cls, v: Optional[str]) -> Optional[str]:
         if v is None:
             return v
-        allowed = {"claude", "gemini", "openai"}
+        allowed = {"claude", "openai"}
         if v not in allowed:
             raise ValueError(f"llm_provider must be one of {allowed}")
         return v
@@ -189,7 +189,7 @@ class LLMKeyBody(BaseModel):
     @field_validator("provider")
     @classmethod
     def provider_valid(cls, v: str) -> str:
-        allowed = {"gemini", "anthropic", "openai"}
+        allowed = {"anthropic", "openai"}
         if v not in allowed:
             raise ValueError(f"provider must be one of {allowed}")
         return v

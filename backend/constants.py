@@ -89,7 +89,6 @@ KITE_COLUMN_MAP = {
 }
 
 # --- LLM provider constants ---
-LLM_PROVIDER_GEMINI = "gemini"
 LLM_PROVIDER_CLAUDE = "claude"
 LLM_PROVIDER_OPENAI = "openai"
 
@@ -139,7 +138,7 @@ AUDIT_WEIGHT_NEWS         = 1.5   # AI-analyzed news sentiment
 AUDIT_WEIGHT_POSITION     = 1.0   # Current unrealized P&L health
 
 # --- Audit health label thresholds ---
-AUDIT_HEALTHY  = 7.5   # Score >= this → HEALTHY
+AUDIT_HEALTHY  = 7.0   # Score >= this → HEALTHY
 AUDIT_STABLE   = 5.0   # Score >= this → STABLE
 AUDIT_WATCH    = 3.0   # Score >= this → WATCH
                # Score < 3.0 → CRITICAL

@@ -9,6 +9,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from flask import Blueprint, request, jsonify, Response, stream_with_context, g
 
 from broker import get_broker
+from extensions import limiter, get_user_or_ip
 from middleware.auth import require_auth, require_broker
 from services.analysis_storage import save_analysis_result
 from services.validation import validate_request, AnalyzeStockBody
@@ -120,6 +121,7 @@ def analyze_stock(body: AnalyzeStockBody):
 
 @analysis_bp.route("/analyze-stock-stream", methods=["POST"])
 @require_auth
+@limiter.limit("5 per minute", key_func=get_user_or_ip)
 @require_broker
 @validate_request(AnalyzeStockBody)
 def analyze_stock_stream(body: AnalyzeStockBody):

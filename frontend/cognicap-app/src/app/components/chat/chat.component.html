@@ -1,12 +1,124 @@
-<div class="chat-container" [class.minimized]="!isChatOpen">
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- FAB — Animated Oracle Cat                                           -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div class="fab-wrap">
+
+  <!-- Speech bubble (appears once on load, auto-dismisses) -->
+  <div class="cat-bubble" *ngIf="showSpeechBubble" aria-live="polite">
+    <span class="bubble-text">Let's analyse some stocks</span>
+    <span class="bubble-cursor" aria-hidden="true"></span>
+  </div>
+
+  <!-- The cat button -->
+  <button
+    class="chat-fab"
+    [class.fab-is-open]="isChatOpen"
+    (click)="toggleChat()"
+    [attr.aria-expanded]="isChatOpen"
+    aria-label="Chat with Tipsy">
+
+    <!-- Unread indicator dot -->
+    <span class="fab-unread" *ngIf="!isChatOpen && messages.length > 0" aria-hidden="true"></span>
+
+    <!-- ── Oracle Cat SVG ─────────────────────────────────────────── -->
+    <svg class="fab-cat" viewBox="0 0 56 66" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+      <defs>
+        <radialGradient id="headGrad" cx="50%" cy="40%" r="55%">
+          <stop offset="0%"   stop-color="#2e2e2e"/>
+          <stop offset="100%" stop-color="#181818"/>
+        </radialGradient>
+        <radialGradient id="irisGrad" cx="40%" cy="35%" r="60%">
+          <stop offset="0%"   stop-color="#e8b84b"/>
+          <stop offset="60%"  stop-color="#b8841e"/>
+          <stop offset="100%" stop-color="#7a5412"/>
+        </radialGradient>
+      </defs>
+
+      <!-- Left ear -->
+      <g class="fab-ear-l">
+        <polygon points="4,28 14,2 27,20" fill="#1e1e1e" stroke="#d4a843" stroke-width="1" stroke-linejoin="round"/>
+        <polygon points="9,25 15,9 24,20"  fill="rgba(212,168,67,0.32)"/>
+      </g>
+
+      <!-- Right ear -->
+      <g class="fab-ear-r">
+        <polygon points="29,20 42,2 52,28" fill="#1e1e1e" stroke="#d4a843" stroke-width="1" stroke-linejoin="round"/>
+        <polygon points="32,20 41,9 47,25"  fill="rgba(212,168,67,0.32)"/>
+      </g>
+
+      <!-- Head circle — raised surface with visible gold rim -->
+      <circle cx="28" cy="42" r="24"
+        fill="url(#headGrad)"
+        stroke="#d4a843"
+        stroke-width="1.4"/>
+
+      <!-- Eye aura glow (blurs in CSS) -->
+      <ellipse cx="18" cy="39" rx="7" ry="7" class="fab-eye-aura"/>
+      <ellipse cx="38" cy="39" rx="7" ry="7" class="fab-eye-aura"/>
+
+      <!-- ── Left eye group (blinks) ── -->
+      <g class="fab-eye-l">
+        <ellipse cx="18" cy="39" rx="5.2" ry="6.2" fill="url(#irisGrad)"/>
+        <ellipse cx="18" cy="39" rx="5.2" ry="6.2" fill="none"
+          stroke="rgba(212,168,67,0.55)" stroke-width="0.5"/>
+        <ellipse cx="18" cy="39" rx="2.1" ry="5.2" fill="#060606"/>
+        <circle  cx="20"   cy="35.8" r="1.9" fill="rgba(255,255,255,0.92)"/>
+        <circle  cx="20.9" cy="37.2" r="0.75" fill="rgba(255,255,255,0.48)"/>
+      </g>
+
+      <!-- ── Right eye group (blinks) ── -->
+      <g class="fab-eye-r">
+        <ellipse cx="38" cy="39" rx="5.2" ry="6.2" fill="url(#irisGrad)"/>
+        <ellipse cx="38" cy="39" rx="5.2" ry="6.2" fill="none"
+          stroke="rgba(212,168,67,0.55)" stroke-width="0.5"/>
+        <ellipse cx="38" cy="39" rx="2.1" ry="5.2" fill="#060606"/>
+        <circle  cx="40"   cy="35.8" r="1.9" fill="rgba(255,255,255,0.92)"/>
+        <circle  cx="40.9" cy="37.2" r="0.75" fill="rgba(255,255,255,0.48)"/>
+      </g>
+
+      <!-- Nose — tiny gold diamond -->
+      <path d="M26.6 50.2 L28 52.6 L29.4 50.2 Q28 48.9 26.6 50.2Z"
+        fill="#d4a843" opacity="0.85"/>
+
+      <!-- Mouth -->
+      <path d="M28 52.6 Q25.5 55.5 23.5 54.5"
+        fill="none" stroke="rgba(232,230,227,0.32)" stroke-width="1.1" stroke-linecap="round"/>
+      <path d="M28 52.6 Q30.5 55.5 32.5 54.5"
+        fill="none" stroke="rgba(232,230,227,0.32)" stroke-width="1.1" stroke-linecap="round"/>
+
+      <!-- Whiskers — left -->
+      <line x1="0"  y1="46.5" x2="15" y2="49"   class="fab-whisker"/>
+      <line x1="0"  y1="50.5" x2="15" y2="50.5"  class="fab-whisker"/>
+      <line x1="0"  y1="54.5" x2="15" y2="52"    class="fab-whisker fab-whisker-faint"/>
+
+      <!-- Whiskers — right -->
+      <line x1="41" y1="49"   x2="56" y2="46.5" class="fab-whisker"/>
+      <line x1="41" y1="50.5" x2="56" y2="50.5"  class="fab-whisker"/>
+      <line x1="41" y1="52"   x2="56" y2="54.5"  class="fab-whisker fab-whisker-faint"/>
+    </svg>
+
+    <!-- Tooltip label -->
+    <span class="fab-tip" aria-hidden="true">Tipsy</span>
+
+  </button>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<!-- Chat Window                                                         -->
+<!-- ══════════════════════════════════════════════════════════════════════ -->
+<div class="chat-window" [class.chat-is-open]="isChatOpen" role="dialog" aria-label="Tipsy AI chat">
+
+  <!-- Header -->
   <div class="chat-header">
     <div class="header-info">
       <div class="ai-avatar">
-        <svg class="cat-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+        <svg class="cat-icon" width="18" height="18" viewBox="0 0 24 24" fill="none"
+          stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
           <circle cx="12" cy="14" r="7.5"/>
           <path d="M6.5 9.5 L4 3.5 L10 7.5 Z"/>
           <path d="M17.5 9.5 L20 3.5 L14 7.5 Z"/>
-          <circle cx="9.5" cy="13" r="1" fill="currentColor" stroke="none"/>
+          <circle cx="9.5"  cy="13" r="1" fill="currentColor" stroke="none"/>
           <circle cx="14.5" cy="13" r="1" fill="currentColor" stroke="none"/>
           <path d="M12 15 L10.5 16.5 L13.5 16.5 Z" fill="currentColor" stroke="none"/>
         </svg>
@@ -23,21 +135,24 @@
       <button class="btn-icon" (click)="clearChat()" title="Clear chat">
         <span class="material-icons">restart_alt</span>
       </button>
-      <button class="btn-icon btn-toggle" (click)="toggleChat()" title="Toggle chat">
-        <span class="material-icons">{{ isChatOpen ? 'keyboard_arrow_down' : 'keyboard_arrow_up' }}</span>
+      <button class="btn-icon btn-close" (click)="toggleChat()" title="Close">
+        <span class="material-icons">close</span>
       </button>
     </div>
   </div>
 
-  <div class="chat-body" *ngIf="isChatOpen">
+  <!-- Body -->
+  <div class="chat-body">
     <div class="messages-container" #messagesContainer>
+
       <div
         *ngFor="let message of messages"
         class="message"
         [class.user-message]="message.isUser"
         [class.ai-message]="!message.isUser">
         <div class="message-content">
-          <p>{{ message.text }}</p>
+          <p *ngIf="message.isUser" [innerHTML]="formatUserMessage(message.text)"></p>
+          <div *ngIf="!message.isUser" class="ai-body" [innerHTML]="formatAIMessage(message.text)"></div>
           <span class="message-time">{{ formatTime(message.timestamp) }}</span>
         </div>
       </div>
@@ -45,12 +160,16 @@
       <div class="message ai-message" *ngIf="isLoading">
         <div class="message-content">
           <div class="typing-indicator">
-            <span></span>
-            <span></span>
-            <span></span>
+            <span></span><span></span><span></span>
           </div>
         </div>
       </div>
+
+    </div>
+
+    <div class="mention-hint">
+      Quick analysis: <code>&#64;QuantAnalyst</code> · <code>&#64;FundamentalsAnalyst</code>
+      · <code>&#64;NewsSentinel</code> · <code>&#64;StockAnalysis</code> + NSE symbol
     </div>
 
     <div class="chat-input">
@@ -59,7 +178,7 @@
         [(ngModel)]="newMessage"
         (keyup.enter)="sendMessage()"
         [disabled]="isLoading"
-        placeholder="Ask me anything about your portfolio..."
+        placeholder="Ask anything, or @QuantAnalyst TATAMOTORS..."
         class="input-field">
       <button
         class="btn-send"
@@ -69,4 +188,5 @@
       </button>
     </div>
   </div>
+
 </div>

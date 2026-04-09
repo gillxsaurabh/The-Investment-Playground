@@ -107,5 +107,50 @@
         <span class="material-icons">refresh</span> Refresh
       </button>
     </div>
+
+    <!-- LLM Usage Card -->
+    <div class="admin-card">
+      <h2><span class="material-icons">psychology</span> LLM Usage</h2>
+      <p class="card-desc">Token consumption and estimated cost by pipeline.</p>
+
+      <div *ngIf="llmUsageLoading" style="color:#888;font-size:0.85rem;">Loading...</div>
+
+      <div *ngIf="!llmUsageLoading && llmUsage.length === 0" style="color:#666;font-size:0.85rem;">
+        No LLM calls recorded yet. Run the buy/sell pipeline or chat to populate.
+      </div>
+
+      <table *ngIf="!llmUsageLoading && llmUsage.length > 0" class="usage-table">
+        <thead>
+          <tr>
+            <th>Pipeline</th>
+            <th>Model</th>
+            <th>Calls</th>
+            <th>In tokens</th>
+            <th>Out tokens</th>
+            <th>Cost (USD)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let row of llmUsage">
+            <td><span class="pipeline-badge">{{ row.pipeline }}</span></td>
+            <td style="color:#888;font-size:0.8rem;">{{ row.model }}</td>
+            <td>{{ row.calls }}</td>
+            <td>{{ row.total_input_tokens | number }}</td>
+            <td>{{ row.total_output_tokens | number }}</td>
+            <td class="cost-val">${{ row.total_cost_usd | number:'1.4-4' }}</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="5" style="text-align:right;color:#888;font-size:0.8rem;">Total</td>
+            <td class="cost-val total-cost">${{ llmTotalCost | number:'1.4-4' }}</td>
+          </tr>
+        </tfoot>
+      </table>
+
+      <button class="secondary-btn refresh-btn" (click)="loadLlmUsage()" style="margin-top:12px;">
+        <span class="material-icons">refresh</span> Refresh
+      </button>
+    </div>
   </div>
 </div>

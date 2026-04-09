@@ -98,7 +98,7 @@ export class DiscoverComponent implements OnInit, OnDestroy {
     { id: 'universe_filter', name: 'Market Scanner', agentName: 'Market Scanner', agentRole: 'Screens universe by volume, 200-EMA & relative strength vs Nifty', status: 'pending', stocksRemaining: null, previousCount: null, startedAt: null, completedAt: null, durationMs: null },
     { id: 'technical_setup', name: 'Quant Analyst', agentName: 'Quant Analyst', agentRole: 'Identifies RSI entry triggers with ADX trend confirmation', status: 'pending', stocksRemaining: null, previousCount: null, startedAt: null, completedAt: null, durationMs: null },
     { id: 'fundamentals', name: 'Fundamentals Analyst', agentName: 'Fundamentals Analyst', agentRole: 'Validates quarterly profit growth, ROE & debt levels via Screener.in', status: 'pending', stocksRemaining: null, previousCount: null, startedAt: null, completedAt: null, durationMs: null },
-    { id: 'sector_health', name: 'Sector Momentum', agentName: 'Sector Momentum', agentRole: 'Confirms positive 5-day sector index tailwind via Kite API', status: 'pending', stocksRemaining: null, previousCount: null, startedAt: null, completedAt: null, durationMs: null },
+    { id: 'sector_health', name: 'Sector Monitor', agentName: 'Sector Monitor', agentRole: 'Confirms positive 5-day sector index tailwind via Kite API', status: 'pending', stocksRemaining: null, previousCount: null, startedAt: null, completedAt: null, durationMs: null },
     { id: 'ai_ranking', name: 'AI Conviction Engine', agentName: 'AI Conviction Engine', agentRole: 'Composite scoring + LLM news sentiment ranking', status: 'pending', stocksRemaining: null, previousCount: null, startedAt: null, completedAt: null, durationMs: null },
     { id: 'final_ranking', name: 'Portfolio Ranker', agentName: 'Portfolio Ranker', agentRole: 'Multi-factor final ranking with LLM rank explanations', status: 'pending', stocksRemaining: null, previousCount: null, startedAt: null, completedAt: null, durationMs: null },
   ];
@@ -114,7 +114,7 @@ export class DiscoverComponent implements OnInit, OnDestroy {
 
   pipelineMode: 'buy' | 'sell' = 'buy';
   selectedGear = 3;
-  selectedProvider: 'gemini' | 'claude' | 'openai' = 'claude';
+  selectedProvider: 'claude' | 'openai' = 'claude';
   isRunning = false;
   isCompleted = false;
   pipelineMessage = '';

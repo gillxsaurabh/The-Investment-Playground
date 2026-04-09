@@ -64,15 +64,13 @@
 .logo-mark {
   width: 28px;
   height: 28px;
-  background: $accent-dim;
-  border: 1px solid rgba($accent, 0.3);
+  background: #000;
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: $radius-sm;
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-
-  .material-icons { font-size: 14px; color: $accent; }
 }
 
 .logo-text {
@@ -258,5 +256,15 @@
   .sidebar {
     width: $sidebar-width;
     box-shadow: $shadow-xl;
+  }
+}
+
+
+// Admin nav item — subtle amber accent
+.admin-item {
+  .nav-icon { color: #c8a84b !important; }
+  &:hover, &.active {
+    background: rgba(200, 168, 75, 0.08) !important;
+    .nav-icon { color: #e8c870 !important; }
   }
 }

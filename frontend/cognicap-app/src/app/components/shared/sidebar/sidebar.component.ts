@@ -1,6 +1,7 @@
 import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../../services/auth.service';
 
 interface NavItem {
   label: string;
@@ -21,6 +22,8 @@ export class SidebarComponent implements OnInit {
   @Output() onLogout = new EventEmitter<void>();
 
   isCollapsed = false;
+
+  constructor(public auth: AuthService) {}
 
   navMain: NavItem[] = [
     { label: 'Dashboard',  icon: 'dashboard',         route: '/dashboard' },

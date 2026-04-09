@@ -37,6 +37,12 @@ JWT_SECRET = os.getenv("JWT_SECRET", "").strip().strip('"\'')  # strip Railway-a
 JWT_ACCESS_EXPIRY_MINUTES = int(os.getenv("JWT_ACCESS_EXPIRY_MINUTES", "15"))
 JWT_REFRESH_EXPIRY_DAYS = int(os.getenv("JWT_REFRESH_EXPIRY_DAYS", "7"))
 
+# --- Encryption secrets (separate from JWT_SECRET) ---
+# In production these MUST be set independently.
+# In development they fall back to JWT_SECRET with a warning.
+LLM_KEY_ENCRYPTION_SECRET = os.getenv("LLM_KEY_ENCRYPTION_SECRET", "").strip().strip('"\'')
+BROKER_TOKEN_ENCRYPTION_SECRET = os.getenv("BROKER_TOKEN_ENCRYPTION_SECRET", "").strip().strip('"\'')
+
 # --- CORS ---
 CORS_ORIGINS = [
     o.strip()
@@ -50,11 +56,14 @@ KITE_API_KEY = os.getenv("KITE_API_KEY", "").strip().strip('"\'')
 KITE_API_SECRET = os.getenv("KITE_API_SECRET", "").strip().strip('"\'')
 
 # --- AI API keys ---
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
 
 # --- Observability ---
 SENTRY_DSN = os.getenv("SENTRY_DSN", "")
+
+# --- Redis ---
+REDIS_URL = os.getenv("REDIS_URL", "").strip()
 
 # --- File paths ---
 _BACKEND_DIR = Path(__file__).resolve().parent
@@ -103,6 +112,18 @@ def validate_config():
             print("[Config] WARNING: FLASK_DEBUG is enabled in production. This is not recommended.")
         if not SENTRY_DSN:
             print("[Config] WARNING: SENTRY_DSN is not set in production. Error monitoring is disabled.")
+        if not LLM_KEY_ENCRYPTION_SECRET:
+            print("[Config] FATAL: LLM_KEY_ENCRYPTION_SECRET must be set in production (cannot fall back to JWT_SECRET).")
+            sys.exit(1)
+        if not BROKER_TOKEN_ENCRYPTION_SECRET:
+            print("[Config] FATAL: BROKER_TOKEN_ENCRYPTION_SECRET must be set in production.")
+            sys.exit(1)
+    else:
+        # Development warnings
+        if not LLM_KEY_ENCRYPTION_SECRET:
+            print("[Config] WARNING: LLM_KEY_ENCRYPTION_SECRET not set — falling back to JWT_SECRET for LLM key encryption (not safe for production).")
+        if not BROKER_TOKEN_ENCRYPTION_SECRET:
+            print("[Config] WARNING: BROKER_TOKEN_ENCRYPTION_SECRET not set — broker token encryption disabled until set.")
 
     # --- Optional broker credentials (only needed for Kite features) ---
     optional_missing = []

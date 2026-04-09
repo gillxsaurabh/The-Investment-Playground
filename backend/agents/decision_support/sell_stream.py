@@ -17,7 +17,6 @@ import time
 from datetime import datetime
 
 from agents.decision_support.sell_tools import (
-    clear_sell_session_cache,
     fetch_portfolio_holdings,
     enrich_holdings_with_technicals,
     enrich_holdings_with_fundamentals,
@@ -25,6 +24,7 @@ from agents.decision_support.sell_tools import (
     compute_sell_scores,
     ai_rank_sell_candidates,
 )
+from agents.shared.data_infra import PipelineSession
 from broker import get_broker
 from constants import VIX_HIGH_THRESHOLD
 
@@ -39,7 +39,7 @@ def run_sell_pipeline_stream(access_token: str, config: dict | None = None, user
 
     Args:
         access_token: Kite Connect access token.
-        config: Optional config dict. Supports 'llm_provider' ('claude'|'gemini'|'openai').
+        config: Optional config dict. Supports 'llm_provider' ('claude'|'openai').
                 Claude is the default for sell analysis.
 
     Events emitted:
@@ -55,7 +55,7 @@ def run_sell_pipeline_stream(access_token: str, config: dict | None = None, user
     llm_provider = config.get("llm_provider", "claude")  # Claude is default for sell
     started_at = datetime.now().isoformat()
 
-    clear_sell_session_cache()
+    session = PipelineSession()
 
     yield _sse("step_start", {
         "step": "pipeline",
@@ -109,7 +109,7 @@ def run_sell_pipeline_stream(access_token: str, config: dict | None = None, user
     holdings = []
     try:
         log_fn = make_logger("portfolio_load")
-        holdings = fetch_portfolio_holdings(access_token, log=log_fn)
+        holdings = fetch_portfolio_holdings(access_token, log=log_fn, session=session)
     except Exception as e:
         yield _sse("error", {"step": "portfolio_load", "message": str(e)})
         return
@@ -153,7 +153,7 @@ def run_sell_pipeline_stream(access_token: str, config: dict | None = None, user
         log_fn = make_logger("technical_scan")
         broker = get_broker(access_token)
         kite = broker.raw_kite
-        holdings = enrich_holdings_with_technicals(holdings, kite, log=log_fn)
+        holdings = enrich_holdings_with_technicals(holdings, kite, log=log_fn, session=session)
     except Exception as e:
         yield _sse("error", {"step": "technical_scan", "message": str(e)})
         return
@@ -182,7 +182,7 @@ def run_sell_pipeline_stream(access_token: str, config: dict | None = None, user
 
     try:
         log_fn = make_logger("fundamental_scan")
-        holdings = enrich_holdings_with_fundamentals(holdings, log=log_fn)
+        holdings = enrich_holdings_with_fundamentals(holdings, log=log_fn, session=session)
     except Exception as e:
         yield _sse("error", {"step": "fundamental_scan", "message": str(e)})
         return
@@ -211,7 +211,7 @@ def run_sell_pipeline_stream(access_token: str, config: dict | None = None, user
 
     try:
         log_fn = make_logger("sector_check")
-        holdings = enrich_holdings_with_sector(holdings, access_token, log=log_fn)
+        holdings = enrich_holdings_with_sector(holdings, access_token, log=log_fn, session=session)
     except Exception as e:
         yield _sse("error", {"step": "sector_check", "message": str(e)})
         return
@@ -240,12 +240,12 @@ def run_sell_pipeline_stream(access_token: str, config: dict | None = None, user
 
     try:
         log_fn = make_logger("sell_scoring")
-        holdings = compute_sell_scores(holdings, log=log_fn)
-        holdings = ai_rank_sell_candidates(holdings, market_regime, log=log_fn, llm_provider=llm_provider, user_id=user_id)
+        holdings = compute_sell_scores(holdings, log=log_fn, session=session)
+        holdings = ai_rank_sell_candidates(holdings, market_regime, log=log_fn, llm_provider=llm_provider, user_id=user_id, session=session)
     except Exception as e:
         log_fn = make_logger("sell_scoring")
         log_fn(f"Sell scoring failed, using rule-based scores only: {e}")
-        holdings = compute_sell_scores(holdings)
+        holdings = compute_sell_scores(holdings, session=session)
 
     for msg in logs:
         yield _sse("step_log", {"step": "sell_scoring", "message": msg})

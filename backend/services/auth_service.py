@@ -328,22 +328,26 @@ def link_broker_token(
     broker_user_name: str = None,
     broker_email: str = None,
 ) -> None:
-    """Store or update a user's broker access token."""
+    """Store or update a user's broker access token (encrypted at rest)."""
+    from services.broker_key_service import encrypt_broker_token, is_encryption_enabled
+    stored_token = encrypt_broker_token(access_token)
+    encrypted_flag = is_encryption_enabled()
     conn = get_conn()
     try:
         conn.execute(
             """INSERT INTO user_broker_tokens
-                (user_id, broker, access_token, broker_user_id, broker_user_name, broker_email)
-            VALUES (?, ?, ?, ?, ?, ?)
+                (user_id, broker, access_token, broker_user_id, broker_user_name, broker_email, encrypted)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             ON CONFLICT (user_id, broker)
             DO UPDATE SET
                 access_token = excluded.access_token,
                 broker_user_id = excluded.broker_user_id,
                 broker_user_name = excluded.broker_user_name,
                 broker_email = excluded.broker_email,
+                encrypted = excluded.encrypted,
                 linked_at = datetime('now')
             """,
-            (user_id, broker, access_token, broker_user_id, broker_user_name, broker_email),
+            (user_id, broker, stored_token, broker_user_id, broker_user_name, broker_email, encrypted_flag),
         )
         conn.commit()
     finally:
@@ -351,26 +355,34 @@ def link_broker_token(
 
 
 def get_broker_token(user_id: int, broker: str = "kite") -> Optional[str]:
-    """Get the stored broker access token for a user."""
+    """Get the stored broker access token for a user (decrypted)."""
+    from services.broker_key_service import decrypt_broker_token
     conn = get_conn()
     try:
         row = conn.execute(
             "SELECT access_token FROM user_broker_tokens WHERE user_id = ? AND broker = ?",
             (user_id, broker),
         ).fetchone()
-        return row["access_token"] if row else None
+        if not row:
+            return None
+        token = decrypt_broker_token(row["access_token"])
+        return token if token else None
     finally:
         conn.close()
 
 
 def get_broker_info(user_id: int, broker: str = "kite") -> Optional[Dict[str, Any]]:
-    """Get full broker link info for a user."""
+    """Get full broker link info for a user. access_token is redacted for safety."""
     conn = get_conn()
     try:
         row = conn.execute(
             "SELECT * FROM user_broker_tokens WHERE user_id = ? AND broker = ?",
             (user_id, broker),
         ).fetchone()
-        return dict(row) if row else None
+        if not row:
+            return None
+        info = dict(row)
+        info["access_token"] = "***"  # never return the raw/encrypted token in API responses
+        return info
     finally:
         conn.close()

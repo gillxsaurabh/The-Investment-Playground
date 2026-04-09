@@ -1,19 +1,32 @@
 <div class="audit-card">
 
-  <!-- Header -->
+  <!-- ── Header ─────────────────────────────────────────────────────────── -->
   <div class="audit-header">
     <div class="audit-title-row">
       <span class="material-icons audit-icon">health_and_safety</span>
       <h3 class="audit-title">Stock Audit</h3>
       <span *ngIf="lastRunAt" class="audit-last-run">Last run: {{ formatDate(lastRunAt) }}</span>
     </div>
-    <button class="btn-run-audit" [disabled]="isRunning" (click)="onRunAudit.emit()">
-      <span class="material-icons">{{ isRunning ? 'hourglass_empty' : 'play_circle' }}</span>
-      {{ isRunning ? 'Running…' : 'Run Audit' }}
-    </button>
+    <div class="header-right">
+      <div class="view-toggle">
+        <button [class.active]="viewMode === 'bucket'" (click)="viewMode = 'bucket'" title="Category columns">
+          <span class="material-icons">view_column</span>
+        </button>
+        <button [class.active]="viewMode === 'card'"   (click)="viewMode = 'card'"   title="Card view">
+          <span class="material-icons">grid_view</span>
+        </button>
+        <button [class.active]="viewMode === 'table'"  (click)="viewMode = 'table'"  title="Table view">
+          <span class="material-icons">table_rows</span>
+        </button>
+      </div>
+      <button class="btn-run-audit" [disabled]="isRunning" (click)="onRunAudit.emit()">
+        <span class="material-icons">{{ isRunning ? 'hourglass_empty' : 'play_circle' }}</span>
+        {{ isRunning ? 'Running…' : 'Run Audit' }}
+      </button>
+    </div>
   </div>
 
-  <!-- Pipeline progress -->
+  <!-- ── Pipeline progress ───────────────────────────────────────────────── -->
   <div *ngIf="isRunning || pipelineMessage" class="pipeline-progress">
     <div class="pipeline-steps">
       <div
@@ -21,12 +34,11 @@
         class="pipeline-step"
         [class.step-running]="s.status === 'running'"
         [class.step-done]="s.status === 'completed'"
-        [class.step-pending]="s.status === 'pending'"
-      >
+        [class.step-pending]="s.status === 'pending'">
         <span class="step-dot">
-          <span *ngIf="s.status === 'running'" class="material-icons spin">sync</span>
+          <span *ngIf="s.status === 'running'"   class="material-icons spin">sync</span>
           <span *ngIf="s.status === 'completed'" class="material-icons">check_circle</span>
-          <span *ngIf="s.status === 'pending'" class="material-icons">radio_button_unchecked</span>
+          <span *ngIf="s.status === 'pending'"   class="material-icons">radio_button_unchecked</span>
         </span>
         <span class="step-label">{{ s.role }}</span>
         <span *ngIf="s.duration_ms" class="step-dur">{{ s.duration_ms }}ms</span>
@@ -35,91 +47,334 @@
     <p *ngIf="pipelineMessage" class="pipeline-msg">{{ pipelineMessage }}</p>
   </div>
 
-  <!-- Summary pills -->
-  <div *ngIf="summary && holdings.length > 0" class="summary-pills">
-    <span class="pill pill-healthy">
-      <span class="material-icons">check_circle</span>
-      {{ summary.healthy }} Healthy
-    </span>
-    <span class="pill pill-stable">
-      <span class="material-icons">trending_flat</span>
-      {{ summary.stable }} Stable
-    </span>
-    <span class="pill pill-watch">
-      <span class="material-icons">warning</span>
-      {{ summary.watch }} Watch
-    </span>
-    <span class="pill pill-critical">
-      <span class="material-icons">dangerous</span>
-      {{ summary.critical }} Critical
-    </span>
-    <span class="pill pill-avg">Avg {{ summary.avg_score | number:'1.1-1' }}/10</span>
+  <!-- ── Summary strip ───────────────────────────────────────────────────── -->
+  <div *ngIf="summary && holdings.length > 0" class="summary-strip">
+    <div class="health-bar-track">
+      <div class="hb-seg hb-healthy"  [style.flex]="summary.healthy"  *ngIf="summary.healthy > 0"
+           [title]="summary.healthy + ' Healthy'"></div>
+      <div class="hb-seg hb-stable"   [style.flex]="summary.stable"   *ngIf="summary.stable > 0"
+           [title]="summary.stable + ' Stable'"></div>
+      <div class="hb-seg hb-watch"    [style.flex]="summary.watch"    *ngIf="summary.watch > 0"
+           [title]="summary.watch + ' Watch'"></div>
+      <div class="hb-seg hb-critical" [style.flex]="summary.critical" *ngIf="summary.critical > 0"
+           [title]="summary.critical + ' Critical'"></div>
+    </div>
+    <div class="summary-stats">
+      <button class="stat-btn" [class.active]="activeFilter === 'HEALTHY'"  (click)="setFilter('HEALTHY')">
+        <span class="stat-dot dot-healthy"></span>
+        <span class="stat-num">{{ summary.healthy }}</span>
+        <span class="stat-lbl">Healthy</span>
+      </button>
+      <button class="stat-btn" [class.active]="activeFilter === 'STABLE'"   (click)="setFilter('STABLE')">
+        <span class="stat-dot dot-stable"></span>
+        <span class="stat-num">{{ summary.stable }}</span>
+        <span class="stat-lbl">Stable</span>
+      </button>
+      <button class="stat-btn" [class.active]="activeFilter === 'WATCH'"    (click)="setFilter('WATCH')">
+        <span class="stat-dot dot-watch"></span>
+        <span class="stat-num">{{ summary.watch }}</span>
+        <span class="stat-lbl">Watch</span>
+      </button>
+      <button class="stat-btn" [class.active]="activeFilter === 'CRITICAL'" (click)="setFilter('CRITICAL')">
+        <span class="stat-dot dot-critical"></span>
+        <span class="stat-num">{{ summary.critical }}</span>
+        <span class="stat-lbl">Critical</span>
+      </button>
+      <div class="stat-avg">
+        <span class="avg-num">{{ summary.avg_score | number:'1.1-1' }}</span>
+        <span class="avg-label">/10 avg</span>
+      </div>
+    </div>
   </div>
 
-  <!-- Holdings scorecard -->
-  <div *ngIf="holdings.length > 0" class="holdings-list">
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- BUCKET VIEW (default)                                                -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="viewMode === 'bucket' && holdings.length > 0"
+    class="audit-buckets"
+    [style.grid-template-columns]="getBucketGridCols()">
 
-    <!-- Column headers -->
+    <div *ngFor="let label of bucketLabels"
+      class="audit-bucket"
+      [class]="'audit-bucket--' + label.toLowerCase()"
+      [class.audit-bucket--collapsed]="getBucket(label).length === 0">
+
+      <!-- Collapsed vertical strip (empty bucket) -->
+      <div *ngIf="getBucket(label).length === 0" class="bucket-collapsed">
+        <span class="bucket-dot" [class]="'bdot-' + label.toLowerCase()"></span>
+        <span class="collapsed-label">{{ label | titlecase }}</span>
+        <span class="collapsed-zero">0</span>
+      </div>
+
+      <!-- Normal column content (non-empty) -->
+      <ng-container *ngIf="getBucket(label).length > 0">
+
+      <!-- Column header -->
+      <div class="bucket-head">
+        <span class="bucket-dot" [class]="'bdot-' + label.toLowerCase()"></span>
+        <span class="bucket-label-text">{{ label | titlecase }}</span>
+        <span class="bucket-count">{{ getBucket(label).length }}</span>
+      </div>
+
+      <!-- Stock micro-cards with radar -->
+      <div class="bucket-cards">
+        <div
+          *ngFor="let h of getVisibleBucket(label); let i = index; trackBy: trackBySymbol"
+          class="bkt-card"
+          [class]="'bkt-card--' + h.health_label.toLowerCase()"
+          [style.animation-delay.ms]="i * 50"
+          (click)="onSelectStock.emit(h)">
+
+          <!-- Symbol + score row -->
+          <div class="bkt-top">
+            <span class="bkt-sym">{{ h.symbol }}</span>
+            <div class="bkt-score-wrap">
+              <span class="bkt-score" [style.color]="getLabelColor(h.health_label)">{{ h.health_score | number:'1.0-0' }}</span>
+              <span class="bkt-denom">/10</span>
+            </div>
+          </div>
+
+          <!-- Pentagon radar (reuses .radar-svg styles) -->
+          <div class="bkt-radar-wrap">
+            <svg viewBox="0 0 140 130" class="radar-svg" aria-hidden="true">
+              <polygon [attr.points]="getRadarPoints(h)" class="r-data" [class]="'r-data--' + h.health_label.toLowerCase()" />
+              <polygon [attr.points]="getGridPoints(0.25)" class="r-grid" />
+              <polygon [attr.points]="getGridPoints(0.50)" class="r-grid" />
+              <polygon [attr.points]="getGridPoints(0.75)" class="r-grid" />
+              <polygon [attr.points]="getGridPoints(1.0)"  class="r-grid r-grid-outer" />
+              <ng-container *ngFor="let j of axisIndices">
+                <line [attr.x1]="getAxisLine(j).x1" [attr.y1]="getAxisLine(j).y1"
+                      [attr.x2]="getAxisLine(j).x2" [attr.y2]="getAxisLine(j).y2" class="r-axis" />
+              </ng-container>
+              <ng-container *ngFor="let j of axisIndices">
+                <circle [attr.cx]="getRadarDotPos(h, j).x" [attr.cy]="getRadarDotPos(h, j).y"
+                        r="2.2" class="r-dot" [class]="'r-dot--' + h.health_label.toLowerCase()" />
+              </ng-container>
+              <ng-container *ngFor="let j of axisIndices">
+                <text [attr.x]="getLabelPos(j).x" [attr.y]="getLabelPos(j).y"
+                      [attr.text-anchor]="getLabelAnchor(j)" [attr.dominant-baseline]="getLabelBaseline(j)"
+                      class="r-label">{{ shortLabels[componentKeys[j]] }}</text>
+                <text [attr.x]="getLabelPos(j).x"
+                      [attr.y]="getLabelPos(j).y + (getLabelBaseline(j) === 'hanging' ? 8 : getLabelBaseline(j) === 'auto' ? -8 : 8)"
+                      [attr.text-anchor]="getLabelAnchor(j)" [attr.dominant-baseline]="getLabelBaseline(j)"
+                      class="r-label-val" [class]="'r-lv--' + h.health_label.toLowerCase()">{{ getCompVal(h, componentKeys[j]) | number:'1.1-1' }}</text>
+              </ng-container>
+            </svg>
+          </div>
+
+          <!-- Verdict + P&L -->
+          <div class="bkt-bottom">
+            <span class="verdict-chip" [class]="getVerdictClass(h.audit_verdict)">
+              {{ formatVerdict(h.audit_verdict) }}
+            </span>
+            <span class="bkt-pnl" [class.pnl-pos]="h.pnl >= 0" [class.pnl-neg]="h.pnl < 0">
+              {{ h.pnl >= 0 ? '+' : '' }}{{ h.pnl_percentage | number:'1.1-1' }}%
+            </span>
+          </div>
+
+          <!-- Score bar -->
+          <div class="bkt-bar-track">
+            <div class="bkt-bar-fill"
+              [style.width.%]="(h.health_score / 10) * 100"
+              [style.background]="getLabelColor(h.health_label)">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- View more / less -->
+      <button
+        *ngIf="getBucket(label).length > 3"
+        class="bucket-more-btn"
+        [class]="'bmore--' + label.toLowerCase()"
+        (click)="toggleBucket(label, $event)">
+        <span class="material-icons">
+          {{ expandedBuckets.has(label) ? 'expand_less' : 'expand_more' }}
+        </span>
+        {{ expandedBuckets.has(label) ? 'Show less' : (getBucket(label).length - 3) + ' more' }}
+      </button>
+
+      </ng-container><!-- end non-empty -->
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- CARD VIEW                                                             -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="viewMode === 'card' && sortedHoldings.length > 0" class="audit-grid">
+
+    <div
+      *ngFor="let h of sortedHoldings; let i = index; trackBy: trackBySymbol"
+      class="stock-card"
+      [class]="'stock-card stock-card--' + h.health_label.toLowerCase()"
+      [class.is-expanded]="expandedCard === h.symbol"
+      [style.animation-delay.ms]="i * 45"
+      (click)="onSelectStock.emit(h)">
+
+      <!-- Top row: symbol + badge -->
+      <div class="card-top">
+        <div class="card-symbol">{{ h.symbol }}</div>
+        <div class="card-badge" [class]="getLabelClass(h.health_label)">{{ h.health_label }}</div>
+      </div>
+
+      <!-- Sector + score -->
+      <div class="card-meta">
+        <span class="card-sector">{{ (h.sector && h.sector !== 'UNKNOWN') ? h.sector : 'Equity' }}</span>
+        <div class="card-score-inline">
+          <span class="score-big" [style.color]="getLabelColor(h.health_label)">
+            {{ h.health_score | number:'1.1-1' }}
+          </span>
+          <span class="score-denom">/10</span>
+        </div>
+      </div>
+
+      <!-- Pentagon Radar -->
+      <div class="card-radar-wrap">
+        <svg viewBox="0 0 140 130" class="radar-svg" aria-hidden="true">
+          <!-- 1. Data fill (drawn first, underneath everything) -->
+          <polygon
+            [attr.points]="getRadarPoints(h)"
+            class="r-data"
+            [class]="'r-data--' + h.health_label.toLowerCase()" />
+          <!-- 2. Grid rings on top of fill so they're always visible -->
+          <polygon [attr.points]="getGridPoints(0.25)" class="r-grid" />
+          <polygon [attr.points]="getGridPoints(0.50)" class="r-grid" />
+          <polygon [attr.points]="getGridPoints(0.75)" class="r-grid" />
+          <polygon [attr.points]="getGridPoints(1.0)"  class="r-grid r-grid-outer" />
+          <!-- 3. Axis lines -->
+          <ng-container *ngFor="let j of axisIndices">
+            <line
+              [attr.x1]="getAxisLine(j).x1" [attr.y1]="getAxisLine(j).y1"
+              [attr.x2]="getAxisLine(j).x2" [attr.y2]="getAxisLine(j).y2"
+              class="r-axis" />
+          </ng-container>
+          <!-- 4. Data-point dots -->
+          <ng-container *ngFor="let j of axisIndices">
+            <circle
+              [attr.cx]="getRadarDotPos(h, j).x"
+              [attr.cy]="getRadarDotPos(h, j).y"
+              r="2.2"
+              class="r-dot"
+              [class]="'r-dot--' + h.health_label.toLowerCase()" />
+          </ng-container>
+          <!-- 5. Corner labels (topmost layer) -->
+          <ng-container *ngFor="let j of axisIndices">
+            <text
+              [attr.x]="getLabelPos(j).x"
+              [attr.y]="getLabelPos(j).y"
+              [attr.text-anchor]="getLabelAnchor(j)"
+              [attr.dominant-baseline]="getLabelBaseline(j)"
+              class="r-label">{{ shortLabels[componentKeys[j]] }}</text>
+            <text
+              [attr.x]="getLabelPos(j).x"
+              [attr.y]="getLabelPos(j).y + (getLabelBaseline(j) === 'hanging' ? 8 : getLabelBaseline(j) === 'auto' ? -8 : 8)"
+              [attr.text-anchor]="getLabelAnchor(j)"
+              [attr.dominant-baseline]="getLabelBaseline(j)"
+              class="r-label-val"
+              [class]="'r-lv--' + h.health_label.toLowerCase()">{{ getCompVal(h, componentKeys[j]) | number:'1.1-1' }}</text>
+          </ng-container>
+        </svg>
+        <!-- Center overlay score -->
+        <div class="radar-center">
+          <span class="radar-score" [style.color]="getLabelColor(h.health_label)">
+            {{ h.health_score | number:'1.0-0' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Component score row -->
+      <div class="comp-row">
+        <div class="comp-cell" *ngFor="let key of componentKeys">
+          <span class="comp-val" [style.color]="getCompColor(h, key)">{{ getCompVal(h, key) | number:'1.1-1' }}</span>
+          <span class="comp-key">{{ shortLabels[key] }}</span>
+        </div>
+      </div>
+
+      <!-- Score bar -->
+      <div class="score-bar-track">
+        <div class="score-bar-fill"
+          [style.width.%]="(h.health_score / 10) * 100"
+          [style.background]="getLabelColor(h.health_label)">
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="card-footer">
+        <span class="verdict-chip" [class]="getVerdictClass(h.audit_verdict)">
+          {{ formatVerdict(h.audit_verdict) }}
+        </span>
+        <span class="card-pnl"
+          [class.pnl-pos]="h.pnl >= 0"
+          [class.pnl-neg]="h.pnl < 0">
+          {{ h.pnl >= 0 ? '+' : '' }}{{ h.pnl_percentage | number:'1.1-1' }}%
+        </span>
+      </div>
+
+      <!-- Expand button -->
+      <button class="expand-btn"
+        (click)="toggleCard(h.symbol, $event)"
+        [title]="expandedCard === h.symbol ? 'Collapse' : 'Details'">
+        <span class="material-icons">{{ expandedCard === h.symbol ? 'expand_less' : 'expand_more' }}</span>
+      </button>
+
+      <!-- Expanded details -->
+      <div class="card-details" *ngIf="expandedCard === h.symbol">
+        <div *ngIf="h.key_risks?.length" class="detail-section">
+          <div class="detail-label risk-label">Risk Factors</div>
+          <div class="detail-item risk-item" *ngFor="let r of h.key_risks?.slice(0, 3)">{{ r }}</div>
+        </div>
+        <div *ngIf="h.key_positives?.length" class="detail-section">
+          <div class="detail-label pos-label">Positives</div>
+          <div class="detail-item pos-item" *ngFor="let p of h.key_positives?.slice(0, 3)">{{ p }}</div>
+        </div>
+        <p *ngIf="h.ai_reasoning" class="ai-reasoning">{{ h.ai_reasoning }}</p>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <!-- TABLE VIEW                                                           -->
+  <!-- ══════════════════════════════════════════════════════════════════════ -->
+  <div *ngIf="viewMode === 'table' && sortedHoldings.length > 0" class="holdings-list">
     <div class="audit-row audit-row--header">
       <div class="cell-stock">Stock</div>
-      <div class="cell-comp" *ngFor="let key of componentKeys">
-        {{ componentLabels[key] }}
-      </div>
+      <div class="cell-comp" *ngFor="let key of componentKeys">{{ componentLabels[key] }}</div>
       <div class="cell-score">Score</div>
       <div class="cell-verdict">Verdict</div>
       <div class="cell-pnl">P&amp;L</div>
     </div>
-
-    <!-- Data rows -->
     <div
       class="audit-row audit-row--data"
       *ngFor="let h of sortedHoldings; trackBy: trackBySymbol"
-      (click)="onSelectStock.emit(h)"
-    >
-      <!-- Stock name + health label -->
+      (click)="onSelectStock.emit(h)">
       <div class="cell-stock">
         <span class="stock-sym">{{ h.symbol }}</span>
         <span class="label-chip" [class]="getLabelClass(h.health_label)">{{ h.health_label }}</span>
       </div>
-
-      <!-- 5 component mini-bars (one per key) -->
       <div class="cell-comp" *ngFor="let key of componentKeys">
         <div class="bar-track">
-          <div
-            class="bar-fill"
-            [style.height.%]="getCompPct(h, key)"
-            [style.background]="getCompColor(h, key)"
-          ></div>
+          <div class="bar-fill" [style.height.%]="getCompPct(h, key)" [style.background]="getCompColor(h, key)"></div>
         </div>
         <span class="bar-val">{{ getCompVal(h, key) | number:'1.1-1' }}</span>
       </div>
-
-      <!-- Total score -->
       <div class="cell-score">
-        <span class="score-num" [style.color]="getLabelColor(h.health_label)">
-          {{ h.health_score | number:'1.1-1' }}
-        </span>
+        <span class="score-num" [style.color]="getLabelColor(h.health_label)">{{ h.health_score | number:'1.1-1' }}</span>
         <span class="score-den">/10</span>
       </div>
-
-      <!-- Verdict -->
       <div class="cell-verdict">
-        <span class="verdict-chip" [class]="getVerdictClass(h.audit_verdict)">
-          {{ formatVerdict(h.audit_verdict) }}
-        </span>
+        <span class="verdict-chip" [class]="getVerdictClass(h.audit_verdict)">{{ formatVerdict(h.audit_verdict) }}</span>
       </div>
-
-      <!-- P&L -->
       <div class="cell-pnl" [class.pnl-pos]="h.pnl >= 0" [class.pnl-neg]="h.pnl < 0">
         {{ h.pnl >= 0 ? '+' : '' }}{{ h.pnl_percentage | number:'1.1-1' }}%
       </div>
     </div>
-
   </div>
 
-  <!-- Empty state -->
-  <div *ngIf="!isRunning && holdings.length === 0" class="empty-state">
-    <span class="material-icons empty-icon">analytics</span>
+  <!-- ── Empty state ─────────────────────────────────────────────────────── -->
+  <div *ngIf="!isRunning && holdings.length === 0" class="empty-state" style="padding: 32px 20px;">
+    <span class="material-icons empty-icon">radar</span>
     <p>No audit results yet.</p>
     <p class="empty-sub">Click <strong>Run Audit</strong> to analyse your portfolio.</p>
   </div>

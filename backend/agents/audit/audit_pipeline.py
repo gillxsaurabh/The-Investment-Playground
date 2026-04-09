@@ -13,8 +13,8 @@ Score: 1–10 health score (10 = perfectly healthy, 1 = critical)
     Position Health     1.0  (unrealized P&L %)
 
 Labels:
-    7.5–10  → HEALTHY
-    5.0–7.4 → STABLE
+    7.0–10  → HEALTHY
+    5.0–6.9 → STABLE
     3.0–4.9 → WATCH
     <3.0    → CRITICAL
 
@@ -26,18 +26,15 @@ LLM roles:
 import json
 import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from datetime import datetime, timedelta
+from datetime import datetime
 from typing import Callable, Optional
 
-import requests
-
-from agents.decision_support.sell_tools import (
-    fetch_portfolio_holdings,
-    enrich_holdings_with_technicals,
-    enrich_holdings_with_fundamentals,
-    enrich_holdings_with_sector,
-    clear_sell_session_cache,
-)
+from agents.decision_support.sell_tools import fetch_portfolio_holdings
+from agents.shared.data_infra import PipelineSession
+from agents.shared.quant_agent import enrich_with_technicals
+from agents.shared.fundamentals_agent import enrich_with_fundamentals
+from agents.shared.sector_agent import enrich_with_sector
+from agents.shared.news_agent import fetch_news_batch
 from broker import get_broker
 from constants import (
     NEWS_LOOKBACK_DAYS,
@@ -56,49 +53,6 @@ from services.analysis_storage import save_analysis_result
 def _sse(event: str, data: dict) -> str:
     """Format a single SSE message."""
     return f"event: {event}\ndata: {json.dumps(data)}\n\n"
-
-
-# ---------------------------------------------------------------------------
-# News fetch (duplicated to avoid importing private _ function from sell_tools)
-# ---------------------------------------------------------------------------
-
-def _fetch_news(symbol: str, days: int = NEWS_LOOKBACK_DAYS) -> tuple[str, list[dict]]:
-    """Fetch recent Google News RSS headlines for a stock symbol."""
-    import xml.etree.ElementTree as ET
-    from email.utils import parsedate_to_datetime
-    try:
-        url = (
-            f"https://news.google.com/rss/search?q={symbol}+NSE+stock"
-            "&hl=en-IN&gl=IN&ceid=IN:en"
-        )
-        resp = requests.get(
-            url,
-            headers={"User-Agent": "Mozilla/5.0 (compatible; CogniCap/1.0)"},
-            timeout=10,
-        )
-        resp.raise_for_status()
-        root = ET.fromstring(resp.content)
-        cutoff = datetime.now() - timedelta(days=days)
-        headlines = []
-        for item in root.findall(".//item"):
-            title_el = item.find("title")
-            pub_el = item.find("pubDate")
-            if title_el is None:
-                continue
-            title = title_el.text or ""
-            if pub_el is not None and pub_el.text:
-                try:
-                    pub_dt = parsedate_to_datetime(pub_el.text)
-                    if pub_dt.replace(tzinfo=None) < cutoff:
-                        continue
-                except Exception:
-                    pass
-            headlines.append({"title": title})
-            if len(headlines) >= 10:
-                break
-        return symbol, headlines
-    except Exception:
-        return symbol, []
 
 
 # ---------------------------------------------------------------------------
@@ -241,14 +195,9 @@ def ai_enrich_audit(
     """
     from agents.config import get_llm
 
-    # Fetch news for all holdings in parallel
-    log(f"Fetching recent news for {len(holdings)} holdings...")
-    news_map: dict[str, list[dict]] = {}
-    with ThreadPoolExecutor(max_workers=5) as ex:
-        futures = [ex.submit(_fetch_news, h["symbol"]) for h in holdings]
-        for fut in as_completed(futures):
-            sym, headlines = fut.result()
-            news_map[sym] = headlines
+    # Fetch news for all holdings in parallel via shared news_agent
+    symbols = [h["symbol"] for h in holdings]
+    news_map = fetch_news_batch(symbols, log=log)
     log("News fetched. Sending to Claude AI for holistic health assessment...")
 
     # Build context lines per holding
@@ -287,9 +236,10 @@ def ai_enrich_audit(
             extended_thinking=True,
             thinking_budget=AUDIT_AI_THINKING_BUDGET,
             user_id=user_id,
+            pipeline="audit",
         )
     else:
-        llm = get_llm(temperature=0.3, provider=effective_provider if effective_provider != "gemini" else None, user_id=user_id)
+        llm = get_llm(temperature=0.3, provider=effective_provider, user_id=user_id, pipeline="audit")
 
     prompt = (
         "You are a senior portfolio health analyst specializing in Indian NSE equity holdings.\n\n"
@@ -386,7 +336,7 @@ def run_stock_audit(
         6. AI Health Analyst     — Claude extended thinking for news + verdict
         7. Persist               — save results to user_analysis_cache SQLite table
     """
-    clear_sell_session_cache()
+    session = PipelineSession()
     started_at = datetime.now().isoformat()
 
     def _emit(event: str, data: dict) -> str:
@@ -405,6 +355,7 @@ def run_stock_audit(
     holdings = fetch_portfolio_holdings(
         access_token,
         log=lambda m: logs_1.append(m),
+        session=session,
     )
     for msg in logs_1:
         yield _log_event(msg)
@@ -428,10 +379,12 @@ def run_stock_audit(
     })
     broker = get_broker(access_token)
     logs_2 = []
-    holdings = enrich_holdings_with_technicals(
+    holdings = enrich_with_technicals(
         holdings,
         broker.raw_kite,
         log=lambda m: logs_2.append(m),
+        mode="enrich",
+        session=session,
     )
     for msg in logs_2:
         yield _log_event(msg)
@@ -444,9 +397,11 @@ def run_stock_audit(
         "role": "Scraping Screener.in for quarterly profit trends, ROE and D/E ratios",
     })
     logs_3 = []
-    holdings = enrich_holdings_with_fundamentals(
+    holdings = enrich_with_fundamentals(
         holdings,
         log=lambda m: logs_3.append(m),
+        mode="enrich",
+        session=session,
     )
     for msg in logs_3:
         yield _log_event(msg)
@@ -459,10 +414,13 @@ def run_stock_audit(
         "role": "Measuring 5-day sector index performance",
     })
     logs_4 = []
-    holdings = enrich_holdings_with_sector(
+    holdings = enrich_with_sector(
         holdings,
-        access_token,
+        broker.raw_kite,
         log=lambda m: logs_4.append(m),
+        mode="enrich",
+        include_3m=True,
+        session=session,
     )
     for msg in logs_4:
         yield _log_event(msg)

@@ -160,3 +160,32 @@ def admin_dashboard():
         })
     finally:
         conn.close()
+
+
+@admin_bp.route("/llm-usage", methods=["GET"])
+@require_auth
+@require_admin
+def admin_llm_usage():
+    """Aggregated LLM token usage and cost by pipeline/provider/model.
+
+    Query params:
+        user_id    (int, optional)
+        pipeline   (str, optional)
+        start_date (str YYYY-MM-DD, optional)
+        end_date   (str YYYY-MM-DD, optional)
+    """
+    from flask import request
+    from services.llm_usage_service import get_usage_summary
+
+    user_id = request.args.get("user_id", type=int)
+    pipeline = request.args.get("pipeline")
+    start_date = request.args.get("start_date")
+    end_date = request.args.get("end_date")
+
+    rows = get_usage_summary(
+        user_id=user_id,
+        pipeline=pipeline,
+        start_date=start_date,
+        end_date=end_date,
+    )
+    return jsonify({"success": True, "usage": rows})

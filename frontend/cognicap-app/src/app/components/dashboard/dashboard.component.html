@@ -17,10 +17,22 @@
   <div class="dashboard-layout">
     <main class="dashboard-main">
 
-      <!-- Loading State -->
-      <div class="loading-container" *ngIf="isLoading">
-        <div class="spinner"></div>
-        <p>Loading your portfolio...</p>
+      <!-- Loading State — Skeleton -->
+      <div class="loading-skeleton" *ngIf="isLoading">
+        <div class="skeleton-summary-row">
+          <app-skeleton variant="card" height="96px"></app-skeleton>
+          <app-skeleton variant="card" height="96px"></app-skeleton>
+          <app-skeleton variant="card" height="96px"></app-skeleton>
+        </div>
+        <div class="skeleton-quick-row">
+          <app-skeleton variant="card" height="130px"></app-skeleton>
+          <div class="skeleton-pills-col">
+            <app-skeleton variant="table-row"></app-skeleton>
+            <app-skeleton variant="table-row"></app-skeleton>
+            <app-skeleton variant="table-row"></app-skeleton>
+          </div>
+        </div>
+        <app-skeleton variant="card" height="260px"></app-skeleton>
       </div>
 
       <!-- Error State -->
@@ -38,123 +50,55 @@
       <!-- Dashboard Content -->
       <div class="dashboard-content" *ngIf="!isLoading && !error">
 
-        <!-- ─── Summary Cards ─────────────────────────────── -->
+        <!-- ─── Top Stats Row: 3 Metrics + Open Positions ──── -->
         <div class="summary-section" [class.updating]="isPortfolioUpdating" *ngIf="summary">
 
-          <div class="summary-card">
-            <div class="card-icon-wrap">
-              <span class="material-icons card-icon">account_balance_wallet</span>
-            </div>
-            <div class="card-content">
-              <h3>Total Investment</h3>
-              <p class="value">{{ formatCurrency(summary.total_investment) }}</p>
-            </div>
+          <!-- Invested -->
+          <div class="stat-card">
+            <span class="stat-label">Total Invested</span>
+            <span class="stat-value mono">{{ formatCurrency(summary.total_investment) }}</span>
+            <span class="stat-footer">
+              <span class="material-icons">pie_chart</span>
+              {{ summary.total_holdings }} holdings
+            </span>
           </div>
 
-          <div class="summary-card">
-            <div class="card-icon-wrap">
-              <span class="material-icons card-icon">trending_up</span>
-            </div>
-            <div class="card-content">
-              <h3>Current Value</h3>
-              <p class="value">{{ formatCurrency(summary.current_value) }}</p>
-            </div>
+          <!-- Portfolio Value -->
+          <div class="stat-card">
+            <span class="stat-label">Portfolio Value</span>
+            <span class="stat-value mono">{{ formatCurrency(summary.current_value) }}</span>
+            <span class="stat-footer">
+              <span class="live-dot"></span>
+              Live prices
+            </span>
           </div>
 
-          <div class="summary-card" [ngClass]="getPnlClass(summary.total_pnl)">
-            <div class="card-icon-wrap">
-              <span class="material-icons card-icon">show_chart</span>
-            </div>
-            <div class="card-content">
-              <h3>Total P&amp;L</h3>
-              <p class="value">{{ formatCurrency(summary.total_pnl) }}</p>
-              <p class="percentage">{{ formatPercentage(summary.pnl_percentage) }}</p>
-            </div>
+          <!-- P&L -->
+          <div class="stat-card pnl-featured" [ngClass]="getPnlClass(summary.total_pnl)">
+            <span class="stat-label">Total P&amp;L</span>
+            <span class="stat-value mono pnl-val">{{ formatCurrency(summary.total_pnl) }}</span>
+            <span class="pct-badge" [ngClass]="getPnlClass(summary.total_pnl)">{{ formatPercentage(summary.pnl_percentage) }}</span>
           </div>
 
-          <div class="summary-card">
-            <div class="card-icon-wrap">
-              <span class="material-icons card-icon">pie_chart</span>
-            </div>
-            <div class="card-content">
-              <h3>Holdings</h3>
-              <p class="value">{{ summary.total_holdings }}</p>
-              <p class="subtitle">Stocks</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- ─── Quick Actions + Positions Widget ─────────────── -->
-        <div class="quick-row">
-
-          <!-- Open Positions Widget -->
-          <div class="positions-widget" (click)="navigateToPositions()">
-            <div class="widget-header">
-              <span class="material-icons">candlestick_chart</span>
-              <span>Open Positions</span>
-            </div>
-            <div class="widget-body">
-              <div class="widget-stat">
-                <span class="widget-number">{{ openPositionsCount }}</span>
-                <span class="widget-label">Active</span>
+          <!-- Open Positions (4th card, same row) -->
+          <div class="stat-card positions-card" (click)="navigateToPositions()">
+            <span class="stat-label">
+              <span class="material-icons" style="font-size:11px;vertical-align:middle;margin-right:3px;">candlestick_chart</span>
+              Open Positions
+            </span>
+            <div class="positions-body">
+              <div class="pos-stat">
+                <span class="pos-num">{{ openPositionsCount }}</span>
+                <span class="pos-sub">Active</span>
               </div>
-              <div class="widget-stat" *ngIf="openPositionsCount > 0">
-                <span class="widget-number" [class.pnl-pos]="totalUnrealizedPnl >= 0" [class.pnl-neg]="totalUnrealizedPnl < 0">
+              <div class="pos-stat" *ngIf="openPositionsCount > 0">
+                <span class="pos-num" [class.pnl-pos]="totalUnrealizedPnl >= 0" [class.pnl-neg]="totalUnrealizedPnl < 0">
                   {{ totalUnrealizedPnl >= 0 ? '+' : '' }}₹{{ totalUnrealizedPnl.toFixed(0) }}
                 </span>
-                <span class="widget-label">Unrealized P&L</span>
+                <span class="pos-sub">Unrealized P&amp;L</span>
               </div>
             </div>
-            <div class="widget-link">View Positions <span class="material-icons">arrow_forward</span></div>
-          </div>
-
-          <!-- Discover Card -->
-          <div class="action-card discover-card" (click)="navigateToDiscover()">
-            <div class="action-icon"><span class="material-icons">search</span></div>
-            <div class="action-info">
-              <div class="action-title">Discover Stocks</div>
-              <div class="action-desc">AI-powered stock discovery pipeline</div>
-            </div>
-            <span class="material-icons action-arrow">arrow_forward</span>
-          </div>
-
-          <!-- Stock Audit Card -->
-          <div class="action-card sell-card" (click)="runAudit()">
-            <div class="action-icon sell-icon"><span class="material-icons">health_and_safety</span></div>
-            <div class="action-info">
-              <div class="action-title">Run Stock Audit</div>
-              <div class="action-desc">Score all holdings — health &amp; exit signals</div>
-            </div>
-            <span class="material-icons action-arrow">{{ auditIsRunning ? 'hourglass_empty' : 'play_circle' }}</span>
-          </div>
-
-          <!-- Automation Card -->
-          <div class="action-card auto-card" (click)="navigateToAutomation()">
-            <div class="action-icon auto-icon"><span class="material-icons">schedule</span></div>
-            <div class="action-info">
-              <div class="action-title">Automation</div>
-              <div class="action-desc">Weekly pipeline scheduling</div>
-            </div>
-            <span class="material-icons action-arrow">arrow_forward</span>
-          </div>
-
-        </div>
-
-        <!-- ─── Recent Trades Activity ──────────────────────── -->
-        <div class="activity-row" *ngIf="recentTrades.length > 0">
-          <div class="activity-header">
-            <span class="material-icons">history</span>
-            Recent Trades
-            <button class="view-all-btn" (click)="navigateToPositions()">View All</button>
-          </div>
-          <div class="activity-list">
-            <div *ngFor="let t of recentTrades" class="activity-item">
-              <span class="a-symbol">{{ t.symbol }}</span>
-              <span class="a-reason">{{ t.reason }}</span>
-              <span class="a-pnl" [class.pos]="t.realized_pnl >= 0" [class.neg]="t.realized_pnl < 0">
-                {{ t.realized_pnl >= 0 ? '+' : '' }}₹{{ t.realized_pnl.toFixed(0) }}
-              </span>
-            </div>
+            <span class="pos-link">View Positions <span class="material-icons">arrow_forward</span></span>
           </div>
         </div>
 
@@ -229,22 +173,60 @@
         </span>
       </div>
 
-      <!-- Component scores -->
+      <!-- Component score radar -->
       <div class="health-analysis-section">
-        <h3><span class="material-icons">bar_chart</span> Score Breakdown</h3>
-        <div class="component-bars">
-          <div class="comp-row" *ngFor="let comp of [
-            {key:'technical',   label:'Technical',        max:3.0, val:auditSelectedStock.health_components?.technical},
-            {key:'fundamental', label:'Fundamental',      max:2.5, val:auditSelectedStock.health_components?.fundamental},
-            {key:'rs',          label:'Rel. Strength',    max:2.0, val:auditSelectedStock.health_components?.relative_strength},
-            {key:'news',        label:'News',             max:1.5, val:auditSelectedStock.health_components?.news},
-            {key:'position',    label:'Position',         max:1.0, val:auditSelectedStock.health_components?.position}
-          ]">
-            <span class="comp-label">{{ comp.label }}</span>
-            <div class="comp-bar-track">
-              <div class="comp-bar-fill" [style.width.%]="(comp.val || 0) / comp.max * 100"></div>
-            </div>
-            <span class="comp-val">{{ comp.val | number:'1.1-1' }}/{{ comp.max }}</span>
+        <h3><span class="material-icons">radar</span> Score Breakdown</h3>
+        <div class="audit-radar-wrap">
+          <svg viewBox="0 0 200 180" class="audit-radar-svg" aria-hidden="true">
+            <!-- 1. Data fill (drawn first, underneath grid) -->
+            <polygon
+              [attr.points]="getAuditRadarPoints(auditSelectedStock)"
+              class="ar-data"
+              [class]="'ar-data--' + auditSelectedStock.health_label.toLowerCase()" />
+            <!-- 2. Grid rings on top of fill -->
+            <polygon [attr.points]="getAuditGridPoints(0.25)" class="ar-grid" />
+            <polygon [attr.points]="getAuditGridPoints(0.50)" class="ar-grid" />
+            <polygon [attr.points]="getAuditGridPoints(0.75)" class="ar-grid" />
+            <polygon [attr.points]="getAuditGridPoints(1.0)"  class="ar-grid ar-grid-outer" />
+            <!-- 3. Axis lines -->
+            <ng-container *ngFor="let i of auditAxisIndices">
+              <line
+                [attr.x1]="getAuditAxisLine(i).x1" [attr.y1]="getAuditAxisLine(i).y1"
+                [attr.x2]="getAuditAxisLine(i).x2" [attr.y2]="getAuditAxisLine(i).y2"
+                class="ar-axis" />
+            </ng-container>
+            <!-- 4. Data-point dots -->
+            <ng-container *ngFor="let i of auditAxisIndices">
+              <circle
+                [attr.cx]="getAuditDotPos(auditSelectedStock, i).x"
+                [attr.cy]="getAuditDotPos(auditSelectedStock, i).y"
+                r="3.5"
+                class="ar-dot"
+                [class]="'ar-dot--' + auditSelectedStock.health_label.toLowerCase()" />
+            </ng-container>
+            <!-- 5. Corner labels: axis name + raw score/max -->
+            <ng-container *ngFor="let i of auditAxisIndices">
+              <text
+                [attr.x]="getAuditLabelPos(i).x"
+                [attr.y]="getAuditLabelPos(i).y"
+                [attr.text-anchor]="getAuditLabelAnchor(i)"
+                [attr.dominant-baseline]="getAuditLabelBaseline(i)"
+                class="ar-label">{{ auditRadarAxes[i].shortLabel }}</text>
+              <text
+                [attr.x]="getAuditLabelPos(i).x"
+                [attr.y]="getAuditLabelPos(i).y + (getAuditLabelBaseline(i) === 'hanging' ? 11 : getAuditLabelBaseline(i) === 'auto' ? -11 : 11)"
+                [attr.text-anchor]="getAuditLabelAnchor(i)"
+                [attr.dominant-baseline]="getAuditLabelBaseline(i)"
+                class="ar-label-val"
+                [style.fill]="getAuditLabelColor(auditSelectedStock)">{{ getAuditRawVal(auditSelectedStock, i) | number:'1.1-1' }}/{{ auditRadarAxes[i].max }}</text>
+            </ng-container>
+          </svg>
+          <!-- Center score overlay -->
+          <div class="ar-center">
+            <span class="ar-score" [style.color]="getAuditLabelColor(auditSelectedStock)">
+              {{ auditSelectedStock.health_score | number:'1.0-0' }}
+            </span>
+            <span class="ar-denom">/10</span>
           </div>
         </div>
       </div>

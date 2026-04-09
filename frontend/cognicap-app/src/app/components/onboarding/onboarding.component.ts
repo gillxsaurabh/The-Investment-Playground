@@ -28,7 +28,7 @@ export class OnboardingComponent implements OnInit {
         'Platform LLM API included',
       ],
       missing: ['Live portfolio sync', 'Personal holdings analysis'],
-      accent: '#6366f1',
+      accent: '#d4a843',
       badge: 'Standard',
     },
     {
@@ -45,7 +45,7 @@ export class OnboardingComponent implements OnInit {
         'Platform LLM API included',
       ],
       missing: ['Bring Your Own LLM API'],
-      accent: '#0ea5e9',
+      accent: '#5b8def',
       badge: 'Popular',
     },
     {
@@ -60,7 +60,7 @@ export class OnboardingComponent implements OnInit {
         'No platform charges',
       ],
       missing: [],
-      accent: '#22c55e',
+      accent: '#00c176',
       badge: 'Free',
     },
   ];

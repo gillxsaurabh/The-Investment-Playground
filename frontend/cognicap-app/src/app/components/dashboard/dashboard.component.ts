@@ -8,6 +8,7 @@ import { DemoService } from '../../services/demo.service';
 import { ChatComponent } from '../chat/chat.component';
 import { HeaderBannerComponent } from '../shared/header-banner/header-banner.component';
 import { StockAuditChartComponent, AuditStep } from './stock-audit-chart.component';
+import { SkeletonComponent } from '../shared/skeleton/skeleton.component';
 import { forkJoin, interval, Subscription } from 'rxjs';
 
 interface Holding {
@@ -53,7 +54,7 @@ interface HoldingWithAnalysis extends Holding {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, ChatComponent, HeaderBannerComponent, StockAuditChartComponent],
+  imports: [CommonModule, ChatComponent, HeaderBannerComponent, StockAuditChartComponent, SkeletonComponent],
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.scss', './portfolio-live.scss']
 })
@@ -553,9 +554,9 @@ export class DashboardComponent implements OnInit, OnDestroy {
 
   agentDisplayName(agent: string): string {
     const names: Record<string, string> = {
-      stats_agent: 'Stats Agent',
-      company_health_agent: 'Company Health',
-      breaking_news_agent: 'Breaking News',
+      stats_agent: 'Quant Analyst',
+      company_health_agent: 'Fundamentals Analyst',
+      breaking_news_agent: 'News Sentinel',
       synthesizer: 'Synthesizer',
     };
     return names[agent] || agent;
@@ -727,5 +728,96 @@ export class DashboardComponent implements OnInit, OnDestroy {
     if (value > 0) return 'positive';
     if (value < 0) return 'negative';
     return 'neutral';
+  }
+
+  // ── Audit Modal Radar ─────────────────────────────────────────────────────────
+
+  private readonly auditR = 62;
+  private readonly auditCX = 100;
+  private readonly auditCY = 90;
+  private readonly auditLabelR = 84;
+
+  readonly auditAxisIndices = [0, 1, 2, 3, 4];
+
+  readonly auditRadarAxes: { key: string; shortLabel: string; max: number }[] = [
+    { key: 'technical',         shortLabel: 'TECH', max: 3.0 },
+    { key: 'fundamental',       shortLabel: 'FUND', max: 2.5 },
+    { key: 'relative_strength', shortLabel: 'RS',   max: 2.0 },
+    { key: 'news',              shortLabel: 'NEWS', max: 1.5 },
+    { key: 'position',          shortLabel: 'POS',  max: 1.0 },
+  ];
+
+  getAuditRawVal(h: AuditHolding, index: number): number {
+    const axis = this.auditRadarAxes[index];
+    return (h.health_components as unknown as Record<string, number>)?.[axis.key] ?? 0;
+  }
+
+  private getAuditNorm(h: AuditHolding, index: number): number {
+    const axis = this.auditRadarAxes[index];
+    return Math.max(0, Math.min(1, this.getAuditRawVal(h, index) / axis.max));
+  }
+
+  getAuditRadarPoints(h: AuditHolding): string {
+    return this.auditAxisIndices.map(i => {
+      const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+      const r     = Math.max(4, this.getAuditNorm(h, i) * this.auditR);
+      return `${this.auditCX + r * Math.cos(angle)},${this.auditCY + r * Math.sin(angle)}`;
+    }).join(' ');
+  }
+
+  getAuditGridPoints(fraction: number): string {
+    return this.auditAxisIndices.map(i => {
+      const angle = (i * 2 * Math.PI / 5) - Math.PI / 2;
+      const r     = fraction * this.auditR;
+      return `${this.auditCX + r * Math.cos(angle)},${this.auditCY + r * Math.sin(angle)}`;
+    }).join(' ');
+  }
+
+  getAuditAxisLine(index: number): { x1: number; y1: number; x2: number; y2: number } {
+    const angle = (index * 2 * Math.PI / 5) - Math.PI / 2;
+    return {
+      x1: this.auditCX,
+      y1: this.auditCY,
+      x2: this.auditCX + this.auditR * Math.cos(angle),
+      y2: this.auditCY + this.auditR * Math.sin(angle),
+    };
+  }
+
+  getAuditDotPos(h: AuditHolding, index: number): { x: number; y: number } {
+    const angle = (index * 2 * Math.PI / 5) - Math.PI / 2;
+    const r     = Math.max(4, this.getAuditNorm(h, index) * this.auditR);
+    return { x: this.auditCX + r * Math.cos(angle), y: this.auditCY + r * Math.sin(angle) };
+  }
+
+  getAuditLabelPos(index: number): { x: number; y: number } {
+    const angle = (index * 2 * Math.PI / 5) - Math.PI / 2;
+    return {
+      x: this.auditCX + this.auditLabelR * Math.cos(angle),
+      y: this.auditCY + this.auditLabelR * Math.sin(angle),
+    };
+  }
+
+  getAuditLabelAnchor(index: number): string {
+    const cos = Math.cos((index * 2 * Math.PI / 5) - Math.PI / 2);
+    if (cos > 0.25)  return 'start';
+    if (cos < -0.25) return 'end';
+    return 'middle';
+  }
+
+  getAuditLabelBaseline(index: number): string {
+    const sin = Math.sin((index * 2 * Math.PI / 5) - Math.PI / 2);
+    if (sin > 0.3)  return 'hanging';
+    if (sin < -0.3) return 'auto';
+    return 'middle';
+  }
+
+  getAuditLabelColor(h: AuditHolding): string {
+    const map: Record<string, string> = {
+      HEALTHY:  '#00c176',
+      STABLE:   '#d4b83a',
+      WATCH:    '#e5973a',
+      CRITICAL: '#d64545',
+    };
+    return map[h.health_label] ?? '#6a6a6a';
   }
 }

@@ -37,8 +37,8 @@ def run_analysis_stream(
     Each agent is wrapped in try/except so failures don't stop the pipeline.
 
     Args:
-        llm_provider: "gemini" | "claude" | "openai" | None.
-                      None keeps existing Gemini+fallback behaviour.
+        llm_provider: "claude" | "openai" | None.
+                      None defaults to Claude for analysis.
     """
     state: AnalysisState = {
         "symbol": symbol,

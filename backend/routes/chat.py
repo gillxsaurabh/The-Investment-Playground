@@ -4,6 +4,7 @@ import logging
 
 from flask import Blueprint, request, jsonify, g
 
+from extensions import limiter, get_user_or_ip
 from middleware.auth import require_auth
 from services.validation import validate_request, ChatSendBody
 
@@ -14,6 +15,7 @@ chat_bp = Blueprint("chat", __name__, url_prefix="/api/chat")
 
 @chat_bp.route("/send", methods=["POST"])
 @require_auth
+@limiter.limit("10 per minute", key_func=get_user_or_ip)
 @validate_request(ChatSendBody)
 def chat_send(body: ChatSendBody):
     """Send message to LangGraph agent."""

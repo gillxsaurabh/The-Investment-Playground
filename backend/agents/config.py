@@ -1,9 +1,9 @@
-"""Centralized LLM factory with automatic Gemini → OpenAI fallback.
+"""Centralized LLM factory — two providers only.
 
-When Gemini hits rate limits (429 / RESOURCE_EXHAUSTED / quota errors),
-calls are automatically retried using ChatGPT as a fallback.
-Implements manual fallback wrapper because LangChain's with_fallbacks()
-has compatibility issues with Python 3.14 / Pydantic V1.
+    provider="openai"  → GPT-4o-mini  (orchestration, routing, lightweight tasks)
+    provider="claude"  → claude-sonnet-4-6  (financial analysis, conviction, synthesis)
+
+Per-user BYOK keys are checked first; platform env vars are the fallback.
 """
 
 import os
@@ -12,94 +12,18 @@ from pathlib import Path
 try:
     from dotenv import load_dotenv
 
-    # Ensure .env is loaded (may live one level above backend/)
     _env_path = Path(__file__).resolve().parents[2] / ".env"
     if _env_path.exists():
         load_dotenv(_env_path)
     else:
-        load_dotenv()  # fallback: search from cwd upward
+        load_dotenv()
 except ImportError:
-    # dotenv already loaded by app.py before agents are imported
     pass
 
-from typing import Any as TypingAny
-
-from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_openai import ChatOpenAI
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_core.outputs import ChatResult, ChatGeneration
 from langchain_core.messages import AIMessage, HumanMessage
-
-# Map Gemini model names to comparable OpenAI models
-_FALLBACK_MODEL_MAP = {
-    "gemini-2.5-flash": "gpt-4o-mini",
-    "gemini-2.0-flash": "gpt-4o-mini",
-    "gemini-1.5-pro": "gpt-4o",
-}
-
-
-class FallbackChatModel(BaseChatModel):
-    """Chat model that tries primary, falls back to secondary on any error.
-
-    Uses ``Any`` for inner models so it can also wrap ``RunnableBinding``
-    objects returned by ``bind_tools()``.
-    """
-
-    primary: TypingAny = None
-    fallback: TypingAny = None
-    primary_name: str = "primary"
-    fallback_name: str = "fallback"
-
-    class Config:
-        arbitrary_types_allowed = True
-
-    @property
-    def _llm_type(self) -> str:
-        return "fallback-chat-model"
-
-    # -- low-level path (called by BaseChatModel.generate) ----------------
-    def _generate(self, messages, stop=None, run_manager=None, **kwargs):
-        try:
-            if hasattr(self.primary, "_generate"):
-                return self.primary._generate(messages, stop=stop, run_manager=run_manager, **kwargs)
-            # RunnableBinding (from bind_tools) — use invoke
-            result = self.primary.invoke(messages)
-            return ChatResult(generations=[ChatGeneration(message=result)])
-        except Exception as e:
-            print(f"[LLM] {self.primary_name} _generate failed: {str(e)[:120]}")
-            print(f"[LLM] Falling back to {self.fallback_name}...")
-            if hasattr(self.fallback, "_generate"):
-                return self.fallback._generate(messages, stop=stop, run_manager=run_manager, **kwargs)
-            result = self.fallback.invoke(messages)
-            return ChatResult(generations=[ChatGeneration(message=result)])
-
-    # -- high-level path (used by LangGraph / create_react_agent) ---------
-    def invoke(self, input, config=None, **kwargs):
-        try:
-            return self.primary.invoke(input, config=config, **kwargs)
-        except Exception as e:
-            print(f"[LLM] {self.primary_name} invoke failed: {str(e)[:120]}")
-            print(f"[LLM] Falling back to {self.fallback_name}...")
-            return self.fallback.invoke(input, config=config, **kwargs)
-
-    async def ainvoke(self, input, config=None, **kwargs):
-        try:
-            return await self.primary.ainvoke(input, config=config, **kwargs)
-        except Exception as e:
-            print(f"[LLM] {self.primary_name} ainvoke failed: {str(e)[:120]}")
-            print(f"[LLM] Falling back to {self.fallback_name}...")
-            return await self.fallback.ainvoke(input, config=config, **kwargs)
-
-    # -- tool binding (for create_react_agent) ----------------------------
-    def bind_tools(self, tools, **kwargs):
-        bound_primary = self.primary.bind_tools(tools, **kwargs)
-        bound_fallback = self.fallback.bind_tools(tools, **kwargs)
-        return FallbackChatModel(
-            primary=bound_primary,
-            fallback=bound_fallback,
-            primary_name=self.primary_name,
-            fallback_name=self.fallback_name,
-        )
 
 
 class ClaudeChatModel(BaseChatModel):
@@ -137,7 +61,6 @@ class ClaudeChatModel(BaseChatModel):
             content = m.content if hasattr(m, "content") else str(m)
             result.append({"role": role, "content": content})
         if not result:
-            # Fallback: treat entire input as a user message
             result = [{"role": "user", "content": str(messages)}]
         return result
 
@@ -147,7 +70,6 @@ class ClaudeChatModel(BaseChatModel):
         formatted = self._format_messages(messages)
 
         if self.extended_thinking:
-            # Extended thinking requires temperature=1.0 (Anthropic requirement)
             resp = client.messages.create(
                 model=self.model_name,
                 max_tokens=16000,
@@ -163,17 +85,67 @@ class ClaudeChatModel(BaseChatModel):
                 temperature=self.temperature,
             )
 
-        # Extract text content only (skip thinking blocks)
         text = next((b.text for b in resp.content if b.type == "text"), "")
-        return ChatResult(generations=[ChatGeneration(message=AIMessage(content=text))])
+        usage = {}
+        if hasattr(resp, "usage") and resp.usage is not None:
+            usage = {
+                "input_tokens": getattr(resp.usage, "input_tokens", 0),
+                "output_tokens": getattr(resp.usage, "output_tokens", 0),
+            }
+        return ChatResult(generations=[ChatGeneration(
+            message=AIMessage(content=text, additional_kwargs={"usage": usage})
+        )])
 
     def invoke(self, input, config=None, **kwargs):
         msgs = [HumanMessage(content=input)] if isinstance(input, str) else input
         return self._generate(msgs).generations[0].message
 
     async def ainvoke(self, input, config=None, **kwargs):
-        # Sync fallback — sufficient for current usage patterns
         return self.invoke(input, config=config, **kwargs)
+
+
+class TrackingChatModel:
+    """Thin proxy around an LLM that records token usage after each call."""
+
+    def __init__(self, inner: BaseChatModel, pipeline: str, user_id: int | None, provider: str, model: str):
+        self._inner = inner
+        self._pipeline = pipeline
+        self._user_id = user_id
+        self._provider = provider
+        self._model = model
+
+    def _record(self, response) -> None:
+        try:
+            usage = {}
+            if hasattr(response, "additional_kwargs"):
+                usage = response.additional_kwargs.get("usage", {})
+            elif hasattr(response, "generations"):
+                first = response.generations[0].message
+                usage = first.additional_kwargs.get("usage", {})
+            from services.llm_usage_service import record_usage
+            record_usage(
+                user_id=self._user_id,
+                pipeline=self._pipeline,
+                provider=self._provider,
+                model=self._model,
+                input_tokens=usage.get("input_tokens", 0),
+                output_tokens=usage.get("output_tokens", 0),
+            )
+        except Exception:
+            pass  # usage tracking must never break the pipeline
+
+    def invoke(self, input, config=None, **kwargs):
+        result = self._inner.invoke(input, config=config, **kwargs)
+        self._record(result)
+        return result
+
+    async def ainvoke(self, input, config=None, **kwargs):
+        result = await self._inner.ainvoke(input, config=config, **kwargs)
+        self._record(result)
+        return result
+
+    def __getattr__(self, name):
+        return getattr(self._inner, name)
 
 
 def _get_user_api_key(user_id: int, provider: str) -> str:
@@ -199,21 +171,23 @@ def _is_rockstar_plan(user_id: int) -> bool:
 
 
 def get_llm(
-    model_name: str = "gemini-2.5-flash",
     temperature: float = 0.1,
-    provider: str = None,
+    provider: str = "openai",
     extended_thinking: bool = False,
     thinking_budget: int = 8000,
     user_id: int = None,
+    pipeline: str = "unknown",
+    # Legacy param ignored (was Gemini model name)
+    model_name: str = None,
 ):
     """Create an LLM instance.
 
     Args:
-        model_name:        Gemini model name (used only when provider is None/"gemini").
         temperature:       Sampling temperature. Ignored for Claude+extended_thinking
                            (Anthropic forces temperature=1.0 in that mode).
-        provider:          "gemini" | "claude" | "openai" | None.
-                           None / "gemini" → existing Gemini+OpenAI fallback (unchanged).
+        provider:          "claude" | "openai".
+                           claude  → claude-sonnet-4-6 (financial analysis, conviction, synthesis)
+                           openai  → gpt-4o-mini (orchestration, routing, lightweight tasks)
         extended_thinking: When True and provider="claude", activates Claude's extended
                            thinking mode for deeper multi-step reasoning.
         thinking_budget:   Token budget for the thinking phase (only used when
@@ -229,13 +203,14 @@ def get_llm(
         user_key = _get_user_api_key(user_id, "anthropic")
         if user_key:
             print(f"[LLM] Using Claude ({CLAUDE_MODEL_DEFAULT}, user key)")
-            return ClaudeChatModel(
+            inner = ClaudeChatModel(
                 model_name=CLAUDE_MODEL_DEFAULT,
                 temperature=temperature,
                 api_key=user_key,
                 extended_thinking=extended_thinking,
                 thinking_budget=thinking_budget,
             )
+            return TrackingChatModel(inner, pipeline, user_id, "anthropic", CLAUDE_MODEL_DEFAULT)
         if is_rockstar:
             raise ValueError(
                 "BYOK_REQUIRED:anthropic — Lone Wolf plan requires your own Anthropic API key. "
@@ -243,66 +218,36 @@ def get_llm(
             )
         platform_key = os.getenv("ANTHROPIC_API_KEY", "")
         if not platform_key:
-            print("[LLM] WARNING: ANTHROPIC_API_KEY not set — falling back to Gemini")
-        else:
-            print(f"[LLM] Using Claude ({CLAUDE_MODEL_DEFAULT}, platform key), extended_thinking={extended_thinking}")
-            return ClaudeChatModel(
-                model_name=CLAUDE_MODEL_DEFAULT,
-                temperature=temperature,
-                api_key=platform_key,
-                extended_thinking=extended_thinking,
-                thinking_budget=thinking_budget,
-            )
-
-    if provider == LLM_PROVIDER_OPENAI:
-        user_key = _get_user_api_key(user_id, "openai")
-        if user_key:
-            return ChatOpenAI(model="gpt-4o-mini", api_key=user_key, temperature=temperature)
-        if is_rockstar:
             raise ValueError(
-                "BYOK_REQUIRED:openai — Lone Wolf plan requires your own OpenAI API key. "
-                "Configure it in Account › AI Models."
+                "[LLM] ANTHROPIC_API_KEY is not set. "
+                "Add it to your .env file to use Claude."
             )
-        platform_key = os.getenv("OPENAI_API_KEY", "")
-        if not platform_key:
-            print("[LLM] WARNING: OPENAI_API_KEY not set — falling back to Gemini")
-        else:
-            return ChatOpenAI(model="gpt-4o-mini", api_key=platform_key, temperature=temperature)
+        print(f"[LLM] Using Claude ({CLAUDE_MODEL_DEFAULT}, platform key), extended_thinking={extended_thinking}")
+        inner = ClaudeChatModel(
+            model_name=CLAUDE_MODEL_DEFAULT,
+            temperature=temperature,
+            api_key=platform_key,
+            extended_thinking=extended_thinking,
+            thinking_budget=thinking_budget,
+        )
+        return TrackingChatModel(inner, pipeline, user_id, "anthropic", CLAUDE_MODEL_DEFAULT)
 
-    # Default path: Gemini with automatic OpenAI fallback
-    gemini_user_key = _get_user_api_key(user_id, "gemini")
-    openai_user_key = _get_user_api_key(user_id, "openai")
-
-    if is_rockstar and not gemini_user_key and not openai_user_key:
+    # Default: OpenAI
+    user_key = _get_user_api_key(user_id, "openai")
+    if user_key:
+        inner = ChatOpenAI(model="gpt-4o-mini", api_key=user_key, temperature=temperature)
+        return TrackingChatModel(inner, pipeline, user_id, "openai", "gpt-4o-mini")
+    if is_rockstar:
         raise ValueError(
-            "BYOK_REQUIRED:gemini — Lone Wolf plan requires your own Gemini API key. "
+            "BYOK_REQUIRED:openai — Lone Wolf plan requires your own OpenAI API key. "
             "Configure it in Account › AI Models."
         )
-
-    gemini_key = gemini_user_key or os.getenv("GEMINI_API_KEY")
-    openai_key = openai_user_key or os.getenv("OPENAI_API_KEY")
-
-    primary = ChatGoogleGenerativeAI(
-        model=model_name,
-        google_api_key=gemini_key,
-        temperature=temperature,
-    )
-
-    if not openai_key:
-        print("[LLM] WARNING: OPENAI_API_KEY not found — no fallback available")
-        return primary
-
-    fallback_model = _FALLBACK_MODEL_MAP.get(model_name, "gpt-4o-mini")
-    fallback = ChatOpenAI(
-        model=fallback_model,
-        api_key=openai_key,
-        temperature=temperature,
-    )
-
-    print(f"[LLM] Configured {model_name} with fallback to {fallback_model}")
-    return FallbackChatModel(
-        primary=primary,
-        fallback=fallback,
-        primary_name=model_name,
-        fallback_name=fallback_model,
-    )
+    platform_key = os.getenv("OPENAI_API_KEY", "")
+    if not platform_key:
+        raise ValueError(
+            "[LLM] OPENAI_API_KEY is not set. "
+            "Add it to your .env file to use OpenAI."
+        )
+    print(f"[LLM] Using OpenAI (gpt-4o-mini, platform key)")
+    inner = ChatOpenAI(model="gpt-4o-mini", api_key=platform_key, temperature=temperature)
+    return TrackingChatModel(inner, pipeline, user_id, "openai", "gpt-4o-mini")

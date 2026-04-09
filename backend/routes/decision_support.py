@@ -5,6 +5,7 @@ import logging
 from flask import Blueprint, request, jsonify, Response, stream_with_context, g
 
 from middleware.auth import require_auth, require_broker
+from extensions import limiter, get_user_or_ip
 
 logger = logging.getLogger(__name__)
 
@@ -22,6 +23,7 @@ def _get_broker_token():
 
 @decision_support_bp.route("/run", methods=["POST"])
 @require_auth
+@limiter.limit("3 per minute", key_func=get_user_or_ip)
 def run_decision_support():
     """SSE endpoint — runs the 4-2-1-1 stock selection pipeline."""
     try:
@@ -56,6 +58,7 @@ def run_decision_support():
 
 @decision_support_bp.route("/sell", methods=["POST"])
 @require_auth
+@limiter.limit("3 per minute", key_func=get_user_or_ip)
 @require_broker
 def run_sell_analysis():
     """SSE endpoint — runs the portfolio sell analysis pipeline."""

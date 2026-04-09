@@ -24,6 +24,11 @@ from constants import (
 
 logger = logging.getLogger(__name__)
 
+# Circuit breaker — trips after 3 consecutive Screener.in failures,
+# recovers after 5 minutes.
+from services.circuit_breaker import CircuitBreaker
+_screener_cb = CircuitBreaker("screener.in", failure_threshold=3, recovery_timeout=300)
+
 _SCREENER_HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -63,12 +68,46 @@ def _extract_ratio(soup: BeautifulSoup, ratio_name: str) -> Optional[float]:
         return None
 
 
+def _get_last_known_fundamentals(symbol: str) -> Dict[str, Optional[float]]:
+    """Fallback: return the most recent cached fundamentals from the DB."""
+    try:
+        from services.db import get_conn
+        conn = get_conn()
+        try:
+            row = conn.execute(
+                "SELECT fund_roe, fund_debt_to_equity, fund_sales_growth "
+                "FROM stock_analyses WHERE symbol = ? "
+                "ORDER BY analyzed_at DESC LIMIT 1",
+                (symbol,),
+            ).fetchone()
+            if row:
+                logger.info("[Screener] Using DB fallback fundamentals for %s", symbol)
+                return {
+                    "roe": row["fund_roe"],
+                    "debt_to_equity": row["fund_debt_to_equity"],
+                    "sales_growth": row["fund_sales_growth"],
+                }
+        finally:
+            conn.close()
+    except Exception as db_err:
+        logger.debug("[Screener] DB fallback failed for %s: %s", symbol, db_err)
+    return {"roe": None, "debt_to_equity": None, "sales_growth": None}
+
+
 def scrape_screener_ratios(symbol: str) -> Dict[str, Optional[float]]:
     """Scrape key financial ratios from Screener.in.
 
     Returns dict with keys: 'roe', 'debt_to_equity', 'sales_growth'.
     Values are None if unavailable.
+
+    Uses a circuit breaker — if Screener.in has failed 3 times in a row the
+    circuit opens and the DB cache is returned immediately without an HTTP call.
+    The circuit resets after 5 minutes.
     """
+    if not _screener_cb.is_call_permitted():
+        logger.info("[Screener] Circuit open — returning DB fallback for %s", symbol)
+        return _get_last_known_fundamentals(symbol)
+
     try:
         time.sleep(SCREENER_API_DELAY)
 
@@ -90,6 +129,7 @@ def scrape_screener_ratios(symbol: str) -> Dict[str, Optional[float]]:
             or _extract_ratio(soup, "Sales CAGR")
         )
 
+        _screener_cb.record_success()
         return {
             "roe": roe,
             "debt_to_equity": debt_to_equity,
@@ -97,8 +137,9 @@ def scrape_screener_ratios(symbol: str) -> Dict[str, Optional[float]]:
         }
 
     except Exception as e:
+        _screener_cb.record_failure()
         logger.warning(f"Screener.in scraping failed for {symbol}: {e}")
-        return {"roe": None, "debt_to_equity": None, "sales_growth": None}
+        return _get_last_known_fundamentals(symbol)
 
 
 def score_fundamentals(
