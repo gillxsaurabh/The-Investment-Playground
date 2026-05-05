@@ -24,69 +24,104 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
 
   showSplash = true;
   splashFading = false;
-
   isScrolled = false;
 
   private logoClicks = 0;
   private logoTimer: ReturnType<typeof setTimeout> | null = null;
 
-  /* ── Slide carousel ─────────────────────────────────────────── */
-  activeSlide = 0;
-  private slideInterval: ReturnType<typeof setInterval> | null = null;
+  openFaq: number | null = null;
 
-  slides = [
+  faqs = [
     {
-      badge: 'SEAMLESS INTEGRATION',
-      title: 'Plug &',
-      highlight: 'Play.',
-      desc: 'Connect your Kite account in seconds via secure API. Instantly view your portfolio\'s health, positions, and P&L.',
-      visual: 'integration',
+      q: 'Is my data secure?',
+      a: 'We use read-only API access to your broker account. We never store your credentials — only an access token that expires every day. Your portfolio data stays on our servers encrypted at rest.',
     },
     {
-      badge: 'THE AGENT ECOSYSTEM',
-      title: 'Your AI',
-      highlight: 'Analyst Army.',
-      desc: 'Six specialist AI agents scan, analyse, and score every stock across market conditions, technicals, fundamentals, news, sector dynamics, and conviction — then rank and execute.',
-      visual: 'agents',
+      q: 'Will the AI auto-execute trades?',
+      a: 'Only if you explicitly enable it with safety rules. By default, every trade needs your approval. StockCraft is a research platform — the agents do the work, you pull the trigger.',
     },
     {
-      badge: 'AUTOMATE & PROTECT',
-      title: 'Full Control.',
-      highlight: 'Full Automation.',
-      desc: 'Every Monday at 9 AM, the system runs the full pipeline — scanning, filtering, ranking, and executing trades automatically.',
-      visual: 'execution',
+      q: 'How is StockCraft different from Smallcase?',
+      a: 'Smallcase sells pre-built portfolios. StockCraft is a research workspace — you decide what to buy. We don\'t sell baskets. Our AI agents analyse your specific holdings and the market in real time.',
     },
     {
-      badge: 'PERSONALIZED RISK',
-      title: 'Choose Your',
-      highlight: 'Risk Profile.',
-      desc: 'Five calibrated risk modes from blue-chip safety to full-universe hunting — you decide how aggressive the AI trades.',
-      visual: 'gears',
+      q: 'How is StockCraft different from Tickertape?',
+      a: 'Tickertape gives you static screeners and data tables. StockCraft gives you an AI research team that converses, explains, and connects the dots across your actual portfolio — personalised, not generic.',
     },
     {
-      badge: 'ZERO-RISK SANDBOX',
-      title: 'Switch to ',
-      highlight: 'Simulator mode.',
-      desc: 'First test in theory then invest.',
-      visual: 'simulator',
+      q: 'Is StockCraft SEBI registered?',
+      a: 'StockCraft is an AI-powered research and analytics platform. We are not a SEBI-registered investment adviser and do not provide personalised investment advice. Our agents provide research; all investment decisions are yours.',
+    },
+    {
+      q: 'What does it cost?',
+      a: 'Free if you bring your own LLM API key (Claude, OpenAI, or Gemini). Managed plan at ₹999/month includes StockCraft-managed Claude Sonnet with priority support and higher rate limits.',
+    },
+    {
+      q: 'Can I use StockCraft with my SIP?',
+      a: 'Yes — connect any supported broker and your SIP holdings appear in your portfolio analysis automatically. The agents treat them like any other holding.',
+    },
+    {
+      q: 'Which brokers are supported?',
+      a: 'Currently Zerodha, Upstox, and Angel One. More brokers are being added based on demand — let us know which one you use.',
+    },
+    {
+      q: 'What LLM does StockCraft use?',
+      a: 'Claude Sonnet by default on the managed plan. On the self-hosted plan you bring your own OpenAI, Anthropic, or Gemini API key — that makes usage free on our end.',
+    },
+    {
+      q: 'Can I export research to Excel?',
+      a: 'Yes — every research result and AI conversation can be exported as CSV or PDF directly from the dashboard.',
     },
   ];
 
   agents = [
-    { name: 'Market Scanner',    icon: 'radar',           color: '#d4a843' },
-    { name: 'Quant Analyst',     icon: 'show_chart',      color: '#5b8def' },
-    { name: 'Fundamentals',      icon: 'account_balance', color: '#00c176' },
-    { name: 'Sector Momentum',   icon: 'pie_chart',       color: '#f97316' },
-    { name: 'AI Conviction',     icon: 'psychology',      color: '#d4a843' },
-    { name: 'Portfolio Analyst', icon: 'analytics',       color: '#5b8def' },
+    {
+      icon: 'bar_chart',
+      title: 'Fundamental Agent',
+      desc: 'Reads earnings reports, balance sheets, and ratios. Flags companies with strong financials before the market notices.',
+    },
+    {
+      icon: 'show_chart',
+      title: 'Technical Agent',
+      desc: 'Watches RSI, MACD, momentum, and chart patterns across NSE/BSE in real time.',
+    },
+    {
+      icon: 'article',
+      title: 'News Agent',
+      desc: 'Parses headlines, regulatory filings, and earnings call transcripts. Surfaces what matters, ignores the noise.',
+    },
+    {
+      icon: 'security',
+      title: 'Risk Agent',
+      desc: 'Tracks volatility, beta, and drawdown across your portfolio. Alerts you before exposure becomes dangerous.',
+    },
   ];
 
-  gears = [
-    { name: 'Safe',     color: '#3b82f6', pct: 20  },
-    { name: 'Cautious', color: '#22c55e', pct: 40  },
-    { name: 'Balanced', color: '#eab308', pct: 60  },
-    { name: 'Bold',     color: '#f97316', pct: 80  },
-    { name: 'Turbo',    color: '#ef4444', pct: 100 },
+  steps = [
+    {
+      n: '01',
+      title: 'Connect',
+      desc: 'Link your Zerodha account in 30 seconds via secure read-only API. No passwords stored.',
+      icon: 'lock',
+    },
+    {
+      n: '02',
+      title: 'Discover',
+      desc: 'Let AI agents scan the market based on your risk profile and surface opportunities across NSE/BSE.',
+      icon: 'manage_search',
+    },
+    {
+      n: '03',
+      title: 'Ask',
+      desc: 'Chat with your AI analyst about any stock, sector rotation, or what\'s happening in your portfolio.',
+      icon: 'chat_bubble_outline',
+    },
+    {
+      n: '04',
+      title: 'Decide',
+      desc: 'You make the trade. Optionally automate weekly scans. Full control stays with you, always.',
+      icon: 'check_circle_outline',
+    },
   ];
 
   constructor(
@@ -94,8 +129,6 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     private demoService: DemoService,
     private ngZone: NgZone,
   ) {}
-
-  /* ── Lifecycle ──────────────────────────────────────────────── */
 
   ngAfterViewInit(): void {
     const video = this.splashVideo.nativeElement;
@@ -107,11 +140,9 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     this.ngZone.runOutsideAngular(() => {
       window.addEventListener('scroll', this.onScroll, { passive: true });
     });
-    this.startSlideshow();
   }
 
   ngOnDestroy(): void {
-    this.stopSlideshow();
     if (this.splashTimeout) clearTimeout(this.splashTimeout);
     window.removeEventListener('scroll', this.onScroll);
   }
@@ -123,39 +154,16 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     }
   };
 
-  /* ── Slideshow (auto-advances every 3.5s, resets on manual click) ── */
-
-  private startSlideshow(): void {
-    this.stopSlideshow();
-    this.slideInterval = setInterval(() => {
-      this.ngZone.run(() => {
-        this.activeSlide = (this.activeSlide + 1) % this.slides.length;
-      });
-    }, 3500);
-  }
-
-  private stopSlideshow(): void {
-    if (this.slideInterval) {
-      clearInterval(this.slideInterval);
-      this.slideInterval = null;
-    }
-  }
-
-  goToSlide(i: number): void {
-    this.activeSlide = i;
-    this.startSlideshow(); // reset timer on manual click
-  }
-
-  /* ── Splash ─────────────────────────────────────────────────── */
-
   onSplashEnd(): void {
-    if (this.splashFading) return;          // already dismissing
+    if (this.splashFading) return;
     if (this.splashTimeout) { clearTimeout(this.splashTimeout); this.splashTimeout = null; }
     this.splashFading = true;
     setTimeout(() => { this.showSplash = false; }, 600);
   }
 
-  /* ── Public actions ─────────────────────────────────────────── */
+  toggleFaq(i: number): void {
+    this.openFaq = this.openFaq === i ? null : i;
+  }
 
   enterDemo(): void {
     this.demoService.enterDemo();

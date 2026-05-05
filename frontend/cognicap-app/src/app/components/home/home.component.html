@@ -2,184 +2,488 @@
 
   <!-- ── SPLASH VIDEO ──────────────────────────────────────── -->
   <div class="splash" [class.fade-out]="splashFading" [class.splash-done]="!showSplash">
-    <video #splashVideo
-           playsinline
-           (ended)="onSplashEnd()"
-           (error)="onSplashEnd()"
-           src="assets/logo_code.mp4">
-    </video>
+    <video #splashVideo playsinline (ended)="onSplashEnd()" (error)="onSplashEnd()" src="assets/logo_code.mp4"></video>
   </div>
 
   <!-- ── NAVIGATION ─────────────────────────────────────────── -->
   <header class="nav" [class.scrolled]="isScrolled">
-    <div class="nav-brand" (click)="onLogoClick()" title="">
-      <div class="logo-mark">
-        <svg width="18" height="18" fill="none" viewBox="0 0 24 24">
-          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <polyline points="16 7 22 7 22 13" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <span class="logo-text">The Investment Playground</span>
+    <div class="nav-brand" (click)="onLogoClick()">
+      <svg viewBox="0 0 340 60" xmlns="http://www.w3.org/2000/svg" width="152" height="26" aria-label="StockCraft">
+        <text x="10" y="48" font-family="Inter, DM Sans, sans-serif" font-size="42px" font-weight="300" fill="#ffffff">Stock<tspan font-weight="700" fill="#F59E0B">Craft</tspan></text>
+      </svg>
     </div>
-
+    <nav class="nav-links">
+      <a class="nav-link" (click)="$event.preventDefault()">How it works</a>
+      <a class="nav-link" (click)="$event.preventDefault()">Pricing</a>
+    </nav>
     <div class="nav-actions">
       <button class="btn-ghost" (click)="goToLogin()">Login</button>
-      <button class="btn-glow btn-sm" (click)="goToSignup()">Sign Up</button>
+      <button class="btn-primary btn-sm" (click)="goToSignup()">Start free →</button>
     </div>
   </header>
 
-  <!-- ── HERO — single viewport ───────────────────────────────── -->
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 1 — HERO
+  ═══════════════════════════════════════════════════════════ -->
   <section class="hero">
-    <div class="hero-split">
+    <div class="hero-bg-glow"></div>
+    <div class="hero-grid-overlay"></div>
 
-      <!-- LEFT: Auto-rotating feature slides -->
-      <div class="hero-left">
-        <div class="slide-viewport glass">
-          <div class="slide"
-               *ngFor="let s of slides; let i = index"
-               [class.active]="activeSlide === i">
+    <div class="hero-inner">
 
-            <span class="slide-badge">{{ s.badge }}</span>
-            <h2 class="slide-title">{{ s.title }} <span class="gradient-text">{{ s.highlight }}</span></h2>
-            <p class="slide-desc">{{ s.desc }}</p>
+      <!-- LEFT: Text -->
+      <div class="hero-text">
+        <div class="hero-eyebrow">
+          <span class="eyebrow-dot"></span>
+          AI ANALYST FOR EVERY INVESTOR
+        </div>
 
-            <div class="slide-visual" [ngSwitch]="s.visual">
+        <h1 class="hero-h1">
+          Research like a fund.<br>
+          <span class="h1-amber">Trade your way.</span>
+        </h1>
 
-              <!-- Integration flow -->
-              <div *ngSwitchCase="'integration'" class="vis-integration">
-                <div class="flow-node-wrap">
-                  <div class="flow-node tip">
-                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24">
-                      <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                      <polyline points="16 7 22 7 22 13" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                    </svg>
-                  </div>
-                  <span class="flow-label">TIP</span>
-                </div>
-                <div class="flow-track">
-                  <span class="fdot"></span><span class="fdot"></span><span class="fdot"></span>
-                </div>
-                <div class="flow-node-wrap">
-                  <div class="flow-node kite">
-                    <img src="kite.png" alt="Kite" class="kite-logo">
-                  </div>
-                  <span class="flow-label">Kite</span>
-                </div>
-              </div>
+        <p class="hero-sub">
+          A team of specialized AI agents does the research. Ask anything. Trade through your broker — manually or fully automated.
+        </p>
 
-              <!-- Agent pills -->
-              <div *ngSwitchCase="'agents'" class="vis-agents">
-                <div class="agent-pill" *ngFor="let a of agents" [style.--ac]="a.color">
-                  <span class="material-icons">{{ a.icon }}</span>
-                  {{ a.name }}
-                </div>
-              </div>
+        <div class="hero-ctas">
+          <button class="btn-primary btn-lg" (click)="goToSignup()">
+            Start free <span class="cta-arrow">→</span>
+          </button>
+          <button class="btn-ghost-lg" (click)="enterDemo()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><polygon points="6 3 20 12 6 21"/></svg>
+            Watch 2-min demo
+          </button>
+        </div>
 
-              <!-- Execution indicators -->
-              <div *ngSwitchCase="'execution'" class="vis-execution">
-                <div class="exec-pill">
-                  <span class="pulse-dot"></span> SYSTEM ACTIVE
-                </div>
-                <div class="exec-pill shield">
-                  <span class="material-icons">verified_user</span> CAPITAL PROTECTED
-                </div>
-              </div>
+        <p class="hero-trust-micro">
+          Free forever for first 100 queries · No credit card · SEBI compliant
+        </p>
+      </div>
 
-              <!-- Risk gears -->
-              <div *ngSwitchCase="'gears'" class="vis-gears">
-                <div class="gear-col"
-                     *ngFor="let g of gears; let i = index"
-                     [style.--gc]="g.color"
-                     [style.--gpct]="g.pct / 100"
-                     [style.--gd]="(i * 0.5) + 's'">
-                  <div class="gear-tube">
-                    <div class="gear-energy"></div>
-                  </div>
-                  <span class="gear-lbl">{{ g.name }}</span>
-                </div>
-              </div>
+      <!-- RIGHT: Product preview -->
+      <div class="hero-preview">
+        <div class="preview-glow"></div>
+        <div class="preview-window">
 
-              <!-- Simulator — paper trade ledger -->
-              <div *ngSwitchCase="'simulator'" class="vis-simulator">
-                <div class="sim-card">
-                  <div class="sim-card-header">
-                    <span class="sim-chip">PAPER TRADE</span>
-                    <span class="sim-balance">&#8377;5,00,000</span>
-                  </div>
-                  <div class="sim-row">
-                    <span class="sim-sym">TATAMOTORS</span>
-                    <span class="sim-pnl gain">+&#8377;2,805</span>
-                  </div>
-                  <div class="sim-row">
-                    <span class="sim-sym">ADANIENT</span>
-                    <span class="sim-pnl gain">+&#8377;1,825</span>
-                  </div>
-                  <div class="sim-row">
-                    <span class="sim-sym">LTIMINDTREE</span>
-                    <span class="sim-pnl loss">−&#8377;2,395</span>
-                  </div>
-                </div>
-                <span class="sim-label">Zero real money at risk</span>
-              </div>
-
+          <!-- Browser chrome -->
+          <div class="chrome-bar">
+            <div class="chrome-dots">
+              <span class="dot-red"></span>
+              <span class="dot-yellow"></span>
+              <span class="dot-green"></span>
+            </div>
+            <div class="chrome-url">
+              <span class="url-lock">🔒</span>
+              stockcraft.ai / portfolio
             </div>
           </div>
 
-          <!-- Progress bar -->
-          <div class="slide-progress" [class]="'sp-' + activeSlide"></div>
-        </div>
+          <!-- App header -->
+          <div class="app-header">
+            <div class="app-header-left">
+              <span class="app-agent-label">Portfolio Analyst</span>
+              <span class="app-status-badge">
+                <span class="status-dot"></span>
+                Live
+              </span>
+            </div>
+            <div class="app-header-right">
+              <span class="app-portfolio-val">₹4,82,350</span>
+              <span class="app-portfolio-pnl loss-text">↓ −3.2%</span>
+            </div>
+          </div>
 
-        <!-- Slide indicator dots -->
-        <div class="slide-dots">
-          <button *ngFor="let s of slides; let i = index"
-                  class="dot"
-                  [class.active]="activeSlide === i"
-                  (click)="goToSlide(i)"></button>
+          <!-- Chat body -->
+          <div class="chat-body">
+
+            <!-- User message -->
+            <div class="msg-row user-row">
+              <div class="msg user-msg">
+                Why did my IT stocks drop this week?
+              </div>
+              <div class="user-avatar">SG</div>
+            </div>
+
+            <!-- AI response -->
+            <div class="msg-row ai-row">
+              <div class="ai-avatar-icon">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="#F59E0B"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+              </div>
+              <div class="msg ai-msg">
+                <p class="ai-lead">Your IT holdings dropped <strong>8.4%</strong> this week — driven by FII outflows and rupee strength compressing export margins.</p>
+
+                <div class="ai-holdings-table">
+                  <div class="holding-row">
+                    <span class="holding-sym">INFY</span>
+                    <div class="holding-bar-wrap">
+                      <div class="holding-bar-fill loss-fill" style="width: 72%"></div>
+                    </div>
+                    <span class="holding-pnl loss-text">−₹8,420</span>
+                  </div>
+                  <div class="holding-row">
+                    <span class="holding-sym">TCS</span>
+                    <div class="holding-bar-wrap">
+                      <div class="holding-bar-fill loss-fill" style="width: 48%"></div>
+                    </div>
+                    <span class="holding-pnl loss-text">−₹5,180</span>
+                  </div>
+                  <div class="holding-row">
+                    <span class="holding-sym">WIPRO</span>
+                    <div class="holding-bar-wrap">
+                      <div class="holding-bar-fill loss-fill" style="width: 29%"></div>
+                    </div>
+                    <span class="holding-pnl loss-text">−₹2,960</span>
+                  </div>
+                </div>
+
+                <div class="ai-verdict">
+                  <span class="verdict-chip">WATCH</span>
+                  <span class="verdict-desc">RSI approaching oversold. Hold unless 50-DMA breaks.</span>
+                </div>
+
+                <span class="ai-cursor"></span>
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Chat input -->
+          <div class="chat-input-bar">
+            <span class="chat-placeholder">Ask about any stock or your portfolio...</span>
+            <button class="chat-send-btn" aria-label="Send">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+            </button>
+          </div>
+
+        </div><!-- /preview-window -->
+      </div><!-- /hero-preview -->
+
+    </div><!-- /hero-inner -->
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 2 — TRUST STRIP
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="trust-strip">
+    <div class="trust-inner">
+      <span class="trust-label">Data &amp; integrations</span>
+      <div class="trust-divider"></div>
+      <div class="trust-logos">
+        <span class="trust-logo">NSE</span>
+        <span class="trust-logo">BSE</span>
+        <span class="trust-sep">·</span>
+        <span class="trust-logo zerodha">Zerodha</span>
+        <span class="trust-logo">Upstox</span>
+        <span class="trust-logo">Angel One</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 3 — HOW IT WORKS
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="how-it-works">
+    <div class="hiw-inner">
+      <div class="section-label">HOW IT WORKS</div>
+      <h2 class="section-h2">From portfolio to specific buy/sell recommendations<br><span class="h2-amber">in under 10 seconds.</span></h2>
+
+      <div class="steps-grid">
+        <div class="step" *ngFor="let s of steps; let i = index" [style.animation-delay]="(i * 0.15) + 's'">
+          <div class="step-number">{{ s.n }}</div>
+          <div class="step-icon-wrap">
+            <span class="material-icons step-icon">{{ s.icon }}</span>
+          </div>
+          <h3 class="step-title">{{ s.title }}</h3>
+          <p class="step-desc">{{ s.desc }}</p>
         </div>
       </div>
 
-      <!-- RIGHT: Headline + CTAs -->
-      <div class="hero-right">
-        <div class="hero-badge">AI-POWERED TRADING INTELLIGENCE</div>
-        <h1 class="hero-h1">
-          Institutional intelligence.<br>
-          <span class="gradient-text">Built for every investor.</span>
-        </h1>
-        <p class="hero-sub">
-          Connect your portfolio and let AI take charge — while you stay in full control.
-        </p>
-        <div class="hero-ctas">
-          <button class="btn-glow btn-lg" (click)="goToSignup()">
-            Get Started <span class="arrow">&rarr;</span>
-          </button>
-          <button class="btn-outline btn-lg" (click)="enterDemo()">
-            <svg class="play-svg" width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><polygon points="6 3 20 12 6 21"/></svg>
-            View Demo
-          </button>
+      <!-- Step 3 callout -->
+      <div class="hiw-callout">
+        <span class="material-icons callout-icon">security</span>
+        <span>StockCraft never auto-trades. <strong>Every decision is yours.</strong> The AI gives you the research; you pull the trigger.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION A — MEET YOUR AI RESEARCH TEAM
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="agents-section">
+    <div class="agents-inner">
+      <div class="section-label">SPECIALIZED AI AGENTS</div>
+      <h2 class="section-h2">Your research team.<br><span class="h2-amber">On call, 24/7.</span></h2>
+      <p class="agents-sub">Each agent is built for a specific job. Together, they cover what a junior analyst at a fund would do — but faster.</p>
+
+      <div class="agents-grid">
+        <div class="agent-card" *ngFor="let agent of agents">
+          <div class="agent-icon-wrap">
+            <span class="material-icons agent-icon">{{ agent.icon }}</span>
+          </div>
+          <h3 class="agent-title">{{ agent.title }}</h3>
+          <p class="agent-desc">{{ agent.desc }}</p>
+        </div>
+      </div>
+
+      <p class="agents-note">All four agents work in parallel. Results in under 10 seconds.</p>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION B — AUTOMATION SHOWCASE
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="automation-section">
+    <div class="auto-inner">
+
+      <!-- Left: copy -->
+      <div class="auto-copy">
+        <div class="section-label">AUTOMATE YOUR EDGE</div>
+        <h2 class="auto-h2">Set it once.<br><span class="h2-amber">Let your agents work overnight.</span></h2>
+        <p class="auto-body">Schedule your AI research team to run every morning before market open. Or every Friday for a weekly portfolio review. The agents do the work — you wake up to the insights.</p>
+        <ul class="auto-bullets">
+          <li class="auto-bullet"><span class="auto-bullet-dot"></span>Daily portfolio scan</li>
+          <li class="auto-bullet"><span class="auto-bullet-dot"></span>Weekly market opportunity discovery</li>
+          <li class="auto-bullet"><span class="auto-bullet-dot"></span>Real-time risk alerts</li>
+          <li class="auto-bullet"><span class="auto-bullet-dot"></span>Custom rules you define</li>
+        </ul>
+      </div>
+
+      <!-- Right: automation rule mockup -->
+      <div class="auto-visual">
+        <div class="auto-rule-card">
+          <div class="auto-rule-header">
+            <div>
+              <div class="auto-rule-title">Daily portfolio scan</div>
+              <div class="auto-rule-schedule">Every weekday at 8:30 AM IST</div>
+            </div>
+            <div class="auto-toggle">
+              <div class="auto-toggle-knob"></div>
+            </div>
+          </div>
+
+          <div class="auto-agents-row">
+            <span class="auto-agent-chip">Fundamental ✓</span>
+            <span class="auto-agent-chip">Technical ✓</span>
+            <span class="auto-agent-chip">Risk ✓</span>
+            <span class="auto-agent-chip">News ✓</span>
+          </div>
+
+          <div class="auto-status-row">
+            <div class="auto-status-badge">
+              <span class="auto-status-dot"></span>
+              Active
+            </div>
+            <div class="auto-last-run">Today at 8:30 AM · 3 alerts generated</div>
+          </div>
+        </div>
+
+        <div class="auto-disclaimer">
+          Automation runs research and analysis. <strong>Trades still require your approval</strong> — unless you explicitly enable auto-execute with broker rules.
         </div>
       </div>
 
     </div>
   </section>
 
-  <!-- ── FOOTER BAR ─────────────────────────────────────────── -->
-  <footer class="footer-bar">
-    <div class="footer-brand">
-      <div class="logo-mark small">
-        <svg width="14" height="14" fill="none" viewBox="0 0 24 24">
-          <polyline points="22 7 13.5 15.5 8.5 10.5 2 17" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-          <polyline points="16 7 22 7 22 13" stroke="white" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION D — COMPARISON TABLE
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="comparison-section">
+    <div class="comparison-inner">
+      <div class="section-label">COMPARED</div>
+      <h2 class="section-h2">Why investors choose StockCraft.</h2>
+
+      <div class="comparison-table-wrap">
+        <table class="comparison-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th class="col-stockcraft">StockCraft</th>
+              <th>Smallcase</th>
+              <th>Tickertape</th>
+              <th>DIY research</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>AI research agents</td>
+              <td class="col-stockcraft"><span class="check-yes">✓</span></td>
+              <td><span class="check-no">✗</span></td>
+              <td><span class="check-no">✗</span></td>
+              <td><span class="check-no">✗</span></td>
+            </tr>
+            <tr>
+              <td>Custom AI chat</td>
+              <td class="col-stockcraft"><span class="check-yes">✓</span></td>
+              <td><span class="check-no">✗</span></td>
+              <td><span class="check-no">✗</span></td>
+              <td><span class="check-no">✗</span></td>
+            </tr>
+            <tr>
+              <td>Connects to your broker</td>
+              <td class="col-stockcraft"><span class="check-yes">✓</span></td>
+              <td><span class="check-yes">✓</span></td>
+              <td><span class="check-no">✗</span></td>
+              <td><span class="check-partial">N/A</span></td>
+            </tr>
+            <tr>
+              <td>You stay in control of trades</td>
+              <td class="col-stockcraft"><span class="check-yes">✓</span></td>
+              <td><span class="check-partial">Partial</span></td>
+              <td><span class="check-partial">N/A</span></td>
+              <td><span class="check-yes">✓</span></td>
+            </tr>
+            <tr>
+              <td>Automated research runs</td>
+              <td class="col-stockcraft"><span class="check-yes">✓</span></td>
+              <td><span class="check-no">✗</span></td>
+              <td><span class="check-no">✗</span></td>
+              <td><span class="check-no">✗</span></td>
+            </tr>
+            <tr>
+              <td>Bring your own LLM (free tier)</td>
+              <td class="col-stockcraft"><span class="check-yes">✓</span></td>
+              <td><span class="check-no">✗</span></td>
+              <td><span class="check-no">✗</span></td>
+              <td><span class="check-no">✗</span></td>
+            </tr>
+            <tr>
+              <td>SEBI-compliant infrastructure</td>
+              <td class="col-stockcraft"><span class="check-yes">✓</span></td>
+              <td><span class="check-yes">✓</span></td>
+              <td><span class="check-yes">✓</span></td>
+              <td><span class="check-partial">N/A</span></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
-      <span>TIP</span>
     </div>
-    <div class="footer-links">
-      <span>Terms &amp; Conditions</span>
-      <span>Privacy Policy</span>
-      <span>Support</span>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION E — PRICING TEASER
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="pricing-section">
+    <div class="pricing-inner">
+      <div class="section-label">SIMPLE PRICING</div>
+      <h2 class="section-h2">Free if you bring your own keys.</h2>
+      <p class="pricing-sub">Use your own Claude, OpenAI, or Gemini API key — pay nothing to StockCraft. Or use ours for a flat monthly fee.</p>
+
+      <div class="pricing-cards">
+
+        <!-- Card 1: Self-hosted -->
+        <div class="pricing-card">
+          <div class="pricing-card-title">Self-hosted</div>
+          <div class="pricing-price">₹0<span class="pricing-price-mo">/mo</span></div>
+          <div class="pricing-price-sub">Bring your own LLM API key</div>
+          <ul class="pricing-features">
+            <li class="pricing-feature"><span class="feature-check">✓</span> All AI agents</li>
+            <li class="pricing-feature"><span class="feature-check">✓</span> Unlimited queries</li>
+            <li class="pricing-feature"><span class="feature-check">✓</span> Full automation</li>
+            <li class="pricing-feature"><span class="feature-check">✓</span> Broker integration</li>
+          </ul>
+          <button class="btn-pricing-ghost" (click)="goToSignup()">Start free →</button>
+        </div>
+
+        <!-- Card 2: Managed -->
+        <div class="pricing-card popular">
+          <span class="pricing-badge">Most popular</span>
+          <div class="pricing-card-title">Managed</div>
+          <div class="pricing-price">₹999<span class="pricing-price-mo">/mo</span></div>
+          <div class="pricing-price-sub">We handle the LLM, you focus on investing</div>
+          <ul class="pricing-features">
+            <li class="pricing-feature"><span class="feature-check">✓</span> Everything in Self-hosted</li>
+            <li class="pricing-feature"><span class="feature-check">✓</span> StockCraft-managed LLM (Claude Sonnet)</li>
+            <li class="pricing-feature"><span class="feature-check">✓</span> Priority support</li>
+            <li class="pricing-feature"><span class="feature-check">✓</span> Higher rate limits</li>
+          </ul>
+          <button class="btn-pricing-primary" (click)="goToSignup()">Start 14-day trial →</button>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 4 — FAQ
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="faq-section">
+    <div class="faq-inner">
+      <div class="section-label">COMMON QUESTIONS</div>
+      <h2 class="section-h2">Straight answers.</h2>
+
+      <div class="faq-list">
+        <div class="faq-item" *ngFor="let f of faqs; let i = index" [class.open]="openFaq === i" (click)="toggleFaq(i)">
+          <div class="faq-q">
+            <span>{{ f.q }}</span>
+            <span class="faq-chevron" [class.rotated]="openFaq === i">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"/></svg>
+            </span>
+          </div>
+          <div class="faq-a" [class.visible]="openFaq === i">
+            <p>{{ f.a }}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       SECTION 5 — FINAL CTA BAND
+  ═══════════════════════════════════════════════════════════ -->
+  <section class="cta-band">
+    <div class="cta-band-inner">
+      <h2 class="cta-band-h2">Start your AI-powered investing<br>in 60 seconds.</h2>
+      <p class="cta-band-sub">Free plan · No credit card · Connect your broker in seconds</p>
+      <button class="btn-cta-band" (click)="goToSignup()">
+        Start free <span class="cta-arrow">→</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- ═══════════════════════════════════════════════════════════
+       FOOTER
+  ═══════════════════════════════════════════════════════════ -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-brand-col">
+        <svg viewBox="0 0 340 60" xmlns="http://www.w3.org/2000/svg" width="120" height="22" aria-label="StockCraft">
+          <text x="10" y="48" font-family="Inter, DM Sans, sans-serif" font-size="42px" font-weight="300" fill="#ffffff">Stock<tspan font-weight="700" fill="#F59E0B">Craft</tspan></text>
+        </svg>
+        <p class="footer-tagline">Institutional-grade research for every investor.</p>
+        <p class="footer-disclaimer">
+          StockCraft is an AI-powered research and analytics platform. We are not a SEBI-registered investment adviser, and we do not provide personalised investment advice. Our AI agents provide research and analysis; all investment decisions are yours. Investments are subject to market risks. Past performance is not indicative of future results. Please read all risk disclosures carefully before investing.
+        </p>
+      </div>
+      <div class="footer-links-col">
+        <span class="footer-col-label">Product</span>
+        <a class="footer-link">How it works</a>
+        <a class="footer-link">Pricing</a>
+        <a class="footer-link">Demo</a>
+      </div>
+      <div class="footer-links-col">
+        <span class="footer-col-label">Legal</span>
+        <a class="footer-link">Terms &amp; Conditions</a>
+        <a class="footer-link">Privacy Policy</a>
+        <a class="footer-link">Risk Disclosure</a>
+        <a class="footer-link">SEBI Compliance</a>
+      </div>
+      <div class="footer-links-col">
+        <span class="footer-col-label">Support</span>
+        <a class="footer-link">Help Center</a>
+        <a class="footer-link">Contact Us</a>
+        <a class="footer-link">Status</a>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <span>© 2026 StockCraft. All rights reserved.</span>
+      <span>Made in India 🇮🇳 for Indian investors</span>
     </div>
   </footer>
 
   <!-- Hidden dev entry -->
   <span class="dev-link" (click)="openDevLogin()">·</span>
+
 </div>
