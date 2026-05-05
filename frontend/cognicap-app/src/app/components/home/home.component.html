@@ -214,7 +214,7 @@
   <section class="agents-section">
     <div class="agents-inner">
       <div class="section-label">SPECIALIZED AI AGENTS</div>
-      <h2 class="section-h2">Your research team.<br><span class="h2-amber">On call, 24/7.</span></h2>
+      <h2 class="section-h2">Your research team.<br><span class="h2-amber">Always working.</span></h2>
       <p class="agents-sub">Each agent is built for a specific job. Together, they cover what a junior analyst at a fund would do — but faster.</p>
 
       <div class="agents-grid">
@@ -253,29 +253,26 @@
       <!-- Right: automation rule mockup -->
       <div class="auto-visual">
         <div class="auto-rule-card">
-          <div class="auto-rule-header">
-            <div>
-              <div class="auto-rule-title">Daily portfolio scan</div>
-              <div class="auto-rule-schedule">Every weekday at 8:30 AM IST</div>
+          <div class="auto-card-top">
+            <div class="auto-status-badge">
+              <span class="auto-status-dot"></span>
+              Active
             </div>
             <div class="auto-toggle">
               <div class="auto-toggle-knob"></div>
             </div>
           </div>
 
-          <div class="auto-agents-row">
-            <span class="auto-agent-chip">Fundamental ✓</span>
-            <span class="auto-agent-chip">Technical ✓</span>
-            <span class="auto-agent-chip">Risk ✓</span>
-            <span class="auto-agent-chip">News ✓</span>
-          </div>
+          <div class="auto-rule-title">Daily portfolio scan</div>
+          <div class="auto-rule-schedule">Every weekday at 8:30 AM IST</div>
 
-          <div class="auto-status-row">
-            <div class="auto-status-badge">
-              <span class="auto-status-dot"></span>
-              Active
-            </div>
-            <div class="auto-last-run">Today at 8:30 AM · 3 alerts generated</div>
+          <div class="auto-last-run-prominent">Today at 8:30 AM · 3 alerts generated</div>
+
+          <div class="auto-agents-row">
+            <span class="auto-agent-chip">Fundamental</span>
+            <span class="auto-agent-chip">Technical</span>
+            <span class="auto-agent-chip">Risk</span>
+            <span class="auto-agent-chip">News</span>
           </div>
         </div>
 
@@ -301,9 +298,9 @@
             <tr>
               <th>Feature</th>
               <th class="col-stockcraft">StockCraft</th>
-              <th>Smallcase</th>
-              <th>Tickertape</th>
-              <th>DIY research</th>
+              <th class="competitor-col">Smallcase</th>
+              <th class="competitor-col">Tickertape</th>
+              <th class="competitor-col">DIY research</th>
             </tr>
           </thead>
           <tbody>
@@ -324,7 +321,7 @@
             <tr>
               <td>Connects to your broker</td>
               <td class="col-stockcraft"><span class="check-yes">✓</span></td>
-              <td><span class="check-yes">✓</span></td>
+              <td><span class="check-yes-muted">✓</span></td>
               <td><span class="check-no">✗</span></td>
               <td><span class="check-partial">N/A</span></td>
             </tr>
@@ -333,7 +330,7 @@
               <td class="col-stockcraft"><span class="check-yes">✓</span></td>
               <td><span class="check-partial">Partial</span></td>
               <td><span class="check-partial">N/A</span></td>
-              <td><span class="check-yes">✓</span></td>
+              <td><span class="check-yes-muted">✓</span></td>
             </tr>
             <tr>
               <td>Automated research runs</td>
@@ -343,7 +340,7 @@
               <td><span class="check-no">✗</span></td>
             </tr>
             <tr>
-              <td>Bring your own LLM (free tier)</td>
+              <td>Free tier with own LLM key</td>
               <td class="col-stockcraft"><span class="check-yes">✓</span></td>
               <td><span class="check-no">✗</span></td>
               <td><span class="check-no">✗</span></td>
@@ -352,8 +349,8 @@
             <tr>
               <td>SEBI-compliant infrastructure</td>
               <td class="col-stockcraft"><span class="check-yes">✓</span></td>
-              <td><span class="check-yes">✓</span></td>
-              <td><span class="check-yes">✓</span></td>
+              <td><span class="check-yes-muted">✓</span></td>
+              <td><span class="check-yes-muted">✓</span></td>
               <td><span class="check-partial">N/A</span></td>
             </tr>
           </tbody>
@@ -435,7 +432,7 @@
   ═══════════════════════════════════════════════════════════ -->
   <section class="cta-band">
     <div class="cta-band-inner">
-      <h2 class="cta-band-h2">Start your AI-powered investing<br>in 60 seconds.</h2>
+      <h2 class="cta-band-h2">Start in 60 seconds.<br>Your AI research team is waiting.</h2>
       <p class="cta-band-sub">Free plan · No credit card · Connect your broker in seconds</p>
       <button class="btn-cta-band" (click)="goToSignup()">
         Start free <span class="cta-arrow">→</span>
