@@ -188,3 +188,16 @@
     .change { font-size: 10px; }
   }
 }
+
+@media (max-width: 480px) {
+  .market-scroll {
+    gap: 18px;
+    animation-duration: 90s;
+  }
+
+  /* Hide gainers/losers on very small phones; keep indices */
+  .market-item.gainer,
+  .market-item.loser {
+    display: none;
+  }
+}

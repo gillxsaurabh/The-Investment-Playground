@@ -82,3 +82,12 @@
 
   &:hover { color: $text-primary; }
 }
+
+@media (max-width: 480px) {
+  .toast-container {
+    right: $space-3;
+    left: $space-3;
+    max-width: 100%;
+    width: auto;
+  }
+}

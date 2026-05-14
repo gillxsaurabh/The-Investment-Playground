@@ -205,3 +205,7 @@
   text-underline-offset: 2px;
   font-weight: 500;
 }
+
+@media (max-width: 480px) {
+  .onboarding-wrap { padding: $space-8 $space-4; }
+}

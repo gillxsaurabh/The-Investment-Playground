@@ -140,6 +140,45 @@
 }
 
 // ============================================================
+// Hamburger toggle (mobile only)
+// ============================================================
+
+.menu-toggle {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: none;
+  border: 1px solid $border-default;
+  border-radius: $radius-sm;
+  color: $text-secondary;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all $transition-fast;
+
+  .material-icons { font-size: 20px; }
+
+  &:hover {
+    background: $bg-hover;
+    color: $text-primary;
+  }
+}
+
+// ============================================================
+// Mobile backdrop
+// ============================================================
+
+.mobile-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: rgba(0, 0, 0, 0.65);
+  backdrop-filter: blur(2px);
+}
+
+// ============================================================
 // Mobile: full width (sidebar is overlay, not inline)
 // ============================================================
 
@@ -149,5 +188,15 @@
     left: 0;
   }
 
+  .top-bar { padding: 0 $space-3; }
+
   .platform-tagline { display: none; }
+
+  .menu-toggle { display: flex; }
+
+  .mobile-backdrop { display: block; }
+}
+
+@media (max-width: 480px) {
+  .user-chip span:not(.material-icons) { display: none; }
 }

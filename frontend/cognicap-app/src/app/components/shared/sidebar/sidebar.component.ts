@@ -1,4 +1,4 @@
-import { Component, Input, Output, EventEmitter, OnInit } from '@angular/core';
+import { Component, Input, Output, EventEmitter, OnInit, HostBinding } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../services/auth.service';
@@ -19,7 +19,11 @@ interface NavItem {
 export class SidebarComponent implements OnInit {
   @Input() userName: string = '';
   @Input() brokerLinked: boolean = false;
+  @Input() mobileOpen: boolean = false;
   @Output() onLogout = new EventEmitter<void>();
+  @Output() closeRequest = new EventEmitter<void>();
+
+  @HostBinding('class.mobile-open') get isOpen() { return this.mobileOpen; }
 
   isCollapsed = false;
 
@@ -56,5 +60,9 @@ export class SidebarComponent implements OnInit {
 
   logout(): void {
     this.onLogout.emit();
+  }
+
+  closeOnNav(): void {
+    this.closeRequest.emit();
   }
 }

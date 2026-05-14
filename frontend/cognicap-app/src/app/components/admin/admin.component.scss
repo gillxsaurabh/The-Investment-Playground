@@ -231,3 +231,19 @@
   font-weight: 600;
   color: #e8c870;
 }
+
+@media (max-width: 768px) {
+  .admin-wrap { padding: 24px 16px; }
+
+  .usage-table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 480px) {
+  .admin-wrap { padding: 16px 12px; }
+  .admin-card { padding: 18px 16px; }
+}

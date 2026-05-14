@@ -1291,6 +1291,7 @@
   border-radius: 12px;
   border: 1px solid var(--hp-border);
   -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .comparison-table {
@@ -1307,7 +1308,15 @@
     border-bottom: 1px solid var(--hp-border);
     white-space: nowrap;
 
-    &:first-child { text-align: left; color: var(--hp-text-2); font-weight: 500; }
+    &:first-child {
+      text-align: left;
+      color: var(--hp-text-2);
+      font-weight: 500;
+      position: sticky;
+      left: 0;
+      background: #111;
+      z-index: 2;
+    }
 
     &.col-stockcraft {
       color: var(--hp-amber);
@@ -1329,6 +1338,10 @@
       font-weight: 500;
       color: var(--hp-text);
       white-space: nowrap;
+      position: sticky;
+      left: 0;
+      background: var(--hp-bg);
+      z-index: 1;
     }
 
     &.col-stockcraft {
@@ -1589,4 +1602,39 @@
   .footer-inner { grid-template-columns: 1fr; }
 
   .footer-bottom { flex-direction: column; text-align: center; }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    padding: 4.5rem 1rem 2rem;
+    min-height: auto;
+  }
+
+  .hero-h1 { font-size: clamp(1.6rem, 8vw, 2.2rem); }
+
+  .hero-ctas { gap: 0.75rem; }
+  .btn-primary { width: 100%; justify-content: center; }
+
+  .section-heading { font-size: clamp(1.4rem, 7vw, 2rem); }
+
+  .how-it-works,
+  .agents-section,
+  .automation-section,
+  .comparison-section,
+  .pricing-section,
+  .faq-section { padding: 3rem 1rem; }
+
+  .cta-band { padding: 3rem 1rem; }
+
+  .footer { padding: 2.5rem 1rem 1.5rem; }
+
+  .nav { padding: 0.75rem 1rem; }
+
+  .agents-grid { gap: 0.75rem; }
+
+  .trust-inner {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.5rem;
+  }
 }

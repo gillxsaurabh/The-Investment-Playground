@@ -147,3 +147,9 @@ h1 {
 
   .material-icons { font-size: 22px; }
 }
+
+@media (max-width: 480px) {
+  .paywall-wrap { padding: $space-4; }
+  .paywall-card { padding: $space-8 $space-5; }
+  .price-block .price { font-size: 2.2rem; }
+}

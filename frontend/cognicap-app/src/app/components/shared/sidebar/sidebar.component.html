@@ -14,7 +14,8 @@
        class="nav-item"
        [routerLink]="item.route"
        routerLinkActive="active"
-       [title]="isCollapsed ? item.label : ''">
+       [title]="isCollapsed ? item.label : ''"
+       (click)="closeOnNav()">
       <span class="material-icons nav-icon">{{ item.icon }}</span>
       <span class="nav-label">{{ item.label }}</span>
     </a>
@@ -29,7 +30,8 @@
        class="nav-item"
        [routerLink]="item.route"
        routerLinkActive="active"
-       [title]="isCollapsed ? item.label : ''">
+       [title]="isCollapsed ? item.label : ''"
+       (click)="closeOnNav()">
       <span class="material-icons nav-icon">{{ item.icon }}</span>
       <span class="nav-label">{{ item.label }}</span>
       <span *ngIf="!brokerLinked && item.route === '/account'" class="warn-dot" title="Kite not linked"></span>
@@ -38,7 +40,8 @@
        class="nav-item admin-item"
        routerLink="/admin"
        routerLinkActive="active"
-       [title]="isCollapsed ? 'Admin' : ''">
+       [title]="isCollapsed ? 'Admin' : ''"
+       (click)="closeOnNav()">
       <span class="material-icons nav-icon">admin_panel_settings</span>
       <span class="nav-label">Admin</span>
     </a>

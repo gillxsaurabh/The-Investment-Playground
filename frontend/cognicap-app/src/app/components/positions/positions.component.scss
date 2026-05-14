@@ -152,7 +152,7 @@
 // ---- Positions grid ----
 .positions-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(280px, 100%), 1fr));
   gap: 14px;
 }
 
@@ -243,7 +243,7 @@
   background: $bg-card;
   border: 1px solid $border-subtle;
   border-radius: 12px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .history-header-row, .history-row {
@@ -297,6 +297,16 @@
   .positions-grid { grid-template-columns: 1fr; }
   .history-header-row, .history-row { grid-template-columns: 90px 70px 70px 40px 70px 1fr; }
   .history-header-row span:last-child, .history-row span:last-child { display: none; }
+}
+
+@media (max-width: 480px) {
+  .positions-layout { padding: 12px; }
+
+  .account-summary { flex-wrap: wrap; gap: 8px; }
+  .summary-chip { min-width: calc(50% - 4px); }
+
+  .header-actions { width: 100%; }
+  .header-actions button { width: 100%; justify-content: center; }
 }
 
 .chart-panel {

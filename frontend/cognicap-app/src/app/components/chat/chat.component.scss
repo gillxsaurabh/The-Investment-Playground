@@ -816,3 +816,24 @@
     bottom: 16px;
   }
 }
+
+@media (max-width: 480px) {
+  .chat-window {
+    right: 0;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    max-width: 100%;
+    max-height: 100dvh;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+    transform-origin: bottom center;
+  }
+
+  .fab-wrap {
+    right: 16px;
+    bottom: 16px;
+  }
+}

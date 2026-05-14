@@ -1,13 +1,21 @@
+<!-- Mobile backdrop -->
+<div class="mobile-backdrop" *ngIf="mobileNavOpen" (click)="closeMobileNav()"></div>
+
 <!-- Sidebar (fixed left) -->
 <app-sidebar
   [userName]="userName"
   [brokerLinked]="brokerLinked"
-  (onLogout)="logout()">
+  [mobileOpen]="mobileNavOpen"
+  (onLogout)="logout()"
+  (closeRequest)="closeMobileNav()">
 </app-sidebar>
 
 <!-- Slim top bar (fixed, offset by sidebar via CSS var) -->
 <header class="top-bar">
   <div class="top-bar-left">
+    <button class="menu-toggle" (click)="toggleMobileNav()" aria-label="Open navigation menu">
+      <span class="material-icons">{{ mobileNavOpen ? 'close' : 'menu' }}</span>
+    </button>
     <svg viewBox="0 0 340 60" xmlns="http://www.w3.org/2000/svg" width="108" height="19" aria-label="StockCraft" style="display:block;flex-shrink:0;">
       <text x="10" y="48" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="42px" font-weight="300" fill="#ffffff">Stock<tspan font-weight="600" fill="#F59E0B">Craft</tspan></text>
     </svg>

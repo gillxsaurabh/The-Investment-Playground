@@ -162,3 +162,23 @@ app-admin {
     margin-left: 0;
   }
 }
+
+/* ---- Shared table scroll wrapper (mobile horizontal scroll) ---- */
+.table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+}
+
+.table-scroll table,
+.table-scroll [class*="grid-table"],
+.table-scroll [class*="-row"] {
+  min-width: max-content;
+}
+
+.sticky-col {
+  position: sticky;
+  left: 0;
+  background: var(--bg-card);
+  z-index: 2;
+}

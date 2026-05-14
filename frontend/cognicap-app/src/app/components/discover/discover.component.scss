@@ -292,6 +292,10 @@
   .staging-panel { position: static; }
 }
 
+@media (max-width: 480px) {
+  .discover-layout { padding: 12px; gap: 12px; }
+}
+
 // ---- Staged button state ----
 .btn-add.btn-staged {
   background: $green-dim;

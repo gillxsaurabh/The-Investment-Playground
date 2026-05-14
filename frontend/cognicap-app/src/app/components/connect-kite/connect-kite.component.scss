@@ -272,4 +272,9 @@ h1 {
   to { transform: rotate(360deg); }
 }
 
+@media (max-width: 480px) {
+  .page { padding: 16px; }
+  .card { padding: 24px 18px 20px; }
+}
+
 .spin { animation: spin 0.8s linear infinite; }

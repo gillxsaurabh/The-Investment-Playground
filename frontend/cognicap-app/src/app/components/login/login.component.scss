@@ -399,6 +399,19 @@
   }
 }
 
+@media (max-width: 480px) {
+  .login-card {
+    padding: 28px 20px;
+    border-radius: 12px;
+  }
+
+  .header {
+    margin-bottom: 24px;
+
+    h1 { font-size: clamp(20px, 6vw, 28px); }
+  }
+}
+
 // --- Forgot password additions ---
 .forgot-header {
   text-align: center;

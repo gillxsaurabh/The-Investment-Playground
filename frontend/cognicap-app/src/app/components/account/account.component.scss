@@ -411,6 +411,27 @@
   .broker-actions { flex-direction: column; }
 }
 
+@media (max-width: 600px) {
+  .tab-bar {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    flex-wrap: nowrap;
+    &::-webkit-scrollbar { display: none; }
+  }
+
+  .tab-btn {
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 12px;
+    .material-icons { display: none; }
+  }
+}
+
+@media (max-width: 480px) {
+  .account-container { padding: 12px; }
+}
+
 // --- Change password section ---
 .change-pw-form {
   display: flex;

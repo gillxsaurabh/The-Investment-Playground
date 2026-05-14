@@ -156,26 +156,28 @@
         <p>Closed trades will appear here.</p>
       </div>
 
-      <div class="history-table" *ngIf="tradeHistory.length > 0">
-        <div class="history-header-row">
-          <span>Symbol</span>
-          <span>Entry</span>
-          <span>Exit</span>
-          <span>Qty</span>
-          <span>P&L</span>
-          <span>Reason</span>
-          <span>Date</span>
-        </div>
-        <div *ngFor="let t of tradeHistory" class="history-row">
-          <span class="h-symbol">{{ t.symbol }}</span>
-          <span>₹{{ t.entry_price.toFixed(2) }}</span>
-          <span>₹{{ t.exit_price.toFixed(2) }}</span>
-          <span>{{ t.quantity }}</span>
-          <span [class.pos]="t.realized_pnl >= 0" [class.neg]="t.realized_pnl < 0">
-            {{ t.realized_pnl >= 0 ? '+' : '' }}₹{{ t.realized_pnl.toFixed(0) }}
-          </span>
-          <span class="h-reason">{{ t.reason }}</span>
-          <span class="h-date">{{ t.exit_time | date:'dd MMM' }}</span>
+      <div class="table-scroll" *ngIf="tradeHistory.length > 0">
+        <div class="history-table">
+          <div class="history-header-row">
+            <span class="sticky-col">Symbol</span>
+            <span>Entry</span>
+            <span>Exit</span>
+            <span>Qty</span>
+            <span>P&L</span>
+            <span>Reason</span>
+            <span>Date</span>
+          </div>
+          <div *ngFor="let t of tradeHistory" class="history-row">
+            <span class="h-symbol sticky-col">{{ t.symbol }}</span>
+            <span>₹{{ t.entry_price.toFixed(2) }}</span>
+            <span>₹{{ t.exit_price.toFixed(2) }}</span>
+            <span>{{ t.quantity }}</span>
+            <span [class.pos]="t.realized_pnl >= 0" [class.neg]="t.realized_pnl < 0">
+              {{ t.realized_pnl >= 0 ? '+' : '' }}₹{{ t.realized_pnl.toFixed(0) }}
+            </span>
+            <span class="h-reason">{{ t.reason }}</span>
+            <span class="h-date">{{ t.exit_time | date:'dd MMM' }}</span>
+          </div>
         </div>
       </div>
     </div>

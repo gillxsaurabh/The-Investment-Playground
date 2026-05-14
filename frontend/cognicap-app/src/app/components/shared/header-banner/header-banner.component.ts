@@ -24,7 +24,19 @@ export class HeaderBannerComponent {
   @Input() marketError: string = '';
   @Output() onLogout = new EventEmitter<void>();
 
+  mobileNavOpen = false;
+
   constructor(private router: Router) {}
+
+  toggleMobileNav(): void {
+    this.mobileNavOpen = !this.mobileNavOpen;
+    document.body.style.overflow = this.mobileNavOpen ? 'hidden' : '';
+  }
+
+  closeMobileNav(): void {
+    this.mobileNavOpen = false;
+    document.body.style.overflow = '';
+  }
 
   navigateTo(page: string): void {
     this.router.navigate([`/${page}`]);
