@@ -7,16 +7,17 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 import time
 from typing import Dict, List, Any
 import os
-from google import genai
-
-
 class StockHealthService:
     """Service to analyze stock health based on multiple factors"""
-    
+
     def __init__(self, kite_instance, gemini_api_key=None):
         self.kite = kite_instance
         self.gemini_api_key = gemini_api_key
-        self.gemini_client = genai.Client(api_key=gemini_api_key) if gemini_api_key else None
+        if gemini_api_key:
+            from google import genai  # optional dependency
+            self.gemini_client = genai.Client(api_key=gemini_api_key)
+        else:
+            self.gemini_client = None
         self.nifty_data = None
         
     def get_portfolio_health_report(self) -> List[Dict[str, Any]]:
