@@ -19,6 +19,7 @@
 
 ### Details
 
+
 **What's cached:**
 ```
 _session_cache       dict[int, DataFrame]   — OHLCV data keyed by instrument_token

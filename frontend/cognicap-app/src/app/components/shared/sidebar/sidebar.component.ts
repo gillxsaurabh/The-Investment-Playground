@@ -36,14 +36,14 @@ export class SidebarComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    const saved = localStorage.getItem('tip-sidebar-collapsed');
+    const saved = localStorage.getItem('stockcraft-sidebar-collapsed');
     this.isCollapsed = saved === 'true';
     this.applyWidth();
   }
 
   toggle(): void {
     this.isCollapsed = !this.isCollapsed;
-    localStorage.setItem('tip-sidebar-collapsed', String(this.isCollapsed));
+    localStorage.setItem('stockcraft-sidebar-collapsed', String(this.isCollapsed));
     this.applyWidth();
   }
 

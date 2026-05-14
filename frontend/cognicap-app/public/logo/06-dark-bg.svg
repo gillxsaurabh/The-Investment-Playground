@@ -1,0 +1,6 @@
+<svg width="680" height="130" viewBox="0 0 680 130" xmlns="http://www.w3.org/2000/svg">
+  <title>StockCraft — Dark Background</title>
+  <rect x="0" y="0" width="680" height="130" rx="8" fill="#0F0F0F"/>
+  <text x="40" y="82" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="62px" font-weight="300" fill="#ffffff">Stock<tspan font-weight="600" fill="#F59E0B">Craft</tspan></text>
+  <text x="44" y="106" font-family="Inter, Helvetica Neue, Arial, sans-serif" font-size="10px" font-weight="400" letter-spacing="5px" fill="#F59E0B" opacity="0.7">INTELLIGENT INVESTING</text>
+</svg>

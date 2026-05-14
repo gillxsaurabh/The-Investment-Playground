@@ -398,14 +398,14 @@
         <span class="material-icons">workspace_premium</span>
         Your Plan
       </h2>
-      <p class="card-desc">Choose the plan that matches how you use CogniCap. You can switch anytime.</p>
+      <p class="card-desc">Choose the plan that matches how you use StockCraft. You can switch anytime.</p>
 
       <div class="plan-grid">
 
-        <!-- Stock Explorer (general) -->
+        <!-- Apprentice (general) -->
         <div class="plan-card" [class.plan-active]="tierInfo?.plan === 'general'">
           <div class="plan-header">
-            <span class="plan-name">Stock Explorer</span>
+            <span class="plan-name">Apprentice</span>
             <span class="plan-price">₹199<small>/mo</small></span>
           </div>
           <ul class="plan-features">
@@ -423,19 +423,19 @@
             [class.plan-btn-active]="tierInfo?.plan === 'general'"
             [disabled]="tierInfo?.plan === 'general' || planSwitching"
             (click)="switchPlan('general')">
-            {{ tierInfo?.plan === 'general' ? 'Current Plan' : 'Switch to Stock Explorer' }}
+            {{ tierInfo?.plan === 'general' ? 'Current Plan' : 'Switch to Apprentice' }}
           </button>
         </div>
 
-        <!-- The Executer (ideal) -->
+        <!-- Craftsman (ideal) -->
         <div class="plan-card" [class.plan-active]="tierInfo?.plan === 'ideal'">
           <div class="plan-badge">Popular</div>
           <div class="plan-header">
-            <span class="plan-name">The Executer</span>
+            <span class="plan-name">Craftsman</span>
             <span class="plan-price">₹499<small>/mo</small></span>
           </div>
           <ul class="plan-features">
-            <li><span class="material-icons">check</span> Everything in Stock Explorer</li>
+            <li><span class="material-icons">check</span> Everything in Apprentice</li>
             <li><span class="material-icons">check</span> Live portfolio sync via Kite</li>
             <li><span class="material-icons">check</span> Personal holdings analysis</li>
             <li><span class="material-icons">check</span> Sell audit pipeline</li>
@@ -452,22 +452,22 @@
             [class.plan-btn-active]="tierInfo?.plan === 'ideal'"
             [disabled]="tierInfo?.plan === 'ideal' || planSwitching"
             (click)="switchPlan('ideal')">
-            {{ tierInfo?.plan === 'ideal' ? 'Current Plan' : 'Switch to The Executer' }}
+            {{ tierInfo?.plan === 'ideal' ? 'Current Plan' : 'Switch to Craftsman' }}
           </button>
           <p class="plan-warn" *ngIf="tierInfo?.plan !== 'ideal' && !tierInfo?.has_broker">
             <span class="material-icons">info</span> You'll need to connect Kite after switching.
           </p>
         </div>
 
-        <!-- Lone Wolf (rockstar) -->
+        <!-- Grandmaster (rockstar) -->
         <div class="plan-card plan-rockstar" [class.plan-active]="tierInfo?.plan === 'rockstar'">
-          <div class="plan-badge plan-badge-green">Free</div>
+          <div class="plan-badge plan-badge-green">BYOK</div>
           <div class="plan-header">
-            <span class="plan-name">Lone Wolf</span>
-            <span class="plan-price">Free</span>
+            <span class="plan-name">Grandmaster</span>
+            <span class="plan-price" style="font-size:0.85em">₹199<small>/mo</small></span>
           </div>
           <ul class="plan-features">
-            <li><span class="material-icons">check</span> Everything in The Executer</li>
+            <li><span class="material-icons">check</span> Everything in Craftsman</li>
             <li><span class="material-icons">check</span> Bring your own LLM API keys</li>
             <li><span class="material-icons">check</span> Runs on your API quotas</li>
             <li><span class="material-icons">check</span> No platform AI charges</li>
@@ -486,7 +486,7 @@
             [class.plan-btn-active]="tierInfo?.plan === 'rockstar'"
             [disabled]="tierInfo?.plan === 'rockstar' || planSwitching"
             (click)="switchPlan('rockstar')">
-            {{ tierInfo?.plan === 'rockstar' ? 'Current Plan' : 'Switch to Lone Wolf' }}
+            {{ tierInfo?.plan === 'rockstar' ? 'Current Plan' : 'Switch to Grandmaster' }}
           </button>
           <p class="plan-warn" *ngIf="tierInfo?.plan !== 'rockstar' && (!tierInfo?.has_broker || !tierInfo?.has_llm_keys)">
             <span class="material-icons">info</span>
@@ -504,7 +504,7 @@
 
       <div class="plan-note">
         <span class="material-icons">info</span>
-        On the <strong>Lone Wolf</strong> plan, the platform's shared LLM quota is disabled — AI features use only your configured API keys. Switching to Lone Wolf without LLM keys will block AI pipelines until keys are added.
+        On the <strong>Grandmaster</strong> plan, the platform's shared LLM quota is disabled — AI features use only your configured API keys. Switching to Grandmaster without LLM keys will block AI pipelines until keys are added.
       </div>
     </section>
 

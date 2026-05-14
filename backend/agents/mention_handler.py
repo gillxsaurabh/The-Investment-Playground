@@ -8,14 +8,21 @@ Supported @mentions:
   @FundamentalsAnalyst SYMBOL — Fundamental analysis from Screener.in
   @NewsSentinel SYMBOL        — News sentiment via Claude
   @StockAnalysis SYMBOL       — Full 4-agent synthesis (requires linked broker)
+
+Natural language queries (no @mention) with stock analysis intent are also
+intercepted by handle_intent() and routed to the appropriate agent.
 """
 
+import json
+import logging
 import re
 
 from agents.analysis_state import AnalysisState
 from agents.workers.stats_agent import stats_agent_node
 from agents.workers.company_health_agent import company_health_agent_node
 from agents.workers.breaking_news_agent import breaking_news_agent_node
+
+logger = logging.getLogger(__name__)
 
 
 # ── State builder ──────────────────────────────────────────────────────────────
@@ -191,7 +198,72 @@ def _extract_symbol(text: str) -> str | None:
     return None
 
 
-# ── Public entry point ─────────────────────────────────────────────────────────
+def _resolve_symbol_via_llm(text: str, user_id: int | None) -> str | None:
+    """Use LLM to extract the NSE ticker from natural language (e.g. 'tata motors' → 'TATAMOTORS')."""
+    try:
+        from agents.config import get_llm
+        from langchain_core.messages import HumanMessage
+        llm = get_llm(temperature=0, provider="openai", user_id=user_id, pipeline="chat")
+        response = llm.invoke([HumanMessage(content=(
+            "Extract the NSE (National Stock Exchange of India) stock ticker symbol from this text. "
+            "Return ONLY the exact NSE ticker in uppercase (e.g. TATAMOTORS, RELIANCE, INFY, HDFCBANK). "
+            "Do NOT return the company name — return the ticker. "
+            "If no Indian stock is mentioned, return NONE.\n\n"
+            f"Text: {text}"
+        ))])
+        symbol = response.content.strip().upper()
+        symbol = re.sub(r"\s+", "", symbol)
+        if symbol in ("NONE", "") or not re.match(r"^[A-Z][A-Z0-9&\-]{1,19}$", symbol):
+            return None
+        return symbol
+    except Exception as e:
+        logger.debug("[MentionHandler] LLM symbol resolution failed: %s", e)
+        return None
+
+
+def _detect_intent_via_llm(
+    message: str, user_id: int | None
+) -> tuple[str, str] | tuple[None, None]:
+    """Classify stock analysis intent and extract NSE symbol from a natural language message.
+
+    Returns (agent_key, symbol) or (None, None) if not a stock analysis query.
+    agent_key is one of: newssentinel | quantanalyst | fundamentalsanalyst | stockanalysis
+    """
+    try:
+        from agents.config import get_llm
+        from langchain_core.messages import HumanMessage
+        llm = get_llm(temperature=0, provider="openai", user_id=user_id, pipeline="chat")
+        response = llm.invoke([HumanMessage(content=(
+            "Classify this message. If it asks for stock analysis of a specific Indian stock, "
+            "respond with JSON only — no extra text:\n"
+            '{"agent": "<type>", "symbol": "<NSE_TICKER>"}\n\n'
+            "Agent types (pick the most specific):\n"
+            "  newssentinel        — news, sentiment, recent events, stock buzz\n"
+            "  quantanalyst        — technical analysis, chart, RSI, MACD, momentum, price action\n"
+            "  fundamentalsanalyst — fundamentals, PE ratio, earnings, revenue, balance sheet\n"
+            "  stockanalysis       — full / complete / overall / comprehensive analysis\n\n"
+            "Rules:\n"
+            "- symbol must be the exact NSE ticker (e.g. TATAMOTORS, not 'Tata Motors')\n"
+            "- If the message is NOT about a specific stock or NOT a stock analysis request, "
+            'return {"agent": "none", "symbol": ""}\n\n'
+            f"Message: {message}"
+        ))])
+        json_match = re.search(r"\{.*\}", response.content, re.DOTALL)
+        if not json_match:
+            return None, None
+        data = json.loads(json_match.group())
+        agent = data.get("agent", "none").lower().strip()
+        symbol = re.sub(r"\s+", "", data.get("symbol", "").upper())
+        symbol = re.sub(r"[^A-Z0-9&\-]", "", symbol)
+        if agent == "none" or agent not in _MENTION_MAP or not symbol:
+            return None, None
+        return agent, symbol
+    except Exception as e:
+        logger.debug("[MentionHandler] Intent detection failed: %s", e)
+        return None, None
+
+
+# ── Public entry points ────────────────────────────────────────────────────────
 
 def handle_mention(message: str, access_token: str, user_id: int | None) -> str | None:
     """Return a formatted agent response if message contains a recognized @mention.
@@ -214,6 +286,10 @@ def handle_mention(message: str, access_token: str, user_id: int | None) -> str 
     stripped = _MENTION_RE.sub("", message).strip()
     symbol = _extract_symbol(stripped)
 
+    # Fallback: user wrote the company name in natural language (e.g. "tata motors")
+    if not symbol:
+        symbol = _resolve_symbol_via_llm(stripped, user_id)
+
     if not symbol:
         return (
             f"Please specify an NSE stock symbol. "
@@ -231,5 +307,32 @@ def handle_mention(message: str, access_token: str, user_id: int | None) -> str 
     try:
         return handler_fn(state)
     except Exception as e:
-        print(f"[MentionHandler] {display_name} failed for {symbol}: {e}")
+        logger.error("[MentionHandler] %s failed for %s: %s", display_name, symbol, e)
+        return f"{display_name} analysis failed for {symbol}: {str(e)}"
+
+
+def handle_intent(message: str, access_token: str, user_id: int | None) -> str | None:
+    """Intercept natural language stock analysis queries that don't use @mention.
+
+    Uses LLM to detect intent + extract NSE symbol, then routes to the right
+    analysis handler. Returns None to fall through to LangGraph for everything else.
+    """
+    agent_key, symbol = _detect_intent_via_llm(message, user_id)
+    if not agent_key or not symbol:
+        return None
+
+    display_name, needs_broker, handler_fn = _MENTION_MAP[agent_key]
+
+    if needs_broker and not access_token:
+        return (
+            f"{display_name} requires a linked Zerodha broker account. "
+            "Link it in Account → Broker settings, then try again."
+        )
+
+    logger.info("[MentionHandler] Intent routed: %s → %s %s", message[:60], agent_key, symbol)
+    state = _build_state(symbol, access_token, user_id)
+    try:
+        return handler_fn(state)
+    except Exception as e:
+        logger.error("[MentionHandler] Intent handler %s failed for %s: %s", agent_key, symbol, e)
         return f"{display_name} analysis failed for {symbol}: {str(e)}"

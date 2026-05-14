@@ -1,9 +1,7 @@
 import {
   Component,
-  AfterViewInit,
+  OnInit,
   OnDestroy,
-  ElementRef,
-  ViewChild,
   NgZone,
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
@@ -17,13 +15,7 @@ import { DemoService } from '../../services/demo.service';
   templateUrl: './home.component.html',
   styleUrls: ['./home.component.scss'],
 })
-export class HomeComponent implements AfterViewInit, OnDestroy {
-  @ViewChild('splashVideo') splashVideo!: ElementRef<HTMLVideoElement>;
-
-  private splashTimeout: ReturnType<typeof setTimeout> | null = null;
-
-  showSplash = true;
-  splashFading = false;
+export class HomeComponent implements OnInit, OnDestroy {
   isScrolled = false;
 
   private logoClicks = 0;
@@ -130,20 +122,13 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
     private ngZone: NgZone,
   ) {}
 
-  ngAfterViewInit(): void {
-    const video = this.splashVideo.nativeElement;
-    video.muted = true;
-    video.play().catch(() => {});
-
-    this.splashTimeout = setTimeout(() => this.onSplashEnd(), 6000);
-
+  ngOnInit(): void {
     this.ngZone.runOutsideAngular(() => {
       window.addEventListener('scroll', this.onScroll, { passive: true });
     });
   }
 
   ngOnDestroy(): void {
-    if (this.splashTimeout) clearTimeout(this.splashTimeout);
     window.removeEventListener('scroll', this.onScroll);
   }
 
@@ -153,13 +138,6 @@ export class HomeComponent implements AfterViewInit, OnDestroy {
       this.ngZone.run(() => { this.isScrolled = scrolled; });
     }
   };
-
-  onSplashEnd(): void {
-    if (this.splashFading) return;
-    if (this.splashTimeout) { clearTimeout(this.splashTimeout); this.splashTimeout = null; }
-    this.splashFading = true;
-    setTimeout(() => { this.showSplash = false; }, 600);
-  }
 
   toggleFaq(i: number): void {
     this.openFaq = this.openFaq === i ? null : i;

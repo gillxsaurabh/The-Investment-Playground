@@ -147,7 +147,7 @@ import { ToastComponent } from './components/shared/toast/toast.component';
   `]
 })
 export class AppComponent implements OnInit, OnDestroy {
-  title = 'TIP';
+  title = 'StockCraft';
   showPrompt = false;
   private sub: Subscription | null = null;
 

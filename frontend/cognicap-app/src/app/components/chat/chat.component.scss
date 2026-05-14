@@ -1,7 +1,7 @@
 @use '../../styles/tokens' as *;
 
 // ============================================================
-// Tipsy — Oracle Cat FAB + Chat Window
+// Sage — Oracle Cat FAB + Chat Window
 // Terminal Luxe: warm black · gold · IBM Plex Mono
 // ============================================================
 
@@ -448,7 +448,8 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  overflow: hidden;
+  overflow: visible;
+  position: relative;
 }
 
 .messages-container {
@@ -653,10 +654,86 @@
 
 
 // ============================================================
+// @mention Autocomplete Dropdown
+// ============================================================
+
+.mention-dropdown {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 14px;
+  right: 14px;
+  background: $bg-elevated;
+  border: 1px solid rgba($accent, 0.28);
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 200;
+  box-shadow:
+    0 -6px 28px rgba(0, 0, 0, 0.75),
+    0 0 0 1px rgba($accent, 0.06) inset;
+  animation: mention-in 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes mention-in {
+  from { opacity: 0; transform: translateY(6px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.mention-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  cursor: pointer;
+  border-bottom: 1px solid $border-subtle;
+  transition: background 0.1s ease;
+
+  &:last-child { border-bottom: none; }
+
+  &.is-highlighted,
+  &:hover {
+    background: rgba($accent, 0.09);
+
+    .mention-name { color: $accent; }
+  }
+
+  .mention-icon {
+    font-size: 15px;
+    color: $accent;
+    flex-shrink: 0;
+    opacity: 0.85;
+  }
+
+  .mention-text {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    min-width: 0;
+  }
+
+  .mention-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: $text-primary;
+    font-family: $font-mono;
+    transition: color 0.1s ease;
+  }
+
+  .mention-desc {
+    font-size: 10.5px;
+    color: $text-muted;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+
+// ============================================================
 // Input
 // ============================================================
 
 .chat-input {
+  position: relative;
   display: flex;
   gap: 8px;
   padding: 12px 14px;

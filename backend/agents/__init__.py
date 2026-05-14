@@ -23,14 +23,23 @@ def run_agent(message: str, session_id: str, access_token: str = None, user_id: 
 
     Returns the assistant's text response.
     """
+    from agents.mention_handler import handle_mention, handle_intent
+
     # @mention shortcut — bypass LangGraph for direct agent invocations
-    from agents.mention_handler import handle_mention
     mention_result = handle_mention(message, access_token or "", user_id)
     if mention_result is not None:
         hist = _graph_sessions.setdefault(session_id, [])
         hist.append(HumanMessage(content=message))
         hist.append(AIMessage(content=mention_result))
         return mention_result
+
+    # Natural language intent routing — e.g. "news on tata motors" without @mention
+    intent_result = handle_intent(message, access_token or "", user_id)
+    if intent_result is not None:
+        hist = _graph_sessions.setdefault(session_id, [])
+        hist.append(HumanMessage(content=message))
+        hist.append(AIMessage(content=intent_result))
+        return intent_result
 
     if session_id not in _graph_sessions:
         _graph_sessions[session_id] = []

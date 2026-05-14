@@ -15,7 +15,7 @@
     [class.fab-is-open]="isChatOpen"
     (click)="toggleChat()"
     [attr.aria-expanded]="isChatOpen"
-    aria-label="Chat with Tipsy">
+    aria-label="Chat with Sage">
 
     <!-- Unread indicator dot -->
     <span class="fab-unread" *ngIf="!isChatOpen && messages.length > 0" aria-hidden="true"></span>
@@ -98,7 +98,7 @@
     </svg>
 
     <!-- Tooltip label -->
-    <span class="fab-tip" aria-hidden="true">Tipsy</span>
+    <span class="fab-tip" aria-hidden="true">Sage</span>
 
   </button>
 </div>
@@ -107,7 +107,7 @@
 <!-- ══════════════════════════════════════════════════════════════════════ -->
 <!-- Chat Window                                                         -->
 <!-- ══════════════════════════════════════════════════════════════════════ -->
-<div class="chat-window" [class.chat-is-open]="isChatOpen" role="dialog" aria-label="Tipsy AI chat">
+<div class="chat-window" [class.chat-is-open]="isChatOpen" role="dialog" aria-label="Sage AI chat">
 
   <!-- Header -->
   <div class="chat-header">
@@ -124,7 +124,7 @@
         </svg>
       </div>
       <div class="header-text">
-        <h3>Tipsy</h3>
+        <h3>Sage</h3>
         <span class="status">
           <span class="status-dot"></span>
           Online
@@ -173,12 +173,31 @@
     </div>
 
     <div class="chat-input">
+
+      <!-- @mention autocomplete dropdown -->
+      <div class="mention-dropdown" *ngIf="showMentionMenu">
+        <div
+          class="mention-item"
+          *ngFor="let agent of filteredAgents; let i = index"
+          [class.is-highlighted]="i === highlightedIndex"
+          (mousedown)="selectMention(agent)">
+          <span class="material-icons mention-icon">{{ agent.icon }}</span>
+          <div class="mention-text">
+            <span class="mention-name">&#64;{{ agent.name }}</span>
+            <span class="mention-desc">{{ agent.desc }}</span>
+          </div>
+        </div>
+      </div>
+
       <input
+        #chatInput
         type="text"
         [(ngModel)]="newMessage"
-        (keyup.enter)="sendMessage()"
+        (ngModelChange)="onInputChange($event)"
+        (keydown)="onInputKeydown($event)"
+        (blur)="closeMentionMenu()"
         [disabled]="isLoading"
-        placeholder="Ask anything, or @QuantAnalyst TATAMOTORS..."
+        placeholder="Ask anything, or type @ to mention an agent..."
         class="input-field">
       <button
         class="btn-send"

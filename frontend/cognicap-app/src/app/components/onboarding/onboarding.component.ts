@@ -17,8 +17,8 @@ export class OnboardingComponent implements OnInit {
   tiers = [
     {
       id: 1,
-      name: 'Stock Explorer',
-      tagline: 'Explore the market',
+      name: 'Apprentice',
+      tagline: 'Learning the craft, discovery only',
       price: '₹199/mo',
       features: [
         'Live market data (Nifty 100)',
@@ -29,15 +29,15 @@ export class OnboardingComponent implements OnInit {
       ],
       missing: ['Live portfolio sync', 'Personal holdings analysis'],
       accent: '#d4a843',
-      badge: 'Standard',
+      badge: 'Starter',
     },
     {
       id: 2,
-      name: 'The Executer',
-      tagline: 'Full experience',
+      name: 'Craftsman',
+      tagline: 'Full toolkit, live trading',
       price: '₹499/mo',
       features: [
-        'Everything in Stock Explorer',
+        'Everything in Apprentice',
         'Live portfolio sync via Kite',
         'Personal holdings analysis',
         'Sell audit pipeline',
@@ -50,18 +50,18 @@ export class OnboardingComponent implements OnInit {
     },
     {
       id: 3,
-      name: 'Lone Wolf',
-      tagline: 'Full control, zero cost',
-      price: 'Free',
+      name: 'Grandmaster',
+      tagline: 'Brings own tools, pays only for platform',
+      price: '₹199/mo or ₹299/mo',
       features: [
-        'Everything in The Executer',
+        'Everything in Craftsman',
         'Bring Your Own LLM API',
         'Runs on your API quotas',
         'No platform charges',
       ],
       missing: [],
       accent: '#00c176',
-      badge: 'Free',
+      badge: 'BYOK',
     },
   ];
 

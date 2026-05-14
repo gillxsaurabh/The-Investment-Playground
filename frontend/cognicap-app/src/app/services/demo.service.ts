@@ -4,7 +4,7 @@ import { BehaviorSubject } from 'rxjs';
 // ── All static demo data ────────────────────────────────────────────────────
 
 export const DEMO_DATA = {
-  user: { name: 'Arjun Sharma', email: 'arjun@tip.in', user_id: 'ZY8821' },
+  user: { name: 'Arjun Sharma', email: 'arjun@stockcraft.in', user_id: 'ZY8821' },
 
   portfolio_summary: {
     success: true,

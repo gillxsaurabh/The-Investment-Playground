@@ -30,7 +30,7 @@ export class ChatService {
     this.sessionId = this.generateSessionId();
     this.addMessage({
       id: this.generateMessageId(),
-      text: 'Hello! I\'m your Investment Playground AI assistant. How can I help you with your portfolio today?',
+      text: 'Hello! I\'m your StockCraft AI assistant. How can I help you with your portfolio today?',
       isUser: false,
       timestamp: new Date()
     });
@@ -83,7 +83,7 @@ export class ChatService {
         this.sessionId = this.generateSessionId();
         this.addMessage({
           id: this.generateMessageId(),
-          text: 'Hello! I\'m your Investment Playground AI assistant. How can I help you with your portfolio today?',
+          text: 'Hello! I\'m your StockCraft AI assistant. How can I help you with your portfolio today?',
           isUser: false,
           timestamp: new Date()
         });

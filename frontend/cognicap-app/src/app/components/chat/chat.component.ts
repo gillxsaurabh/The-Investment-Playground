@@ -4,6 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { ChatService, ChatMessage } from '../../services/chat.service';
 
+interface Agent {
+  name: string;
+  icon: string;
+  desc: string;
+}
+
 @Component({
   selector: 'app-chat',
   standalone: true,
@@ -13,6 +19,7 @@ import { ChatService, ChatMessage } from '../../services/chat.service';
 })
 export class ChatComponent implements OnInit, AfterViewChecked {
   @ViewChild('messagesContainer') private messagesContainer!: ElementRef;
+  @ViewChild('chatInput') chatInputRef!: ElementRef<HTMLInputElement>;
 
   messages: ChatMessage[] = [];
   newMessage: string = '';
@@ -20,19 +27,84 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   isChatOpen: boolean = false;
   showSpeechBubble: boolean = false;
 
+  // @mention autocomplete
+  readonly agents: Agent[] = [
+    { name: 'QuantAnalyst',        icon: 'bar_chart',      desc: 'Technical indicators — RSI, ADX, EMA' },
+    { name: 'FundamentalsAnalyst', icon: 'analytics',      desc: 'Financials, ROE, revenue trends' },
+    { name: 'NewsSentinel',        icon: 'newspaper',      desc: 'Breaking news & sentiment' },
+    { name: 'StockAnalysis',       icon: 'manage_search',  desc: 'Full deep-dive on any stock' },
+    { name: 'Portfolio',           icon: 'pie_chart',      desc: 'Your holdings & P&L overview' },
+  ];
+
+  showMentionMenu = false;
+  filteredAgents: Agent[] = [];
+  highlightedIndex = 0;
+
   constructor(private chatService: ChatService, private sanitizer: DomSanitizer) {}
 
   ngOnInit(): void {
     this.chatService.messages$.subscribe(messages => {
       this.messages = messages;
     });
-    // Show speech bubble 1.2s after load, auto-dismiss after 5.5s
     setTimeout(() => { this.showSpeechBubble = true; }, 1200);
     setTimeout(() => { this.showSpeechBubble = false; }, 6700);
   }
 
   ngAfterViewChecked(): void {
     this.scrollToBottom();
+  }
+
+  onInputChange(value: string): void {
+    const match = value.match(/@([A-Za-z]*)$/);
+    if (match) {
+      const query = match[1].toLowerCase();
+      this.filteredAgents = this.agents.filter(a =>
+        a.name.toLowerCase().startsWith(query)
+      );
+      this.showMentionMenu = this.filteredAgents.length > 0;
+      this.highlightedIndex = 0;
+    } else {
+      this.showMentionMenu = false;
+    }
+  }
+
+  selectMention(agent: Agent): void {
+    const atIndex = this.newMessage.lastIndexOf('@');
+    this.newMessage = this.newMessage.slice(0, atIndex) + '@' + agent.name + ' ';
+    this.showMentionMenu = false;
+    setTimeout(() => this.chatInputRef?.nativeElement?.focus(), 0);
+  }
+
+  closeMentionMenu(): void {
+    setTimeout(() => { this.showMentionMenu = false; }, 150);
+  }
+
+  onInputKeydown(event: KeyboardEvent): void {
+    if (this.showMentionMenu) {
+      switch (event.key) {
+        case 'ArrowDown':
+          event.preventDefault();
+          this.highlightedIndex = (this.highlightedIndex + 1) % this.filteredAgents.length;
+          break;
+        case 'ArrowUp':
+          event.preventDefault();
+          this.highlightedIndex = (this.highlightedIndex - 1 + this.filteredAgents.length) % this.filteredAgents.length;
+          break;
+        case 'Enter':
+        case 'Tab':
+          event.preventDefault();
+          if (this.filteredAgents.length > 0) {
+            this.selectMention(this.filteredAgents[this.highlightedIndex]);
+          }
+          break;
+        case 'Escape':
+          event.preventDefault();
+          this.showMentionMenu = false;
+          break;
+      }
+    } else if (event.key === 'Enter') {
+      this.sendMessage();
+    }
   }
 
   sendMessage(): void {
@@ -48,7 +120,6 @@ export class ChatComponent implements OnInit, AfterViewChecked {
       next: (response) => {
         this.isLoading = false;
         if (!response.success && response.error) {
-          // Add error message
           this.messages.push({
             id: `error_${Date.now()}`,
             text: `Error: ${response.error}`,
@@ -72,12 +143,8 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
   clearChat(): void {
     this.chatService.clearChat().subscribe({
-      next: () => {
-        console.log('Chat cleared');
-      },
-      error: (err) => {
-        console.error('Failed to clear chat:', err);
-      }
+      next: () => { console.log('Chat cleared'); },
+      error: (err) => { console.error('Failed to clear chat:', err); }
     });
   }
 
@@ -88,7 +155,7 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   private scrollToBottom(): void {
     try {
       if (this.messagesContainer) {
-        this.messagesContainer.nativeElement.scrollTop = 
+        this.messagesContainer.nativeElement.scrollTop =
           this.messagesContainer.nativeElement.scrollHeight;
       }
     } catch(err) {
@@ -98,14 +165,10 @@ export class ChatComponent implements OnInit, AfterViewChecked {
 
   formatTime(timestamp: Date): string {
     const date = new Date(timestamp);
-    return date.toLocaleTimeString('en-US', {
-      hour: '2-digit',
-      minute: '2-digit'
-    });
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   }
 
   formatUserMessage(text: string): SafeHtml {
-    // Escape HTML to prevent XSS, then wrap @mentions in colored spans
     const escaped = text
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
@@ -116,30 +179,20 @@ export class ChatComponent implements OnInit, AfterViewChecked {
   }
 
   formatAIMessage(text: string): SafeHtml {
-    // Escape HTML first to prevent XSS
     let html = text
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;')
       .replace(/"/g, '&quot;');
 
-    // Bold **text**
     html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-    // Italic *text* (avoid matching remaining lone asterisks)
     html = html.replace(/\*([^*\n]+?)\*/g, '<em>$1</em>');
-    // Headers ### or ## or #
     html = html.replace(/^#{1,3}\s+(.+)$/gm, '<strong class="chat-heading">$1</strong>');
-    // Monospace `code`
     html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
-    // Bullet lines starting with - or •
     html = html.replace(/^[-•]\s+(.+)$/gm, '<span class="chat-bullet">$1</span>');
-    // Score bar lines (lines containing █ or ░)
     html = html.replace(/^(.+?)\s+(█[█░]+\s+[\d.]+\/5)$/gm, '<span class="score-row"><span class="score-label">$1</span><span class="score-bar">$2</span></span>');
-    // ASCII table separator lines (─────)
     html = html.replace(/^[─\-]{3,}.*$/gm, '<span class="chat-divider"></span>');
-    // Double newline → paragraph break
     html = html.replace(/\n\n/g, '</p><p class="chat-p">');
-    // Single newline → line break
     html = html.replace(/\n/g, '<br>');
 
     return this.sanitizer.bypassSecurityTrustHtml(`<p class="chat-p">${html}</p>`);
