@@ -67,7 +67,7 @@ def register(body: RegisterBody):
         return jsonify({"success": False, "error": str(e)}), 409
     except Exception as e:
         logger.exception("[Auth] Registration failed")
-        return jsonify({"success": False, "error": "Registration failed"}), 500
+        return jsonify({"success": False, "error": f"Registration failed: {type(e).__name__}: {e}"}), 500
 
 
 @auth_bp.route("/login", methods=["POST"])
