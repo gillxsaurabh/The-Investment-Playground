@@ -88,12 +88,25 @@ def init_db() -> None:
             (9,  "009_llm_usage.sql"),
             (10, "010_schema_hardening.sql"),
             (11, "011_consolidate_state.sql"),
-            (12, "012_restore_admin_broker_encrypted.sql"),
+            (12, None),  # handled inline below — ALTER TABLE IF NOT EXISTS workaround
         ]
 
         for target_version, filename in migrations:
             if version >= target_version:
                 continue
+
+            if filename is None:
+                # Migration 012: restore encrypted column dropped by old migration 010.
+                # ALTER TABLE ADD COLUMN has no IF NOT EXISTS in SQLite, so check first.
+                cols = [r[1] for r in conn.execute("PRAGMA table_info(admin_broker_tokens)").fetchall()]
+                if "encrypted" not in cols:
+                    conn.execute("ALTER TABLE admin_broker_tokens ADD COLUMN encrypted BOOLEAN NOT NULL DEFAULT FALSE")
+                conn.execute("PRAGMA user_version = 12")
+                conn.commit()
+                logger.info("[DB] Migrated to schema version 12")
+                version = 12
+                continue
+
             migration_file = migrations_dir / filename
             if not migration_file.exists():
                 logger.error("[DB] Migration file not found: %s", migration_file)
