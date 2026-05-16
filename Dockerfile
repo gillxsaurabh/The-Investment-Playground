@@ -12,10 +12,9 @@ RUN npx ng build --configuration=production
 FROM python:3.11-slim
 WORKDIR /app
 
-# Install Python dependencies + su-exec for privilege drop in entrypoint
+# Install Python dependencies (bump DEPS_VER to bust Railway's layer cache)
 ARG DEPS_VER=4
 COPY backend/requirements.txt ./backend/requirements.txt
-RUN apt-get update && apt-get install -y --no-install-recommends su-exec && rm -rf /var/lib/apt/lists/*
 RUN pip install --no-cache-dir -r backend/requirements.txt
 
 # Copy Gunicorn config into backend dir so it's accessible from WORKDIR
@@ -27,13 +26,9 @@ COPY backend/ ./backend/
 # Copy Angular build output from Stage 1
 COPY --from=frontend-builder /app/frontend/cognicap-app/dist ./frontend/cognicap-app/dist
 
-# Create state directory and non-root user
+# Create state directory (gitignored — must exist at runtime)
+# Run as root so Railway volume mounts (which are root-owned) are writable
 RUN mkdir -p backend/data/state
-RUN adduser --disabled-password --gecos "" appuser && chown -R appuser:appuser /app
-
-# Entrypoint fixes Railway volume ownership (mounted as root) then drops to appuser
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
 
 # Health check for container orchestrators
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
@@ -41,5 +36,4 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
 
 # Set working directory to backend so relative imports work
 WORKDIR /app/backend
-ENTRYPOINT ["/entrypoint.sh"]
 CMD ["gunicorn", "-c", "gunicorn.conf.py", "app:create_app()"]
