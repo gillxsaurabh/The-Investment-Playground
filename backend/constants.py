@@ -1,158 +1,151 @@
-"""All magic numbers and domain constants for CogniCap.
+"""Re-export of all analysis constants from YAML config.
 
-Consolidates hardcoded values previously scattered across stock_analyzer.py,
-stock_health_service.py, agents/decision_support/strategy_config.py, app.py,
-and simulator.py.
+Values live in backend/config/analysis_params.yaml — edit them there.
+All existing `from constants import X` imports continue to work unchanged.
 """
 
+from services.params import params as _p
+
 # --- Technical indicator periods ---
-ADX_PERIOD = 14
-EMA_SHORT = 20
-EMA_LONG = 50
-EMA_TREND = 200
-RSI_PERIOD = 14
-ATR_PERIOD = 14
+ADX_PERIOD    = _p.get("ADX_PERIOD")
+EMA_SHORT     = _p.get("EMA_SHORT")
+EMA_LONG      = _p.get("EMA_LONG")
+EMA_TREND     = _p.get("EMA_TREND")
+RSI_PERIOD    = _p.get("RSI_PERIOD")
+ATR_PERIOD    = _p.get("ATR_PERIOD")
 
 # --- Decision support thresholds ---
-RSI_BUY_LIMIT = 30
-MIN_TURNOVER = 50_000_000  # 5 Crores
+RSI_BUY_LIMIT = _p.get("RSI_BUY_LIMIT")
+MIN_TURNOVER  = _p.get("MIN_TURNOVER")
 
 # --- Decision support pipeline (Phase 1) ---
-ADX_PIPELINE_MIN = 20             # Minimum ADX for trend confirmation in Filter 2
-STRICT_ROE_MIN = 15.0             # Minimum ROE for "strict" fundamental check (Gear 1)
-STRICT_DE_MAX = 1.0               # Maximum D/E for "strict" fundamental check (Gear 1)
-SECTOR_5D_TOLERANCE = -0.5        # Allow sector 5-day change down to -0.5%
-SECTOR_HISTORY_CALENDAR_DAYS = 15 # Fetch 15 calendar days to get 5+ trading days
+ADX_PIPELINE_MIN             = _p.get("ADX_PIPELINE_MIN")
+STRICT_ROE_MIN               = _p.get("STRICT_ROE_MIN")
+STRICT_DE_MAX                = _p.get("STRICT_DE_MAX")
+SECTOR_5D_TOLERANCE          = _p.get("SECTOR_5D_TOLERANCE")
+SECTOR_HISTORY_CALENDAR_DAYS = _p.get("SECTOR_HISTORY_CALENDAR_DAYS")
 
 # --- Decision support pipeline (Phase 2) ---
-MIN_VOLUME_RATIO = 0.7            # 5-day/20-day avg volume ratio minimum (distribution filter)
-YOY_QUARTERS_NEEDED = 5           # Need at least 5 quarters for YoY comparison
+MIN_VOLUME_RATIO    = _p.get("MIN_VOLUME_RATIO")
+YOY_QUARTERS_NEEDED = _p.get("YOY_QUARTERS_NEEDED")
 
 # --- Decision support pipeline (Phase 3) ---
-VIX_HIGH_THRESHOLD = 20           # VIX above this = elevated fear
-VIX_RSI_TIGHTENING = 5            # Legacy: kept for reference; graduated tiers used instead
+VIX_HIGH_THRESHOLD  = _p.get("VIX_HIGH_THRESHOLD")
+VIX_RSI_TIGHTENING  = _p.get("VIX_RSI_TIGHTENING")
 
 # Graduated VIX response tiers
-VIX_TIER1_THRESHOLD = 20   # VIX 20-25 → mild caution  → tighten RSI by 3
-VIX_TIER2_THRESHOLD = 25   # VIX 25-30 → high fear     → tighten RSI by 7, limit to Gear 1-3
-VIX_TIER3_THRESHOLD = 30   # VIX >30   → extreme fear  → pause automation entirely
-VIX_TIER1_RSI_TIGHTEN = 3
-VIX_TIER2_RSI_TIGHTEN = 7
-NEWS_LOOKBACK_DAYS = 7            # Days of news to fetch
-NEWS_NEGATIVE_THRESHOLD = 2       # AI sentiment score below this = warning
+VIX_TIER1_THRESHOLD  = _p.get("VIX_TIER1_THRESHOLD")
+VIX_TIER2_THRESHOLD  = _p.get("VIX_TIER2_THRESHOLD")
+VIX_TIER3_THRESHOLD  = _p.get("VIX_TIER3_THRESHOLD")
+VIX_TIER1_RSI_TIGHTEN = _p.get("VIX_TIER1_RSI_TIGHTEN")
+VIX_TIER2_RSI_TIGHTEN = _p.get("VIX_TIER2_RSI_TIGHTEN")
+NEWS_LOOKBACK_DAYS      = _p.get("NEWS_LOOKBACK_DAYS")
+NEWS_NEGATIVE_THRESHOLD = _p.get("NEWS_NEGATIVE_THRESHOLD")
 
 # --- Analysis score weights ---
-WEIGHT_RECENCY = 0.25
-WEIGHT_TREND = 0.25
-WEIGHT_FUNDAMENTALS = 0.30
-WEIGHT_AI_SENTIMENT = 0.20
+WEIGHT_RECENCY       = _p.get("WEIGHT_RECENCY")
+WEIGHT_TREND         = _p.get("WEIGHT_TREND")
+WEIGHT_FUNDAMENTALS  = _p.get("WEIGHT_FUNDAMENTALS")
+WEIGHT_AI_SENTIMENT  = _p.get("WEIGHT_AI_SENTIMENT")
 
 # --- Fundamental thresholds ---
-ROE_EXCELLENT = 15
-ROE_GOOD = 10
-ROE_POOR = 5
-DE_LOW = 1.0
-DE_MODERATE = 2.0
-DE_HIGH = 3.0
+ROE_EXCELLENT = _p.get("ROE_EXCELLENT")
+ROE_GOOD      = _p.get("ROE_GOOD")
+ROE_POOR      = _p.get("ROE_POOR")
+DE_LOW        = _p.get("DE_LOW")
+DE_MODERATE   = _p.get("DE_MODERATE")
+DE_HIGH       = _p.get("DE_HIGH")
 
 # --- Simulator ---
-SPREAD_FACTOR = 0.0005       # 0.05% impact cost
-MAX_HISTORY_SECONDS = 600    # 10 minutes of 1-second price snapshots
-DEFAULT_TRAIL_MULTIPLIER = 1.5
-STALL_EXIT_DAYS = 12   # Trading days (not calendar days) without a new high before stall exit
-DEFAULT_INITIAL_CAPITAL = 100_000.0
+SPREAD_FACTOR          = _p.get("SPREAD_FACTOR")
+MAX_HISTORY_SECONDS    = _p.get("MAX_HISTORY_SECONDS")
+DEFAULT_TRAIL_MULTIPLIER = _p.get("DEFAULT_TRAIL_MULTIPLIER")
+STALL_EXIT_DAYS        = _p.get("STALL_EXIT_DAYS")
+DEFAULT_INITIAL_CAPITAL = _p.get("DEFAULT_INITIAL_CAPITAL")
 
 # --- Rate limiting ---
-KITE_API_DELAY = 0.2          # seconds between Kite API calls
-SCREENER_API_DELAY = 1.0      # seconds between screener.in requests
+KITE_API_DELAY    = _p.get("KITE_API_DELAY")
+SCREENER_API_DELAY = _p.get("SCREENER_API_DELAY")
 
-# --- Nifty cache ---
-NIFTY_CACHE_DURATION = 3600   # 1 hour in seconds
-HISTORICAL_DATA_DAYS = 180    # 6 months
-ATR_HISTORICAL_DAYS = 30
+# --- Cache ---
+NIFTY_CACHE_DURATION  = _p.get("NIFTY_CACHE_DURATION")
+HISTORICAL_DATA_DAYS  = _p.get("HISTORICAL_DATA_DAYS")
+ATR_HISTORICAL_DAYS   = _p.get("ATR_HISTORICAL_DAYS")
 
 # --- Relative strength thresholds ---
-RS_STRONG_OUTPERFORM = 5      # percentage points above Nifty
-RS_UNDERPERFORM = -5
+RS_STRONG_OUTPERFORM = _p.get("RS_STRONG_OUTPERFORM")
+RS_UNDERPERFORM      = _p.get("RS_UNDERPERFORM")
 
 # --- ADX thresholds ---
-ADX_STRONG_TREND = 25
-ADX_MODERATE_TREND = 20
+ADX_STRONG_TREND   = _p.get("ADX_STRONG_TREND")
+ADX_MODERATE_TREND = _p.get("ADX_MODERATE_TREND")
 
 # --- Historical data column mapping (Kite -> standard) ---
-KITE_COLUMN_MAP = {
-    'open': 'Open',
-    'high': 'High',
-    'low': 'Low',
-    'close': 'Close',
-    'volume': 'Volume',
-}
+KITE_COLUMN_MAP = _p.section("kite_column_map")
 
-# --- LLM provider constants ---
+# --- LLM provider constants (non-YAML — string literals are fine) ---
 LLM_PROVIDER_CLAUDE = "claude"
 LLM_PROVIDER_OPENAI = "openai"
 
 # --- Claude model & extended thinking budgets ---
-CLAUDE_MODEL_DEFAULT              = "claude-sonnet-4-6"
-CLAUDE_SYNTHESIS_THINKING_BUDGET  = 5000   # synthesizer: reconcile 3 conflicting signals
-CLAUDE_CONVICTION_THINKING_BUDGET = 10000  # conviction engine: rank 5-20 stocks simultaneously
+CLAUDE_MODEL_DEFAULT              = _p.get("CLAUDE_MODEL_DEFAULT")
+CLAUDE_SYNTHESIS_THINKING_BUDGET  = _p.get("CLAUDE_SYNTHESIS_THINKING_BUDGET")
+CLAUDE_CONVICTION_THINKING_BUDGET = _p.get("CLAUDE_CONVICTION_THINKING_BUDGET")
 
 # --- Sell analysis thresholds ---
-SELL_RSI_OVERBOUGHT = 70           # RSI above this → overbought signal
-SELL_RSI_MOMENTUM_FAILED = 40      # RSI below this after being above 50 → momentum reversal
-SELL_ADX_WEAK = 20                 # ADX below this + falling = trend breakdown
-SELL_RS_NIFTY_GAP = -10.0         # 3M return vs Nifty below this → relative weakness
-SELL_RS_SECTOR_GAP = -10.0        # 3M return vs sector below this → sector laggard
-SELL_PROFIT_DECLINE_QUARTERS = 2   # consecutive declining quarters triggers flag
-SELL_ROE_WEAK = 10.0              # ROE below this → fundamental red flag
-SELL_ROE_MODERATE = 15.0          # ROE below this → minor flag
-SELL_DE_HIGH = 3.0                # D/E above this → high debt flag
-SELL_PNL_LOSS_THRESHOLD = -15.0   # unrealized P&L% below this → position health flag
-SELL_PNL_DEEP_LOSS_THRESHOLD = -25.0  # deep loss threshold
+SELL_RSI_OVERBOUGHT           = _p.get("SELL_RSI_OVERBOUGHT")
+SELL_RSI_MOMENTUM_FAILED      = _p.get("SELL_RSI_MOMENTUM_FAILED")
+SELL_ADX_WEAK                 = _p.get("SELL_ADX_WEAK")
+SELL_RS_NIFTY_GAP             = _p.get("SELL_RS_NIFTY_GAP")
+SELL_RS_SECTOR_GAP            = _p.get("SELL_RS_SECTOR_GAP")
+SELL_PROFIT_DECLINE_QUARTERS  = _p.get("SELL_PROFIT_DECLINE_QUARTERS")
+SELL_ROE_WEAK                 = _p.get("SELL_ROE_WEAK")
+SELL_ROE_MODERATE             = _p.get("SELL_ROE_MODERATE")
+SELL_DE_HIGH                  = _p.get("SELL_DE_HIGH")
+SELL_PNL_LOSS_THRESHOLD       = _p.get("SELL_PNL_LOSS_THRESHOLD")
+SELL_PNL_DEEP_LOSS_THRESHOLD  = _p.get("SELL_PNL_DEEP_LOSS_THRESHOLD")
 
 # --- Position sizing ---
-RISK_PER_TRADE_PCT = 0.01      # Risk 1% of capital per trade
-MAX_POSITION_PCT = 0.25        # Single position cannot exceed 25% of capital
+RISK_PER_TRADE_PCT = _p.get("RISK_PER_TRADE_PCT")
+MAX_POSITION_PCT   = _p.get("MAX_POSITION_PCT")
 
 # --- Automation sell integration ---
-AUTO_SELL_URGENCY_THRESHOLD = 70   # Sell urgency score >= this triggers auto-close in automation
+AUTO_SELL_URGENCY_THRESHOLD = _p.get("AUTO_SELL_URGENCY_THRESHOLD")
 
 # --- Drawdown protection ---
-MAX_DRAWDOWN_PCT = 0.20    # Pause automation if equity is down >20% from initial capital
+MAX_DRAWDOWN_PCT = _p.get("MAX_DRAWDOWN_PCT")
 
 # --- Trailing stop profit tightening ---
-TRAIL_TIGHTEN_PROFIT_ATR = 2.0   # Once unrealized profit >= N × ATR, tighten the trail
-TRAIL_TIGHTEN_FACTOR = 0.75      # Multiply the trail_multiplier by this factor when tightening
+TRAIL_TIGHTEN_PROFIT_ATR = _p.get("TRAIL_TIGHTEN_PROFIT_ATR")
+TRAIL_TIGHTEN_FACTOR     = _p.get("TRAIL_TIGHTEN_FACTOR")
 
 # --- Sell urgency score bands ---
-SELL_URGENCY_STRONG = 70   # Score >= this → STRONG SELL
-SELL_URGENCY_SELL = 40     # Score >= this → SELL
-SELL_URGENCY_WATCH = 20    # Score >= this → WATCH
-                           # Score < 20 → HOLD
+SELL_URGENCY_STRONG = _p.get("SELL_URGENCY_STRONG")
+SELL_URGENCY_SELL   = _p.get("SELL_URGENCY_SELL")
+SELL_URGENCY_WATCH  = _p.get("SELL_URGENCY_WATCH")
 
 # --- Unified Stock Audit: health score weights (sum = 10.0) ---
-AUDIT_WEIGHT_TECHNICAL    = 3.0   # RSI, ADX, EMA alignment, volume
-AUDIT_WEIGHT_FUNDAMENTAL  = 2.5   # ROE, D/E, profit trend
-AUDIT_WEIGHT_RS           = 2.0   # 3M relative strength vs Nifty + sector
-AUDIT_WEIGHT_NEWS         = 1.5   # AI-analyzed news sentiment
-AUDIT_WEIGHT_POSITION     = 1.0   # Current unrealized P&L health
+AUDIT_WEIGHT_TECHNICAL   = _p.get("AUDIT_WEIGHT_TECHNICAL")
+AUDIT_WEIGHT_FUNDAMENTAL = _p.get("AUDIT_WEIGHT_FUNDAMENTAL")
+AUDIT_WEIGHT_RS          = _p.get("AUDIT_WEIGHT_RS")
+AUDIT_WEIGHT_NEWS        = _p.get("AUDIT_WEIGHT_NEWS")
+AUDIT_WEIGHT_POSITION    = _p.get("AUDIT_WEIGHT_POSITION")
 
 # --- Audit health label thresholds ---
-AUDIT_HEALTHY  = 7.0   # Score >= this → HEALTHY
-AUDIT_STABLE   = 5.0   # Score >= this → STABLE
-AUDIT_WATCH    = 3.0   # Score >= this → WATCH
-               # Score < 3.0 → CRITICAL
+AUDIT_HEALTHY = _p.get("AUDIT_HEALTHY")
+AUDIT_STABLE  = _p.get("AUDIT_STABLE")
+AUDIT_WATCH   = _p.get("AUDIT_WATCH")
 
 # --- Claude thinking budget for audit AI enrichment ---
-AUDIT_AI_THINKING_BUDGET = 10000
+AUDIT_AI_THINKING_BUDGET = _p.get("AUDIT_AI_THINKING_BUDGET")
 
 # --- Live trading risk controls ---
-LIVE_MAX_POSITION_SIZE = 0.20      # Single position cannot exceed 20% of equity
-LIVE_MAX_DAILY_LOSS = 0.05         # Halt if daily realized loss > 5% of equity
-LIVE_MAX_OPEN_POSITIONS = 10       # Maximum concurrent live positions
-LIVE_MAX_ORDER_VALUE = 500_000     # Single order cap: ₹5 lakhs
+LIVE_MAX_POSITION_SIZE   = _p.get("LIVE_MAX_POSITION_SIZE")
+LIVE_MAX_DAILY_LOSS      = _p.get("LIVE_MAX_DAILY_LOSS")
+LIVE_MAX_OPEN_POSITIONS  = _p.get("LIVE_MAX_OPEN_POSITIONS")
+LIVE_MAX_ORDER_VALUE     = _p.get("LIVE_MAX_ORDER_VALUE")
 
 # --- Sell pipeline data settings ---
-SELL_HISTORICAL_DAYS = 400         # Days of OHLCV to fetch for sell analysis (enough for EMA-200)
-SELL_MOMENTUM_LOOKBACK = 10        # Days to look back for RSI momentum failure detection
-SELL_VOLUME_DRY_RATIO = 0.60       # 5d/20d volume ratio below this = volume drying up (distribution signal)
+SELL_HISTORICAL_DAYS    = _p.get("SELL_HISTORICAL_DAYS")
+SELL_MOMENTUM_LOOKBACK  = _p.get("SELL_MOMENTUM_LOOKBACK")
+SELL_VOLUME_DRY_RATIO   = _p.get("SELL_VOLUME_DRY_RATIO")

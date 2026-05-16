@@ -1,63 +1,23 @@
-"""Default strategy parameters for the Decision Support pipeline.
+"""Strategy gear profiles loaded from YAML config.
 
-These values are used when the user doesn't override them via the UI.
+Values live in backend/config/analysis_params.yaml → strategy_gears.
+All existing imports (`from agents.decision_support.strategy_config import STRATEGY_GEARS`) work unchanged.
 """
 
-# RSI Configuration
-DEFAULT_RSI_PERIOD = 14
-DEFAULT_RSI_BUY_LIMIT = 30       # Buy signal if RSI < this value (pullback)
+from services.params import params as _p
 
-# EMA Configuration
-DEFAULT_EMA_PERIOD = 200         # Trend filter: price must be above this EMA
+_gears_cfg = _p.all_gears()
 
-# Volume / Turnover Configuration
-DEFAULT_MIN_TURNOVER = 50_000_000  # 5 Crores (50M) minimum 20-day avg turnover
-
-# ---------------------------------------------------------------------------
-# Strategy Gears — preset profiles selected via the UI slider (1–5)
-# ---------------------------------------------------------------------------
-
-STRATEGY_GEARS = {
-    1: {
-        "label": "Fortress",
-        "universe": "nifty100",
-        "min_turnover": 500_000_000,      # 50 Cr (High Liquidity)
-        "rsi_buy_limit": 30,              # Buy only Deep Dips
-        "fundamental_check": "strict",
-        "atr_stop_loss_multiplier": 2.0,
-    },
-    2: {
-        "label": "Cautious",
-        "universe": "nifty100",
-        "min_turnover": 100_000_000,      # 10 Cr
-        "rsi_buy_limit": 35,
-        "fundamental_check": "standard",
-        "atr_stop_loss_multiplier": 1.75,
-    },
-    3: {
-        "label": "Balanced",
-        "universe": "nifty500",
-        "min_turnover": 50_000_000,       # 5 Cr
-        "rsi_buy_limit": 40,
-        "fundamental_check": "standard",
-        "atr_stop_loss_multiplier": 1.5,
-    },
-    4: {
-        "label": "Growth",
-        "universe": "nifty_midcap150",
-        "min_turnover": 20_000_000,       # 2 Cr (Allow smaller names)
-        "rsi_buy_limit": 50,              # Buy shallow dips
-        "fundamental_check": "loose",
-        "atr_stop_loss_multiplier": 1.25,
-    },
-    5: {
-        "label": "Turbo",
-        "universe": "nifty_smallcap250",
-        "min_turnover": 5_000_000,        # 50 Lakhs (Wild West)
-        "rsi_buy_limit": 60,              # Buy Breakouts (Momentum)
-        "fundamental_check": "none",
-        "atr_stop_loss_multiplier": 1.0,
-    },
+# Build STRATEGY_GEARS with integer keys to match the original API
+STRATEGY_GEARS: dict[int, dict] = {
+    int(gear_num): dict(gear_data)
+    for gear_num, gear_data in _gears_cfg.get("gears", {}).items()
 }
 
-DEFAULT_GEAR = 3
+DEFAULT_GEAR: int = int(_gears_cfg.get("default_gear", 3))
+
+# Legacy exports used by tools.py — backed by YAML values
+DEFAULT_RSI_PERIOD   = _p.get("RSI_PERIOD")
+DEFAULT_RSI_BUY_LIMIT = _p.get("RSI_BUY_LIMIT")
+DEFAULT_EMA_PERIOD   = _p.get("EMA_TREND")
+DEFAULT_MIN_TURNOVER = _p.get("MIN_TURNOVER")

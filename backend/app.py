@@ -81,6 +81,17 @@ def create_app(testing=False):
     def attach_request_context():
         g.request_id = request.headers.get("X-Request-ID") or str(uuid.uuid4())[:8]
         g.request_start = time.monotonic()
+        g._db_conn = None  # slot for a request-scoped connection if needed
+
+    # --- DB connection teardown safety net ---
+    @app.teardown_request
+    def close_db_connection(exc):
+        conn = g.pop("_db_conn", None)
+        if conn is not None:
+            try:
+                conn.close()
+            except Exception:
+                pass
 
     # --- Security headers + request duration + request ID propagation ---
     @app.after_request

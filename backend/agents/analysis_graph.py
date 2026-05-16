@@ -53,6 +53,8 @@ def _synthesizer_node(state: AnalysisState) -> dict:
             pipeline="analysis",
         )
 
+        from services.params import prompts as _prompts
+
         conflict_instruction = ""
         if conflict_detected:
             conflict_instruction = (
@@ -65,22 +67,17 @@ def _synthesizer_node(state: AnalysisState) -> dict:
         if news_risk_flags:
             risk_flags_str = f"\nNews risk flags from sentiment agent: {', '.join(news_risk_flags)}"
 
-        prompt = (
-            f"You are a senior investment analyst. Three specialist agents have analyzed {symbol}:{conflict_instruction}\n\n"
-            f"**Quantitative Analyst** (Technical/Momentum): {stats['score']}/5\n{stats['explanation']}\n\n"
-            f"**Fundamentals Analyst** (Balance Sheet): {health['score']}/5\n{health['explanation']}\n\n"
-            f"**News Sentinel** (Sentiment/Events): {news['score']}/5\n{news['explanation']}"
-            f"{risk_flags_str}\n\n"
-            "Synthesize all three signals and return a JSON object with exactly these keys:\n\n"
-            "{\n"
-            '  "overall_score": <float 1.0-5.0, one decimal>,\n'
-            '  "verdict": "<action> — <1-2 sentence reasoning>",\n'
-            '  "risk_factors": ["<most important downside risk>", "<second risk>"],\n'
-            '  "conflict_summary": "<explanation of why one signal dominates, or null if agents agree>",\n'
-            '  "confidence": "high" | "medium" | "low"\n'
-            "}\n\n"
-            "Actions: Strong Buy, Buy, Accumulate, Hold, Reduce, Exit\n\n"
-            "Return ONLY the JSON object, no additional text or markdown."
+        prompt = _prompts.render(
+            "synthesizer",
+            symbol=symbol,
+            conflict_instruction=conflict_instruction,
+            stats_score=stats["score"],
+            stats_explanation=stats["explanation"],
+            health_score=health["score"],
+            health_explanation=health["explanation"],
+            news_score=news["score"],
+            news_explanation=news["explanation"],
+            risk_flags_str=risk_flags_str,
         )
 
         response = llm.invoke(prompt)

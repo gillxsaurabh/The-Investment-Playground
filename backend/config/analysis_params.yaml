@@ -1,0 +1,269 @@
+# CogniCap Analysis Parameters
+# Edit values here and restart the backend for changes to take effect.
+# Full inventory: admin_panel_inventory.md
+# All 126 analysis params live here (117 numerical) + non-analysis constants from constants.py
+
+# ---------------------------------------------------------------------------
+# 1. Technical Indicator Periods
+# ---------------------------------------------------------------------------
+technical_periods:
+  ADX_PERIOD: 14
+  EMA_SHORT: 20
+  EMA_LONG: 50
+  EMA_TREND: 200
+  RSI_PERIOD: 14
+  ATR_PERIOD: 14
+
+# ---------------------------------------------------------------------------
+# 2. Buy Pipeline Filter Thresholds
+# ---------------------------------------------------------------------------
+buy_pipeline:
+  RSI_BUY_LIMIT: 30
+  MIN_TURNOVER: 50000000            # 5 Crores — default when no gear override
+  ADX_PIPELINE_MIN: 20              # Min ADX for trend confirmation
+  STRICT_ROE_MIN: 15.0              # Min ROE % under Gear 1 strict mode
+  STRICT_DE_MAX: 1.0                # Max D/E under Gear 1 strict mode
+  SECTOR_5D_TOLERANCE: -0.5         # Allow sector 5-day change down to this %
+  SECTOR_HISTORY_CALENDAR_DAYS: 15  # Sector data lookback window (calendar days)
+  MIN_VOLUME_RATIO: 0.7             # 5d/20d volume ratio floor (distribution check)
+  YOY_QUARTERS_NEEDED: 5            # Min quarters for YoY profit comparison
+
+# ---------------------------------------------------------------------------
+# 3. Composite Scoring Weights (must sum to 1.0)
+# ---------------------------------------------------------------------------
+composite_weights:
+  WEIGHT_RECENCY: 0.25       # 3M relative strength vs Nifty
+  WEIGHT_TREND: 0.25         # ADX + EMA alignment
+  WEIGHT_FUNDAMENTALS: 0.30  # Profit growth & ROE
+  WEIGHT_AI_SENTIMENT: 0.20  # News sentiment from Claude
+
+# ---------------------------------------------------------------------------
+# 4. Final Ranking Weights — Agent 6 (must sum to 1.0)
+# ---------------------------------------------------------------------------
+ranking_weights:
+  RANK_WEIGHT_AI_CONVICTION: 0.35  # AI model's 1-10 conviction score
+  RANK_WEIGHT_COMPOSITE: 0.25      # Stage-5 composite 0-100
+  RANK_WEIGHT_RS: 0.15             # 3M stock return vs Nifty
+  RANK_WEIGHT_FUNDAMENTAL: 0.15    # ROE + D/E + profit growth
+  RANK_WEIGHT_SECTOR: 0.10         # Sector 5d performance
+
+# ---------------------------------------------------------------------------
+# 5. Market Regime — VIX Tiers
+# ---------------------------------------------------------------------------
+vix_regime:
+  VIX_HIGH_THRESHOLD: 20       # Legacy — kept for reference
+  VIX_RSI_TIGHTENING: 5        # Legacy — graduated tiers used instead
+  VIX_TIER1_THRESHOLD: 20      # Tier 1: mild caution
+  VIX_TIER2_THRESHOLD: 25      # Tier 2: high fear → restrict aggressive gears
+  VIX_TIER3_THRESHOLD: 30      # Tier 3: extreme fear → pause automation
+  VIX_TIER1_RSI_TIGHTEN: 3     # Raise RSI buy limit by this in Tier 1
+  VIX_TIER2_RSI_TIGHTEN: 7     # Raise RSI buy limit by this in Tier 2
+
+# ---------------------------------------------------------------------------
+# 6. News Sentiment
+# ---------------------------------------------------------------------------
+news:
+  NEWS_LOOKBACK_DAYS: 7         # News fetch window per stock
+  NEWS_NEGATIVE_THRESHOLD: 2    # AI sentiment score < this triggers warning
+
+# ---------------------------------------------------------------------------
+# 7. Fundamental Quality Tiers
+# ---------------------------------------------------------------------------
+fundamentals:
+  ROE_EXCELLENT: 15   # Excellent capital efficiency (%)
+  ROE_GOOD: 10        # Good returns (%)
+  ROE_POOR: 5         # Below-average (%)
+  DE_LOW: 1.0         # Conservative leverage
+  DE_MODERATE: 2.0    # Moderate leverage
+  DE_HIGH: 3.0        # High leverage risk
+
+# ---------------------------------------------------------------------------
+# 8. Relative Strength Thresholds
+# ---------------------------------------------------------------------------
+relative_strength:
+  RS_STRONG_OUTPERFORM: 5    # Outperformance buffer vs Nifty (%)
+  RS_UNDERPERFORM: -5        # Underperformance threshold (%)
+  ADX_STRONG_TREND: 25       # ADX confirming strong trend
+  ADX_MODERATE_TREND: 20     # ADX confirming moderate trend
+
+# ---------------------------------------------------------------------------
+# 9. Sell Pipeline Trigger Thresholds
+# ---------------------------------------------------------------------------
+sell_triggers:
+  SELL_RSI_OVERBOUGHT: 70           # RSI above this = profit-taking signal
+  SELL_RSI_MOMENTUM_FAILED: 40      # RSI below this after being above 50 = reversal
+  SELL_ADX_WEAK: 20                 # ADX below this + falling = trend breakdown
+  SELL_RS_NIFTY_GAP: -10.0          # 3M return vs Nifty < this = laggard (%)
+  SELL_RS_SECTOR_GAP: -10.0         # 3M return vs sector < this = sector laggard (%)
+  SELL_PROFIT_DECLINE_QUARTERS: 2   # Consecutive declining quarters → flag
+  SELL_ROE_WEAK: 10.0               # ROE below this = red flag (%)
+  SELL_ROE_MODERATE: 15.0           # ROE below this = minor flag (%)
+  SELL_DE_HIGH: 3.0                 # D/E above this = high debt flag
+  SELL_PNL_LOSS_THRESHOLD: -15.0    # Unrealized P&L below this triggers SL review (%)
+  SELL_PNL_DEEP_LOSS_THRESHOLD: -25.0  # Deep loss threshold (%)
+  SELL_HISTORICAL_DAYS: 400         # Days of OHLCV to fetch for sell analysis
+  SELL_MOMENTUM_LOOKBACK: 10        # Days window for RSI momentum failure detection
+  SELL_VOLUME_DRY_RATIO: 0.60       # 5d/20d volume below this = volume dry-up
+
+# ---------------------------------------------------------------------------
+# 10. Sell Urgency Scoring Points (per signal)
+# Each value = points added to 0-100 urgency score when that signal fires.
+# ---------------------------------------------------------------------------
+sell_urgency_points:
+  # Technical breakdown signals (section max ~56)
+  technical:
+    price_below_ema200: 15         # Long-term trend broken
+    rsi_overbought: 10             # Profit-taking signal
+    rsi_momentum_failed: 8         # RSI below 40 after being >50
+    adx_weak: 7                    # ADX < threshold + falling
+    price_below_ema50: 5           # Intermediate trend lost
+    price_below_ema20: 3           # Short-term trend weak
+    volume_drying_near_highs: 8    # 5d/20d ratio < dry threshold near highs
+    volume_low: 4                  # Low volume (not near highs variant)
+
+  # Relative weakness signals (section max 25)
+  relative_weakness:
+    nifty_underperform_large: 12   # Nifty gap <= SELL_RS_NIFTY_GAP
+    nifty_underperform_mid: 7      # Nifty gap <= -5%
+    nifty_underperform_small: 4    # Nifty gap <= -2%
+    sector_underperform_large: 13  # Sector gap <= SELL_RS_SECTOR_GAP
+    sector_underperform_mid: 8     # Sector gap <= -5%
+
+  # Fundamental flags (section max 25)
+  fundamental:
+    profit_declining_consecutive: 15  # N+ consecutive quarters declining
+    profit_declining_qoq: 7           # QoQ profit decline
+    profit_declining_yoy: 10          # YoY profit decline
+    roe_weak: 8                        # ROE below weak threshold
+    roe_moderate: 4                    # ROE between weak and moderate thresholds
+    de_high: 7                         # D/E above high threshold
+
+  # Position health (section max 20)
+  position_health:
+    deep_loss: 20     # P&L < SELL_PNL_DEEP_LOSS_THRESHOLD
+    loss: 14          # P&L < SELL_PNL_LOSS_THRESHOLD
+    moderate_loss: 8  # P&L between -5% and SELL_PNL_LOSS_THRESHOLD
+    minor_loss: 4     # P&L between -2% and -5%
+
+# ---------------------------------------------------------------------------
+# 11. Sell Urgency Score Bands
+# ---------------------------------------------------------------------------
+sell_urgency_bands:
+  SELL_URGENCY_STRONG: 70  # Score >= this → STRONG SELL
+  SELL_URGENCY_SELL: 40    # Score >= this → SELL
+  SELL_URGENCY_WATCH: 20   # Score >= this → WATCH
+                            # Score < 20 → HOLD
+
+# ---------------------------------------------------------------------------
+# 12. Dashboard Health Score Weights (sum to 10.0)
+# ---------------------------------------------------------------------------
+audit_weights:
+  AUDIT_WEIGHT_TECHNICAL: 3.0    # RSI, ADX, EMA alignment, volume
+  AUDIT_WEIGHT_FUNDAMENTAL: 2.5  # ROE, D/E, profit trend
+  AUDIT_WEIGHT_RS: 2.0           # 3M relative strength vs Nifty + sector
+  AUDIT_WEIGHT_NEWS: 1.5         # AI-analyzed news sentiment
+  AUDIT_WEIGHT_POSITION: 1.0     # Current unrealized P&L health
+
+# ---------------------------------------------------------------------------
+# 13. Dashboard Health Score Bands
+# ---------------------------------------------------------------------------
+audit_bands:
+  AUDIT_HEALTHY: 7.0  # Score >= this → HEALTHY (Hold / accumulate)
+  AUDIT_STABLE: 5.0   # Score >= this → STABLE (Monitor)
+  AUDIT_WATCH: 3.0    # Score >= this → WATCH (Review position)
+                      # Score < 3.0 → CRITICAL (Consider exit)
+
+# ---------------------------------------------------------------------------
+# 14. LLM Model + Thinking Budgets
+# ---------------------------------------------------------------------------
+llm:
+  CLAUDE_MODEL_DEFAULT: "claude-sonnet-4-6"
+  CLAUDE_SYNTHESIS_THINKING_BUDGET: 5000    # Synthesizer: reconcile 3 conflicting signals
+  CLAUDE_CONVICTION_THINKING_BUDGET: 10000  # Conviction engine: rank 5-20 stocks
+  AUDIT_AI_THINKING_BUDGET: 10000           # Audit dashboard AI enrichment
+
+# ---------------------------------------------------------------------------
+# 15. Buy Strategy Gears (5 preset profiles)
+# ---------------------------------------------------------------------------
+strategy_gears:
+  default_gear: 3
+  gears:
+    1:
+      label: "Fortress"
+      universe: "nifty100"
+      min_turnover: 500000000    # 50 Cr (High Liquidity)
+      rsi_buy_limit: 30          # Buy only deep dips
+      fundamental_check: "strict"
+      atr_stop_loss_multiplier: 2.0
+    2:
+      label: "Cautious"
+      universe: "nifty100"
+      min_turnover: 100000000    # 10 Cr
+      rsi_buy_limit: 35
+      fundamental_check: "standard"
+      atr_stop_loss_multiplier: 1.75
+    3:
+      label: "Balanced"
+      universe: "nifty500"
+      min_turnover: 50000000     # 5 Cr
+      rsi_buy_limit: 40
+      fundamental_check: "standard"
+      atr_stop_loss_multiplier: 1.5
+    4:
+      label: "Growth"
+      universe: "nifty_midcap150"
+      min_turnover: 20000000     # 2 Cr
+      rsi_buy_limit: 50          # Buy shallow dips
+      fundamental_check: "loose"
+      atr_stop_loss_multiplier: 1.25
+    5:
+      label: "Turbo"
+      universe: "nifty_smallcap250"
+      min_turnover: 5000000      # 50 Lakhs
+      rsi_buy_limit: 60          # Buy breakouts (momentum)
+      fundamental_check: "none"
+      atr_stop_loss_multiplier: 1.0
+
+# ---------------------------------------------------------------------------
+# Non-analysis constants (also externalized for completeness)
+# ---------------------------------------------------------------------------
+simulator:
+  SPREAD_FACTOR: 0.0005          # 0.05% impact cost
+  MAX_HISTORY_SECONDS: 600       # 10 min of 1-second price snapshots
+  DEFAULT_TRAIL_MULTIPLIER: 1.5
+  STALL_EXIT_DAYS: 12            # Trading days without new high before stall exit
+  DEFAULT_INITIAL_CAPITAL: 100000.0
+
+rate_limits:
+  KITE_API_DELAY: 0.2            # Seconds between Kite API calls
+  SCREENER_API_DELAY: 1.0        # Seconds between screener.in requests
+
+cache:
+  NIFTY_CACHE_DURATION: 3600     # 1 hour
+  HISTORICAL_DATA_DAYS: 180      # 6 months
+  ATR_HISTORICAL_DAYS: 30
+
+position_sizing:
+  RISK_PER_TRADE_PCT: 0.01       # Risk 1% of capital per trade
+  MAX_POSITION_PCT: 0.25         # Single position cannot exceed 25%
+
+automation:
+  AUTO_SELL_URGENCY_THRESHOLD: 70  # Sell urgency >= this triggers auto-close
+  MAX_DRAWDOWN_PCT: 0.20           # Pause automation if down >20% from initial
+
+trailing:
+  TRAIL_TIGHTEN_PROFIT_ATR: 2.0   # Once profit >= N × ATR, tighten trail
+  TRAIL_TIGHTEN_FACTOR: 0.75      # Multiply trail_multiplier by this
+
+live_trading:
+  LIVE_MAX_POSITION_SIZE: 0.20    # Single position cannot exceed 20% of equity
+  LIVE_MAX_DAILY_LOSS: 0.05       # Halt if daily realized loss > 5%
+  LIVE_MAX_OPEN_POSITIONS: 10     # Maximum concurrent live positions
+  LIVE_MAX_ORDER_VALUE: 500000    # Single order cap: ₹5 lakhs
+
+kite_column_map:
+  open: "Open"
+  high: "High"
+  low: "Low"
+  close: "Close"
+  volume: "Volume"

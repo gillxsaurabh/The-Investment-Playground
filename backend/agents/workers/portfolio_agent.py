@@ -10,15 +10,9 @@ TOOLS = [
     get_market_indices,
 ]
 
-SYSTEM_PROMPT = (
-    "You are a portfolio analysis assistant for CogniCap, "
-    "a trading portfolio dashboard connected to Zerodha Kite.\n\n"
-    "You have access to the user's live portfolio data and analysis tools. "
-    "When answering questions about holdings, P&L, or stock health, "
-    "use the available tools to fetch real data rather than guessing.\n\n"
-    "Always provide specific numbers when available. "
-    "Format currency values in INR (₹)."
-)
+from services.params import prompts as _prompts
+
+SYSTEM_PROMPT = _prompts.get("portfolio_chat")
 
 # Self-register on import
 register_agent(

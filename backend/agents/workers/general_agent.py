@@ -1,12 +1,7 @@
 from agents.registry import register_agent
+from services.params import prompts as _prompts
 
-SYSTEM_PROMPT = (
-    "You are CogniCap's general assistant. You help with "
-    "general trading knowledge, market concepts, and financial education.\n\n"
-    "You do not have access to the user's portfolio data. "
-    "If the user asks about their specific holdings or portfolio, "
-    "let them know you'll route their question to the portfolio specialist."
-)
+SYSTEM_PROMPT = _prompts.get("general_chat")
 
 # Self-register on import
 register_agent(

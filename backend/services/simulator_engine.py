@@ -66,19 +66,26 @@ class PaperTradingSimulator(TradingEngine):
         atomic_json_write(self.data_file, self._data, indent=2, default=str)
 
     def _load_price_history(self):
-        """Load price history from file, pruning entries older than 1 hour."""
+        """Load price history from file, pruning stale entries and flushing immediately."""
         self._price_history = locked_json_read(self.history_file, default=[])
+        before = len(self._price_history)
         self._prune_history()
+        if len(self._price_history) < before:
+            # Persist the pruned view so the file doesn't grow unboundedly across restarts
+            self._save_price_history()
 
     def _save_price_history(self):
         atomic_json_write(self.history_file, self._price_history, default=str)
 
     def _prune_history(self):
-        """Remove snapshots older than MAX_HISTORY_SECONDS."""
+        """Remove snapshots older than MAX_HISTORY_SECONDS and cap total entries."""
         cutoff = (datetime.now() - timedelta(seconds=MAX_HISTORY_SECONDS)).strftime(
             "%Y-%m-%d %H:%M:%S"
         )
         self._price_history = [s for s in self._price_history if s["time"] >= cutoff]
+        # Hard cap: keep only the most recent 1000 entries regardless of time window
+        if len(self._price_history) > 1000:
+            self._price_history = self._price_history[-1000:]
 
     def record_price_snapshot(self, ltps=None):
         """Record current normalized % values for all active positions.

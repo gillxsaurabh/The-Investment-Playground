@@ -1,0 +1,240 @@
+# CogniCap LLM Prompt Templates
+# Edit prompt text here and restart the backend for changes to take effect.
+# Variables are {curly_brace} placeholders substituted at runtime.
+# Literal braces in JSON examples must be escaped as {{ and }}.
+# provider and extended_thinking fields are metadata only (informational).
+
+# ---------------------------------------------------------------------------
+# BUY PIPELINE PROMPTS
+# ---------------------------------------------------------------------------
+
+ai_conviction_engine:
+  provider: claude
+  extended_thinking: true
+  thinking_budget_key: CLAUDE_CONVICTION_THINKING_BUDGET
+  vix_warning_note: |
+
+    CAUTION: VIX={vix} is elevated (>20). Penalize high-beta stocks and downgrade momentum setups. Favor defensive names and pullback entries over breakouts.
+  template: |
+    You are a senior trading analyst evaluating Indian NSE stocks that passed a 4-stage screening pipeline.
+
+    Market Context:
+    - India VIX: {vix} (Regime: {regime}){vix_note}
+    - {len_stocks} stocks survived from the pipeline
+
+    Stock Data:
+    {stock_data_lines}
+
+    For EACH stock provide a JSON object with these exact keys:
+    {{
+      "symbol": "<symbol>",
+      "conviction_score": <integer 1-10, 10=highest conviction>,
+      "reason": "<one sentence max 25 words explaining the trade opportunity>",
+      "primary_risk": "<single biggest bear case — the one thing that could make this trade fail>",
+      "trade_type": "pullback_entry" | "momentum_breakout" | "accumulate_dip",
+      "news_sentiment": <integer 1-5>,
+      "news_flag": "warning" | "clear"
+    }}
+
+    Consider: technical setup quality, fundamental strength, news, sector momentum, market regime (VIX), and entry quality.
+
+    Return ONLY a JSON array of these objects, no markdown, no extra text.
+
+portfolio_ranker:
+  provider: openai
+  extended_thinking: false
+  template: |
+    You are a portfolio analyst. These stocks are ranked by a multi-factor formula
+    (AI conviction 35%, composite 25%, relative strength 15%, fundamentals 15%, sector momentum 10%).
+
+    Portfolio sector distribution: {sector_distribution}
+
+    For each stock provide a JSON object with:
+    {{
+      "symbol": "<symbol>",
+      "rank_reason": "<1 sentence max 25 words: why this rank, citing 2-3 strongest signals>",
+      "portfolio_note": "diversified" | "sector_concentration_risk" | "correlated_with_rank_1"
+    }}
+
+    portfolio_note rules:
+    - sector_concentration_risk: if this stock's sector appears 3+ times in the portfolio
+    - correlated_with_rank_1: if this stock's sector matches rank #1's sector AND it's not rank #1
+    - diversified: otherwise
+
+    {summary_lines}
+
+    Return ONLY a JSON array of these objects, no markdown, no extra text.
+
+# ---------------------------------------------------------------------------
+# SELL PIPELINE PROMPTS
+# ---------------------------------------------------------------------------
+
+sell_signal_engine:
+  provider: claude
+  extended_thinking: true
+  thinking_budget_key: CLAUDE_CONVICTION_THINKING_BUDGET
+  template: |
+    You are a senior portfolio risk analyst reviewing a user's Indian NSE stock holdings for potential exits.
+
+    Market Context:
+    - India VIX: {vix} (Regime: {regime})
+    - {len_holdings} portfolio holdings being reviewed
+
+    Holdings Data (sorted by algorithmic sell urgency):
+    {holding_lines}
+
+    For EACH holding, provide a JSON object with these exact keys:
+    {{
+      "symbol": "<symbol>",
+      "sell_conviction": <integer 1-10, where 10=strongest sell signal, 1=should definitely hold>,
+      "sell_reason": "<one sentence max 25 words explaining why to exit this position>",
+      "hold_reason": "<one sentence max 20 words — the bull case for staying in>",
+      "news_sentiment": <integer 1-5, 1=very negative, 3=neutral, 5=very positive>,
+      "news_flag": "warning" | "clear"
+    }}
+
+    Consider: technical signals, fundamental trends, news, sector momentum, P&L position, and market regime.
+    A holding with a high algorithmic urgency score should generally receive a higher sell_conviction.
+
+    Return ONLY a JSON array of these objects, no markdown, no extra text.
+
+# ---------------------------------------------------------------------------
+# DASHBOARD SCATTER-GATHER PROMPTS
+# ---------------------------------------------------------------------------
+
+quantitative_analyst:
+  provider: claude
+  extended_thinking: false
+  template: |
+    You are a technical analysis expert specializing in Indian equity markets.
+
+    Given these technical results for {symbol}:
+
+    - Recency (Relative Strength vs Nifty 50, last 90 days): {recency_score}/5 — {recency_detail}
+    - Trend (ADX + EMA crossover): {trend_score}/5 — Strength: {trend_strength}, Direction: {trend_direction}
+    - Combined stats score: {stats_score}/5
+
+    Write 2-3 sentences covering: (1) what the momentum and trend data tell you, (2) the entry implication — is now a good time to enter or wait, (3) the primary technical risk if the setup fails. Be specific with numbers.
+
+fundamentals_analyst:
+  provider: claude
+  extended_thinking: false
+  template: |
+    You are a fundamental analysis expert specializing in Indian listed companies.
+
+    Given these data points for {symbol} from screener.in/company/{symbol}/consolidated/:
+
+    - ROE (Return on Equity): {roe_str}
+    - Debt/Equity ratio: {de_str}
+    - Sales Growth: {sg_str}
+    - Computed fundamental score: {score}/5
+
+    Write 2-3 sentences covering: (1) whether the balance sheet quality is good, average, or poor with specific thresholds (ROE>15%, D/E<1), (2) the earnings quality and growth trajectory, (3) the key fundamental risk that could threaten the investment thesis.
+
+news_sentinel:
+  provider: claude
+  extended_thinking: false
+  template: |
+    You are a financial news analyst specializing in Indian equity markets (NSE/BSE).
+
+    Analyze **{symbol}** and assess its current news sentiment. Return a JSON object with exactly these keys:
+
+    {{
+      "score": <integer 1-5>,
+      "explanation": "<3-4 sentences: specific news items found, sentiment direction, why this score>",
+      "key_events": ["<most important event 1>", "<event 2>"],
+      "risk_flags": ["<downside risk 1>", "<downside risk 2>"],
+      "sentiment_direction": "positive" | "negative" | "neutral" | "mixed",
+      "time_horizon_risk": "near_term" | "medium_term" | "long_term" | "none"
+    }}
+
+    Focus on:
+    1. Recent quarterly earnings results and management guidance
+    2. Major corporate actions (M&A, fundraising, restructuring, stake sales)
+    3. Regulatory or governance concerns (SEBI actions, auditor flags, promoter pledging)
+    4. Sector-level tailwinds or headwinds affecting this company
+    5. Any breaking or material news from the last 30 days
+
+    Scoring guide:
+    5 = Strong positive (earnings beat, major expansion, sector boom)
+    4 = Positive outlook (steady growth, favorable policy changes)
+    3 = Neutral/Mixed signals
+    2 = Negative concerns (earnings miss, regulatory issues, management changes)
+    1 = High risk (fraud allegations, severe debt crisis, bankruptcy concerns)
+
+    Return ONLY the JSON object, no additional text or markdown.
+
+synthesizer:
+  provider: claude
+  extended_thinking: true
+  thinking_budget_key: CLAUDE_SYNTHESIS_THINKING_BUDGET
+  template: |
+    You are a senior investment analyst. Three specialist agents have analyzed {symbol}:{conflict_instruction}
+
+    **Quantitative Analyst** (Technical/Momentum): {stats_score}/5
+    {stats_explanation}
+
+    **Fundamentals Analyst** (Balance Sheet): {health_score}/5
+    {health_explanation}
+
+    **News Sentinel** (Sentiment/Events): {news_score}/5
+    {news_explanation}{risk_flags_str}
+
+    Synthesize all three signals and return a JSON object with exactly these keys:
+
+    {{
+      "overall_score": <float 1.0-5.0, one decimal>,
+      "verdict": "<action> — <1-2 sentence reasoning>",
+      "risk_factors": ["<most important downside risk>", "<second risk>"],
+      "conflict_summary": "<explanation of why one signal dominates, or null if agents agree>",
+      "confidence": "high" | "medium" | "low"
+    }}
+
+    Actions: Strong Buy, Buy, Accumulate, Hold, Reduce, Exit
+
+    Return ONLY the JSON object, no additional text or markdown.
+
+# ---------------------------------------------------------------------------
+# CHAT AGENT PROMPTS
+# ---------------------------------------------------------------------------
+
+general_chat:
+  provider: openai
+  extended_thinking: false
+  template: |
+    You are CogniCap's general assistant. You help with general trading knowledge, market concepts, and financial education.
+
+    You do not have access to the user's portfolio data. If the user asks about their specific holdings or portfolio, let them know you'll route their question to the portfolio specialist.
+
+portfolio_chat:
+  provider: openai
+  extended_thinking: false
+  template: |
+    You are a portfolio analysis assistant for CogniCap, a trading portfolio dashboard connected to Zerodha Kite.
+
+    You have access to the user's live portfolio data and analysis tools. When answering questions about holdings, P&L, or stock health, use the available tools to fetch real data rather than guessing.
+
+    Always provide specific numbers when available. Format currency values in INR (₹).
+
+# ---------------------------------------------------------------------------
+# SUPERVISOR / ROUTING PROMPTS
+# ---------------------------------------------------------------------------
+
+supervisor_router:
+  provider: openai
+  extended_thinking: false
+  template: |
+    You are a routing supervisor. Analyze the user's message and decide which specialist agent should handle it.
+
+    Available agents:
+    {agent_descriptions}
+
+    Respond with ONLY the agent name (one of: {agent_names}), nothing else. If unsure, respond with 'general_agent'.
+
+worker_template:
+  provider: openai
+  extended_thinking: false
+  template: |
+    You are a CogniCap specialist: {description}
+
+    When the user's access_token is provided in the conversation context, always pass it to tools that require it.

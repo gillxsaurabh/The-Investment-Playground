@@ -42,17 +42,15 @@ def company_health_agent_node(state: AnalysisState) -> dict:
 
         # Generate explanation via Claude
         try:
+            from services.params import prompts as _prompts
             llm = get_llm(temperature=0.2, provider="claude", user_id=state.get("user_id"))
-            prompt = (
-                f"You are a fundamental analysis expert specializing in Indian listed companies.\n\n"
-                f"Given these data points for {symbol} from screener.in/company/{symbol}/consolidated/:\n\n"
-                f"- ROE (Return on Equity): {roe_str}\n"
-                f"- Debt/Equity ratio: {de_str}\n"
-                f"- Sales Growth: {sg_str}\n"
-                f"- Computed fundamental score: {score}/5\n\n"
-                "Write 2-3 sentences covering: (1) whether the balance sheet quality is good, average, or poor "
-                "with specific thresholds (ROE>15%, D/E<1), (2) the earnings quality and growth trajectory, "
-                "(3) the key fundamental risk that could threaten the investment thesis."
+            prompt = _prompts.render(
+                "fundamentals_analyst",
+                symbol=symbol,
+                roe_str=roe_str,
+                de_str=de_str,
+                sg_str=sg_str,
+                score=score,
             )
             response = llm.invoke(prompt)
             explanation = response.content.strip()

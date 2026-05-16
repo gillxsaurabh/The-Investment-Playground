@@ -68,15 +68,27 @@ REDIS_URL = os.getenv("REDIS_URL", "").strip()
 # --- File paths ---
 _BACKEND_DIR = Path(__file__).resolve().parent
 DATA_DIR = _BACKEND_DIR / "data"
-STATE_DIR = DATA_DIR / "state"
+
+# DATA_MOUNT_PATH overrides the state directory — set to the Railway volume mount
+# (e.g. DATA_MOUNT_PATH=/data) so DB and JSON state survive container restarts.
+_DATA_MOUNT = os.getenv("DATA_MOUNT_PATH", "").strip()
+STATE_DIR = Path(_DATA_MOUNT) if _DATA_MOUNT else DATA_DIR / "state"
 STATE_DIR.mkdir(parents=True, exist_ok=True)  # ensure dir exists on fresh deploys
 
 TOKEN_FILE = STATE_DIR / "access_token.json"
-ANALYSIS_STORAGE_FILE = STATE_DIR / "analysis_storage.json"
+# analysis_storage.json is deprecated — analysis cache lives in user_analysis_cache table
 SIMULATOR_DATA_FILE = STATE_DIR / "simulator_data.json"
 SIMULATOR_PRICE_HISTORY_FILE = STATE_DIR / "simulator_price_history.json"
 AUTOMATION_STATE_FILE = STATE_DIR / "automation_state.json"
 DB_PATH = STATE_DIR / "cognicap.db"
+BACKUP_DIR = STATE_DIR / "backups"
+
+# --- S3 off-site backups (optional) ---
+S3_BACKUP_BUCKET = os.getenv("S3_BACKUP_BUCKET", "").strip()
+S3_BACKUP_PREFIX = os.getenv("S3_BACKUP_PREFIX", "cognicap/backups").strip()
+AWS_ACCESS_KEY_ID = os.getenv("AWS_ACCESS_KEY_ID", "").strip()
+AWS_SECRET_ACCESS_KEY = os.getenv("AWS_SECRET_ACCESS_KEY", "").strip()
+AWS_DEFAULT_REGION = os.getenv("AWS_DEFAULT_REGION", "ap-south-1").strip()
 
 # --- Well-known instrument tokens ---
 NIFTY_50_TOKEN = 256265

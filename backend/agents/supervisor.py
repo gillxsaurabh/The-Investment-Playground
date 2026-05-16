@@ -20,12 +20,11 @@ def _supervisor_node(state: AgentState) -> dict:
     agent_descriptions = get_agent_descriptions()
     agent_names = list(get_registered_agents().keys())
 
-    system_msg = SystemMessage(content=(
-        "You are a routing supervisor. "
-        "Analyze the user's message and decide which specialist agent should handle it.\n\n"
-        f"Available agents:\n{agent_descriptions}\n\n"
-        f"Respond with ONLY the agent name (one of: {', '.join(agent_names)}), nothing else. "
-        "If unsure, respond with 'general_agent'."
+    from services.params import prompts as _prompts
+    system_msg = SystemMessage(content=_prompts.render(
+        "supervisor_router",
+        agent_descriptions=agent_descriptions,
+        agent_names=", ".join(agent_names),
     ))
 
     messages = [system_msg, state["messages"][-1]]
@@ -45,11 +44,8 @@ def _route_to_agent(state: AgentState) -> str:
 
 def _make_worker_node(description: str, tools: list):
     """Build a worker node function backed by a ReAct agent."""
-    system_prompt = (
-        f"You are a CogniCap specialist: {description}\n\n"
-        "When the user's access_token is provided in the conversation context, "
-        "always pass it to tools that require it."
-    )
+    from services.params import prompts as _prompts
+    system_prompt = _prompts.render("worker_template", description=description)
 
     def worker(state: AgentState) -> dict:
         # LLM is instantiated per-request so per-user BYOK keys are resolved correctly

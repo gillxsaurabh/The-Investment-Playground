@@ -13,6 +13,8 @@ import json
 import time
 import threading
 from datetime import datetime, timedelta
+
+from services.params import params as _p, prompts as _prompts
 from typing import Any, Callable, Optional
 
 import pandas as pd
@@ -580,30 +582,16 @@ def ai_rank_stocks(
     vix_high = isinstance(vix, (int, float)) and vix > 20
 
     vix_note = (
-        f"\nCAUTION: VIX={vix} is elevated (>20). Penalize high-beta stocks and downgrade momentum setups. "
-        "Favor defensive names and pullback entries over breakouts."
+        _prompts.meta("ai_conviction_engine").get("vix_warning_note", "").rstrip("\n").format(vix=vix)
         if vix_high else ""
     )
-    prompt = (
-        "You are a senior trading analyst evaluating Indian NSE stocks that passed a 4-stage screening pipeline.\n\n"
-        f"Market Context:\n"
-        f"- India VIX: {vix} (Regime: {regime}){vix_note}\n"
-        f"- {len(stocks)} stocks survived from the pipeline\n\n"
-        f"Stock Data:\n"
-        + "\n".join(stock_data_lines)
-        + "\n\nFor EACH stock provide a JSON object with these exact keys:\n"
-        "{\n"
-        '  "symbol": "<symbol>",\n'
-        '  "conviction_score": <integer 1-10, 10=highest conviction>,\n'
-        '  "reason": "<one sentence max 25 words explaining the trade opportunity>",\n'
-        '  "primary_risk": "<single biggest bear case — the one thing that could make this trade fail>",\n'
-        '  "trade_type": "pullback_entry" | "momentum_breakout" | "accumulate_dip",\n'
-        '  "news_sentiment": <integer 1-5>,\n'
-        '  "news_flag": "warning" | "clear"\n'
-        "}\n\n"
-        "Consider: technical setup quality, fundamental strength, news, sector momentum, "
-        "market regime (VIX), and entry quality.\n\n"
-        "Return ONLY a JSON array of these objects, no markdown, no extra text."
+    prompt = _prompts.render(
+        "ai_conviction_engine",
+        vix=vix,
+        regime=regime,
+        vix_note=vix_note,
+        len_stocks=len(stocks),
+        stock_data_lines="\n".join(stock_data_lines),
     )
 
     try:
@@ -758,11 +746,11 @@ def rank_final_shortlist(
             "sector_momentum_norm":   round(sector_norm[i], 1),
         }
         s["final_rank_score"] = round(
-            0.35 * conv_norm[i]
-            + 0.25 * comp_norm[i]
-            + 0.15 * rs_norm[i]
-            + 0.15 * fund_norm[i]
-            + 0.10 * sector_norm[i],
+            _p.get("RANK_WEIGHT_AI_CONVICTION") * conv_norm[i]
+            + _p.get("RANK_WEIGHT_COMPOSITE") * comp_norm[i]
+            + _p.get("RANK_WEIGHT_RS") * rs_norm[i]
+            + _p.get("RANK_WEIGHT_FUNDAMENTAL") * fund_norm[i]
+            + _p.get("RANK_WEIGHT_SECTOR") * sector_norm[i],
             1,
         )
 
@@ -795,22 +783,10 @@ def rank_final_shortlist(
         from collections import Counter
         sector_counts = Counter(sectors)
 
-        prompt = (
-            "You are a portfolio analyst. These stocks are ranked by a multi-factor formula "
-            "(AI conviction 35%, composite 25%, relative strength 15%, fundamentals 15%, sector momentum 10%).\n\n"
-            f"Portfolio sector distribution: {dict(sector_counts)}\n\n"
-            "For each stock provide a JSON object with:\n"
-            "{\n"
-            '  "symbol": "<symbol>",\n'
-            '  "rank_reason": "<1 sentence max 25 words: why this rank, citing 2-3 strongest signals>",\n'
-            '  "portfolio_note": "diversified" | "sector_concentration_risk" | "correlated_with_rank_1"\n'
-            "}\n\n"
-            "portfolio_note rules:\n"
-            "- sector_concentration_risk: if this stock's sector appears 3+ times in the portfolio\n"
-            "- correlated_with_rank_1: if this stock's sector matches rank #1's sector AND it's not rank #1\n"
-            "- diversified: otherwise\n\n"
-            + "\n".join(summary_lines)
-            + "\n\nReturn ONLY a JSON array of these objects, no markdown, no extra text."
+        prompt = _prompts.render(
+            "portfolio_ranker",
+            sector_distribution=str(dict(sector_counts)),
+            summary_lines="\n".join(summary_lines),
         )
 
         response = llm.invoke(prompt)

@@ -1,31 +1,72 @@
 """SQLite persistence layer for CogniCap trade lifecycle tracking.
 
-Uses PRAGMA foreign_keys = ON and WAL journal mode for concurrent read perf.
-All writes are fire-and-forget (log warnings on failure) so they never break
-the primary JSON-backed simulator behavior.
+Uses PRAGMA foreign_keys = ON, WAL journal mode, and tuned PRAGMA settings
+for production reliability. All connections are created via get_conn() which
+sets required PRAGMAs on every new connection.
+
+Financial writes (insert_trade, update_trade_exit, insert_account_snapshot)
+capture exceptions to Sentry so silent data loss is surfaced in observability.
+Non-financial writes (position_snapshots, SL updates) remain best-effort.
 """
 
 import logging
 import sqlite3
+from contextlib import contextmanager
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional
+
+try:
+    import sentry_sdk
+    _SENTRY_AVAILABLE = True
+except ImportError:
+    _SENTRY_AVAILABLE = False
 
 from config import DB_PATH
 
 logger = logging.getLogger(__name__)
 
 
+def _capture(exc: Exception) -> None:
+    """Send exception to Sentry when available."""
+    if _SENTRY_AVAILABLE:
+        sentry_sdk.capture_exception(exc)
+
+
 def get_conn() -> sqlite3.Connection:
-    """Return a WAL-mode, foreign-key-enabled SQLite connection."""
-    conn = sqlite3.connect(str(DB_PATH))
+    """Return a production-tuned WAL-mode SQLite connection."""
+    conn = sqlite3.connect(str(DB_PATH), timeout=10)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
     conn.execute("PRAGMA journal_mode = WAL")
+    conn.execute("PRAGMA synchronous = NORMAL")      # 3× faster writes; still crash-safe
+    conn.execute("PRAGMA busy_timeout = 5000")        # retry for 5s on lock contention
+    conn.execute("PRAGMA cache_size = -64000")        # 64 MB page cache
+    conn.execute("PRAGMA journal_size_limit = 104857600")  # cap WAL at 100 MB
     return conn
 
 
-LATEST_SCHEMA_VERSION = 9
+@contextmanager
+def managed_conn():
+    """Context manager that opens, yields, commits, and closes a connection.
+
+    Usage:
+        with managed_conn() as conn:
+            conn.execute(...)
+    Exceptions propagate to the caller; the connection is always closed.
+    """
+    conn = get_conn()
+    try:
+        yield conn
+        conn.commit()
+    except Exception:
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
+LATEST_SCHEMA_VERSION = 11
 
 
 def init_db() -> None:
@@ -36,15 +77,17 @@ def init_db() -> None:
         version = conn.execute("PRAGMA user_version").fetchone()[0]
 
         migrations = [
-            (1, "001_initial.sql"),
-            (2, "002_users.sql"),
-            (3, "003_add_user_id.sql"),
-            (4, "004_analysis_cache.sql"),
-            (5, "005_password_reset.sql"),
-            (6, "006_admin_and_tiers.sql"),
-            (7, "007_user_plan.sql"),
-            (8, "008_encrypt_broker_tokens.sql"),
-            (9, "009_llm_usage.sql"),
+            (1,  "001_initial.sql"),
+            (2,  "002_users.sql"),
+            (3,  "003_add_user_id.sql"),
+            (4,  "004_analysis_cache.sql"),
+            (5,  "005_password_reset.sql"),
+            (6,  "006_admin_and_tiers.sql"),
+            (7,  "007_user_plan.sql"),
+            (8,  "008_encrypt_broker_tokens.sql"),
+            (9,  "009_llm_usage.sql"),
+            (10, "010_schema_hardening.sql"),
+            (11, "011_consolidate_state.sql"),
         ]
 
         for target_version, filename in migrations:
@@ -52,18 +95,18 @@ def init_db() -> None:
                 continue
             migration_file = migrations_dir / filename
             if not migration_file.exists():
-                logger.error(f"[DB] Migration file not found: {migration_file}")
+                logger.error("[DB] Migration file not found: %s", migration_file)
                 return
             sql = migration_file.read_text()
             conn.executescript(sql)
             conn.commit()
-            logger.info(f"[DB] Migrated to schema version {target_version}")
+            logger.info("[DB] Migrated to schema version %d", target_version)
 
         final_version = conn.execute("PRAGMA user_version").fetchone()[0]
         if final_version >= LATEST_SCHEMA_VERSION:
-            logger.debug(f"[DB] Schema at version {final_version}")
+            logger.debug("[DB] Schema at version %d", final_version)
     except Exception as e:
-        logger.error(f"[DB] Schema initialization failed: {e}", exc_info=True)
+        logger.error("[DB] Schema initialization failed: %s", e, exc_info=True)
     finally:
         conn.close()
 
@@ -73,7 +116,7 @@ def init_db() -> None:
 # ---------------------------------------------------------------------------
 
 def insert_trade(trade: Dict[str, Any], user_id: Optional[int] = None) -> None:
-    """Insert a new trade record."""
+    """Insert a new trade record. Captures exceptions to Sentry (financial data)."""
     atr = trade.get("atr_at_entry", 0)
     multiplier = trade.get("trail_multiplier", 1.5)
     conn = get_conn()
@@ -134,7 +177,8 @@ def insert_trade(trade: Dict[str, Any], user_id: Optional[int] = None) -> None:
         })
         conn.commit()
     except Exception as e:
-        logger.warning(f"[DB] insert_trade failed for {trade.get('trade_id')}: {e}")
+        _capture(e)
+        logger.warning("[DB] insert_trade failed for %s: %s", trade.get("trade_id"), e)
     finally:
         conn.close()
 
@@ -162,7 +206,7 @@ def update_trade_fill(
         })
         conn.commit()
     except Exception as e:
-        logger.warning(f"[DB] update_trade_fill failed for {trade_id}: {e}")
+        logger.warning("[DB] update_trade_fill failed for %s: %s", trade_id, e)
     finally:
         conn.close()
 
@@ -185,14 +229,15 @@ def update_trade_sl(
         if sl_order_id is not None:
             params["sl_order_id"] = sl_order_id
             sl_clause = ", sl_order_id = :sl_order_id"
-        conn.execute(f"""
-            UPDATE trades SET current_sl = :current_sl,
-                highest_price_seen = :highest_price_seen{sl_clause}
-            WHERE trade_id = :trade_id
-        """, params)
+        conn.execute(
+            f"UPDATE trades SET current_sl = :current_sl,"
+            f" highest_price_seen = :highest_price_seen{sl_clause}"
+            f" WHERE trade_id = :trade_id",
+            params,
+        )
         conn.commit()
     except Exception as e:
-        logger.warning(f"[DB] update_trade_sl failed for {trade_id}: {e}")
+        logger.warning("[DB] update_trade_sl failed for %s: %s", trade_id, e)
     finally:
         conn.close()
 
@@ -206,7 +251,7 @@ def update_trade_exit(
     realized_pnl_pct: float,
     holding_days: int,
 ) -> None:
-    """Mark a trade as closed with exit details."""
+    """Mark a trade as closed. Captures exceptions to Sentry (financial data)."""
     conn = get_conn()
     try:
         conn.execute("""
@@ -226,7 +271,8 @@ def update_trade_exit(
         })
         conn.commit()
     except Exception as e:
-        logger.warning(f"[DB] update_trade_exit failed for {trade_id}: {e}")
+        _capture(e)
+        logger.warning("[DB] update_trade_exit failed for %s: %s", trade_id, e)
     finally:
         conn.close()
 
@@ -235,6 +281,7 @@ def get_open_trades(trading_mode: Optional[str] = None, user_id: Optional[int] =
     """Get all open trades, optionally filtered by trading_mode and/or user_id."""
     conn = get_conn()
     try:
+        # Build parameterized query — no f-string interpolation of user values
         conditions = ["status = 'OPEN'"]
         params: List[Any] = []
         if trading_mode:
@@ -243,11 +290,11 @@ def get_open_trades(trading_mode: Optional[str] = None, user_id: Optional[int] =
         if user_id is not None:
             conditions.append("user_id = ?")
             params.append(user_id)
-        where = " AND ".join(conditions)
-        rows = conn.execute(f"SELECT * FROM trades WHERE {where}", params).fetchall()
+        sql = "SELECT * FROM trades WHERE " + " AND ".join(conditions)
+        rows = conn.execute(sql, params).fetchall()
         return [dict(row) for row in rows]
     except Exception as e:
-        logger.warning(f"[DB] get_open_trades failed: {e}")
+        logger.warning("[DB] get_open_trades failed: %s", e)
         return []
     finally:
         conn.close()
@@ -260,7 +307,7 @@ def get_trade(trade_id: str) -> Optional[Dict[str, Any]]:
         row = conn.execute("SELECT * FROM trades WHERE trade_id = ?", (trade_id,)).fetchone()
         return dict(row) if row else None
     except Exception as e:
-        logger.warning(f"[DB] get_trade failed for {trade_id}: {e}")
+        logger.warning("[DB] get_trade failed for %s: %s", trade_id, e)
         return None
     finally:
         conn.close()
@@ -275,14 +322,14 @@ def get_pending_entry_trades() -> List[Dict[str, Any]]:
         ).fetchall()
         return [dict(row) for row in rows]
     except Exception as e:
-        logger.warning(f"[DB] get_pending_entry_trades failed: {e}")
+        logger.warning("[DB] get_pending_entry_trades failed: %s", e)
         return []
     finally:
         conn.close()
 
 
 def insert_position_snapshot(snapshot: Dict[str, Any]) -> None:
-    """Record a position price snapshot."""
+    """Record a position price snapshot (best-effort, no Sentry capture)."""
     conn = get_conn()
     try:
         conn.execute("""
@@ -298,13 +345,13 @@ def insert_position_snapshot(snapshot: Dict[str, Any]) -> None:
         """, snapshot)
         conn.commit()
     except Exception as e:
-        logger.warning(f"[DB] insert_position_snapshot failed: {e}")
+        logger.warning("[DB] insert_position_snapshot failed: %s", e)
     finally:
         conn.close()
 
 
 def insert_account_snapshot(snapshot: Dict[str, Any]) -> None:
-    """Record an account state snapshot."""
+    """Record an account state snapshot. Captures exceptions to Sentry (financial data)."""
     conn = get_conn()
     try:
         conn.execute("""
@@ -322,6 +369,54 @@ def insert_account_snapshot(snapshot: Dict[str, Any]) -> None:
         """, snapshot)
         conn.commit()
     except Exception as e:
-        logger.warning(f"[DB] insert_account_snapshot failed: {e}")
+        _capture(e)
+        logger.warning("[DB] insert_account_snapshot failed: %s", e)
+    finally:
+        conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Simulator account state (replaces simulator_data_*.json as primary store)
+# ---------------------------------------------------------------------------
+
+def upsert_simulator_account(user_id: int, account: Dict[str, Any]) -> None:
+    """Write current simulator account state for a user (upsert)."""
+    conn = get_conn()
+    try:
+        conn.execute("""
+            INSERT INTO simulator_accounts (
+                user_id, initial_capital, current_balance, total_pnl, updated_at
+            ) VALUES (:user_id, :initial_capital, :current_balance, :total_pnl, :updated_at)
+            ON CONFLICT(user_id) DO UPDATE SET
+                initial_capital = excluded.initial_capital,
+                current_balance = excluded.current_balance,
+                total_pnl       = excluded.total_pnl,
+                updated_at      = excluded.updated_at
+        """, {
+            "user_id": user_id,
+            "initial_capital": account.get("initial_capital"),
+            "current_balance": account.get("current_balance"),
+            "total_pnl": account.get("total_pnl", 0.0),
+            "updated_at": datetime.utcnow().isoformat(sep=" ", timespec="seconds"),
+        })
+        conn.commit()
+    except Exception as e:
+        _capture(e)
+        logger.warning("[DB] upsert_simulator_account failed for user %s: %s", user_id, e)
+    finally:
+        conn.close()
+
+
+def get_simulator_account(user_id: int) -> Optional[Dict[str, Any]]:
+    """Return the simulator account row for a user, or None if not found."""
+    conn = get_conn()
+    try:
+        row = conn.execute(
+            "SELECT * FROM simulator_accounts WHERE user_id = ?", (user_id,)
+        ).fetchone()
+        return dict(row) if row else None
+    except Exception as e:
+        logger.warning("[DB] get_simulator_account failed for user %s: %s", user_id, e)
+        return None
     finally:
         conn.close()

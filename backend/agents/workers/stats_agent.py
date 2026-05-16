@@ -111,16 +111,17 @@ def stats_agent_node(state: AnalysisState) -> dict:
 
         # Generate explanation via Claude
         try:
+            from services.params import prompts as _prompts
             llm = get_llm(temperature=0.2, provider="claude", user_id=state.get("user_id"))
-            prompt = (
-                f"You are a technical analysis expert specializing in Indian equity markets.\n\n"
-                f"Given these technical results for {symbol}:\n\n"
-                f"- Recency (Relative Strength vs Nifty 50, last 90 days): {recency_score}/5 — {recency_detail}\n"
-                f"- Trend (ADX + EMA crossover): {trend_score}/5 — Strength: {trend_strength}, Direction: {trend_direction}\n"
-                f"- Combined stats score: {stats_score}/5\n\n"
-                "Write 2-3 sentences covering: (1) what the momentum and trend data tell you, "
-                "(2) the entry implication — is now a good time to enter or wait, "
-                "(3) the primary technical risk if the setup fails. Be specific with numbers."
+            prompt = _prompts.render(
+                "quantitative_analyst",
+                symbol=symbol,
+                recency_score=recency_score,
+                recency_detail=recency_detail,
+                trend_score=trend_score,
+                trend_strength=trend_strength,
+                trend_direction=trend_direction,
+                stats_score=stats_score,
             )
             response = llm.invoke(prompt)
             explanation = response.content.strip()

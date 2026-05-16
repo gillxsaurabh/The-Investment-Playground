@@ -79,16 +79,12 @@ def automation_run_now():
     data = request.get_json(silent=True) or {}
     dry_run = bool(data.get("dry_run", True))
 
-    # Use broker token if available
+    # Use broker token if available — atomic write to avoid corruption on crash
     access_token = getattr(g, "broker_token", "") or ""
     if access_token:
-        import json
         from config import TOKEN_FILE
-        from pathlib import Path
-        path = Path(TOKEN_FILE)
-        path.parent.mkdir(parents=True, exist_ok=True)
-        with open(path, "w") as f:
-            json.dump({"access_token": access_token}, f)
+        from services.file_lock import atomic_json_write
+        atomic_json_write(str(TOKEN_FILE), {"access_token": access_token})
 
     with _run_now_lock:
         if _run_now_active:

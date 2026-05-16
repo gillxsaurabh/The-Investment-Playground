@@ -17,6 +17,8 @@ import json
 from datetime import datetime
 from typing import Callable, Optional
 
+from services.params import params as _p, prompts as _prompts
+
 from agents.shared.data_infra import (
     PipelineSession,
     clear_session_cache,
@@ -209,21 +211,27 @@ def _score_technical_breakdown(holding: dict) -> tuple[int, list[str]]:
     if price is None or rsi is None:
         return 0, []
 
+    _pts = _p.section("sell_urgency_points")
+    _tech = _pts["technical"]
+    _rs = _pts["relative_weakness"]
+    _fund = _pts["fundamental"]
+    _ph = _pts["position_health"]
+
     # Price below EMA-200 (trend broken) — strongest signal
     if ema_200 is not None and price < ema_200:
-        score += 15
+        score += _tech["price_below_ema200"]
         signals.append(f"Price ({price}) below 200-EMA ({ema_200}) — long-term trend broken")
 
     # RSI overbought — take profits
     if rsi > SELL_RSI_OVERBOUGHT:
-        score += 10
+        score += _tech["rsi_overbought"]
         signals.append(f"RSI={rsi:.1f} overbought (>{SELL_RSI_OVERBOUGHT}) — consider taking profits")
 
     # RSI momentum failure
     elif rsi < SELL_RSI_MOMENTUM_FAILED and len(rsi_history) >= 2:
         was_above_50 = any(v >= 50 for v in rsi_history[:-1])
         if was_above_50:
-            score += 8
+            score += _tech["rsi_momentum_failed"]
             signals.append(
                 f"RSI={rsi:.1f} momentum failed (fell below {SELL_RSI_MOMENTUM_FAILED} "
                 f"after being above 50)"
@@ -231,29 +239,29 @@ def _score_technical_breakdown(holding: dict) -> tuple[int, list[str]]:
 
     # ADX weak and falling
     if adx is not None and adx < SELL_ADX_WEAK:
-        score += 7
+        score += _tech["adx_weak"]
         signals.append(f"ADX={adx:.1f} below {SELL_ADX_WEAK} — trend weakening")
 
     # Price below EMA-50
     if ema_50 is not None and price < ema_50:
-        score += 5
+        score += _tech["price_below_ema50"]
         signals.append(f"Price ({price}) below 50-EMA ({ema_50}) — intermediate trend lost")
 
     # Price below EMA-20
     if ema_20 is not None and price < ema_20:
-        score += 3
+        score += _tech["price_below_ema20"]
         signals.append(f"Price ({price}) below 20-EMA ({ema_20}) — short-term trend weak")
 
     # Volume deterioration
     if volume_ratio is not None and volume_ratio < SELL_VOLUME_DRY_RATIO:
         if ema_50 is not None and price >= ema_50 * 0.98:
-            score += 8
+            score += _tech["volume_drying_near_highs"]
             signals.append(
                 f"Volume drying up: 5d/20d ratio={volume_ratio:.2f} (<{SELL_VOLUME_DRY_RATIO}) "
                 f"while price near highs — possible distribution"
             )
         else:
-            score += 4
+            score += _tech["volume_low"]
             signals.append(
                 f"Volume low: 5d/20d ratio={volume_ratio:.2f} — weak buying interest"
             )
@@ -273,20 +281,22 @@ def _score_relative_weakness(holding: dict) -> tuple[int, list[str]]:
     if stock_3m is None or nifty_3m is None:
         return 0, []
 
+    _rs = _p.section("sell_urgency_points")["relative_weakness"]
+
     nifty_gap = stock_3m - nifty_3m
     if nifty_gap <= SELL_RS_NIFTY_GAP:
-        score += 12
+        score += _rs["nifty_underperform_large"]
         signals.append(
             f"3M return {stock_3m:.1f}% underperforms Nifty {nifty_3m:.1f}% "
             f"by {abs(nifty_gap):.1f}% — significant laggard"
         )
     elif nifty_gap <= -5.0:
-        score += 7
+        score += _rs["nifty_underperform_mid"]
         signals.append(
             f"3M return {stock_3m:.1f}% underperforms Nifty {nifty_3m:.1f}% by {abs(nifty_gap):.1f}%"
         )
     elif nifty_gap <= -2.0:
-        score += 4
+        score += _rs["nifty_underperform_small"]
         signals.append(
             f"3M return {stock_3m:.1f}% slightly below Nifty {nifty_3m:.1f}%"
         )
@@ -294,12 +304,12 @@ def _score_relative_weakness(holding: dict) -> tuple[int, list[str]]:
     if sector_3m is not None:
         sector_gap = stock_3m - sector_3m
         if sector_gap <= SELL_RS_SECTOR_GAP:
-            score += 13
+            score += _rs["sector_underperform_large"]
             signals.append(
                 f"3M return underperforms sector by {abs(sector_gap):.1f}% — sector laggard"
             )
         elif sector_gap <= -5.0:
-            score += 8
+            score += _rs["sector_underperform_mid"]
             signals.append(
                 f"3M return underperforms sector by {abs(sector_gap):.1f}%"
             )
@@ -318,33 +328,35 @@ def _score_fundamental_flags(holding: dict) -> tuple[int, list[str]]:
     roe = holding.get("roe")
     de = holding.get("debt_to_equity")
 
+    _fund = _p.section("sell_urgency_points")["fundamental"]
+
     # Consecutive quarterly profit decline
     if decline_quarters >= SELL_PROFIT_DECLINE_QUARTERS:
-        score += 15
+        score += _fund["profit_declining_consecutive"]
         signals.append(
             f"Profit declining for {decline_quarters} consecutive quarters — earnings deteriorating"
         )
     elif qoq_declining:
-        score += 7
+        score += _fund["profit_declining_qoq"]
         signals.append("Quarterly profit fell QoQ — monitor for trend reversal")
 
     # YoY profit declining
     if yoy_declining is True:
-        score += 10
+        score += _fund["profit_declining_yoy"]
         signals.append("Annual profit declining YoY — fundamental weakness")
 
     # ROE weakness
     if roe is not None:
         if roe < SELL_ROE_WEAK:
-            score += 8
+            score += _fund["roe_weak"]
             signals.append(f"ROE={roe:.1f}% below {SELL_ROE_WEAK}% — poor capital efficiency")
         elif roe < SELL_ROE_MODERATE:
-            score += 4
+            score += _fund["roe_moderate"]
             signals.append(f"ROE={roe:.1f}% is marginal ({SELL_ROE_WEAK}–{SELL_ROE_MODERATE}%)")
 
     # High debt
     if de is not None and de > SELL_DE_HIGH:
-        score += 7
+        score += _fund["de_high"]
         signals.append(f"D/E={de:.2f} — high leverage risk")
 
     return min(score, 25), signals
@@ -357,19 +369,21 @@ def _score_position_health(holding: dict) -> tuple[int, list[str]]:
 
     pnl_pct = holding.get("pnl_percentage", 0.0) or 0.0
 
+    _ph = _p.section("sell_urgency_points")["position_health"]
+
     if pnl_pct < SELL_PNL_DEEP_LOSS_THRESHOLD:
-        score = 20
+        score = _ph["deep_loss"]
         signals.append(
             f"Deep loss: {pnl_pct:.1f}% below entry — stop-loss review needed"
         )
     elif pnl_pct < SELL_PNL_LOSS_THRESHOLD:
-        score = 14
+        score = _ph["loss"]
         signals.append(f"Significant loss: {pnl_pct:.1f}% below entry")
     elif pnl_pct < -5.0:
-        score = 8
+        score = _ph["moderate_loss"]
         signals.append(f"Moderate loss: {pnl_pct:.1f}% below entry")
     elif pnl_pct < -2.0:
-        score = 4
+        score = _ph["minor_loss"]
         signals.append(f"Minor loss: {pnl_pct:.1f}% below entry")
 
     return score, signals
@@ -486,25 +500,12 @@ def ai_rank_sell_candidates(
             f"News: {headline_text}"
         )
 
-    prompt = (
-        "You are a senior portfolio risk analyst reviewing a user's Indian NSE stock holdings for potential exits.\n\n"
-        f"Market Context:\n"
-        f"- India VIX: {vix} (Regime: {regime})\n"
-        f"- {len(holdings)} portfolio holdings being reviewed\n\n"
-        f"Holdings Data (sorted by algorithmic sell urgency):\n"
-        + "\n".join(holding_lines)
-        + "\n\nFor EACH holding, provide a JSON object with these exact keys:\n"
-        "{\n"
-        '  "symbol": "<symbol>",\n'
-        '  "sell_conviction": <integer 1-10, where 10=strongest sell signal, 1=should definitely hold>,\n'
-        '  "sell_reason": "<one sentence max 25 words explaining why to exit this position>",\n'
-        '  "hold_reason": "<one sentence max 20 words — the bull case for staying in>",\n'
-        '  "news_sentiment": <integer 1-5, 1=very negative, 3=neutral, 5=very positive>,\n'
-        '  "news_flag": "warning" | "clear"\n'
-        "}\n\n"
-        "Consider: technical signals, fundamental trends, news, sector momentum, P&L position, and market regime.\n"
-        "A holding with a high algorithmic urgency score should generally receive a higher sell_conviction.\n\n"
-        "Return ONLY a JSON array of these objects, no markdown, no extra text."
+    prompt = _prompts.render(
+        "sell_signal_engine",
+        vix=vix,
+        regime=regime,
+        len_holdings=len(holdings),
+        holding_lines="\n".join(holding_lines),
     )
 
     try:

@@ -6,3 +6,10 @@ dockerfilePath = "Dockerfile"
 startCommand = "gunicorn -c gunicorn.conf.py 'app:create_app()'"
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 3
+
+# Persistent volume — create via Railway dashboard (Storage → New Volume),
+# mount at /data, then set DATA_MOUNT_PATH=/data in Railway environment vars.
+# Without this, cognicap.db and all state files are wiped on every redeploy.
+[[volumes]]
+mountPath = "/data"
+name = "cognicap-state"

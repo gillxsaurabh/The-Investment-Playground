@@ -20,34 +20,9 @@ def breaking_news_agent_node(state: AnalysisState) -> dict:
     """Analyze recent news sentiment via Claude and return score + explanation."""
     symbol = state["symbol"]
     try:
+        from services.params import prompts as _prompts
         llm = get_llm(temperature=0.3, provider="claude", user_id=state.get("user_id"))
-
-        prompt = (
-            f"You are a financial news analyst specializing in Indian equity markets (NSE/BSE).\n\n"
-            f"Analyze **{symbol}** and assess its current news sentiment. "
-            "Return a JSON object with exactly these keys:\n\n"
-            "{\n"
-            '  "score": <integer 1-5>,\n'
-            '  "explanation": "<3-4 sentences: specific news items found, sentiment direction, why this score>",\n'
-            '  "key_events": ["<most important event 1>", "<event 2>"],\n'
-            '  "risk_flags": ["<downside risk 1>", "<downside risk 2>"],\n'
-            '  "sentiment_direction": "positive" | "negative" | "neutral" | "mixed",\n'
-            '  "time_horizon_risk": "near_term" | "medium_term" | "long_term" | "none"\n'
-            "}\n\n"
-            "Focus on:\n"
-            "1. Recent quarterly earnings results and management guidance\n"
-            "2. Major corporate actions (M&A, fundraising, restructuring, stake sales)\n"
-            "3. Regulatory or governance concerns (SEBI actions, auditor flags, promoter pledging)\n"
-            "4. Sector-level tailwinds or headwinds affecting this company\n"
-            "5. Any breaking or material news from the last 30 days\n\n"
-            "Scoring guide:\n"
-            "5 = Strong positive (earnings beat, major expansion, sector boom)\n"
-            "4 = Positive outlook (steady growth, favorable policy changes)\n"
-            "3 = Neutral/Mixed signals\n"
-            "2 = Negative concerns (earnings miss, regulatory issues, management changes)\n"
-            "1 = High risk (fraud allegations, severe debt crisis, bankruptcy concerns)\n\n"
-            "Return ONLY the JSON object, no additional text or markdown."
-        )
+        prompt = _prompts.render("news_sentinel", symbol=symbol)
 
         response = llm.invoke(prompt)
         text = response.content.strip()
