@@ -120,8 +120,7 @@ def init_db() -> None:
         if final_version >= LATEST_SCHEMA_VERSION:
             logger.debug("[DB] Schema at version %d", final_version)
     except Exception as e:
-        logger.error("[DB] Schema initialization FAILED — %s: %s", type(e).__name__, e, exc_info=True)
-        raise  # re-raise so create_app logs it prominently
+        logger.error("[DB] Schema initialization failed: %s", e, exc_info=True)
     finally:
         conn.close()
 
