@@ -69,11 +69,27 @@ REDIS_URL = os.getenv("REDIS_URL", "").strip()
 _BACKEND_DIR = Path(__file__).resolve().parent
 DATA_DIR = _BACKEND_DIR / "data"
 
-# DATA_MOUNT_PATH overrides the state directory — set to the Railway volume mount
-# (e.g. DATA_MOUNT_PATH=/data) so DB and JSON state survive container restarts.
-_DATA_MOUNT = os.getenv("DATA_MOUNT_PATH", "").strip()
-STATE_DIR = Path(_DATA_MOUNT) if _DATA_MOUNT else DATA_DIR / "state"
-STATE_DIR.mkdir(parents=True, exist_ok=True)  # ensure dir exists on fresh deploys
+# Resolve persistent state directory.
+# Priority: DATA_MOUNT_PATH env var → auto-detect /data (Railway volume default) → fallback inside container.
+def _resolve_state_dir() -> Path:
+    explicit = os.getenv("DATA_MOUNT_PATH", "").strip()
+    if explicit:
+        return Path(explicit)
+    # Auto-detect Railway volume mounted at /data (exists and is writable)
+    railway_default = Path("/data")
+    if railway_default.is_dir():
+        try:
+            railway_default.mkdir(parents=True, exist_ok=True)
+            (railway_default / ".write_test").touch()
+            (railway_default / ".write_test").unlink()
+            return railway_default
+        except OSError:
+            pass
+    return DATA_DIR / "state"
+
+STATE_DIR = _resolve_state_dir()
+STATE_DIR.mkdir(parents=True, exist_ok=True)
+print(f"[Config] State directory: {STATE_DIR}")
 
 TOKEN_FILE = STATE_DIR / "access_token.json"
 # analysis_storage.json is deprecated — analysis cache lives in user_analysis_cache table

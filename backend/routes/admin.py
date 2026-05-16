@@ -7,6 +7,7 @@ import logging
 import os
 
 from flask import Blueprint, jsonify, g
+from kiteconnect import exceptions as kite_exc
 
 from broker.kite_adapter import KiteBrokerAdapter
 from middleware.auth import require_auth, require_admin
@@ -106,9 +107,18 @@ def admin_broker_link(body: BrokerLinkBody):
                 "broker_user_name": profile.get("user_name"),
             },
         })
+    except kite_exc.TokenException as exc:
+        logger.warning("[Admin] Kite token invalid/expired: %s", exc)
+        return jsonify({"success": False, "error": f"Invalid or expired request token: {exc}"}), 400
+    except kite_exc.InputException as exc:
+        logger.warning("[Admin] Kite input error: %s", exc)
+        return jsonify({"success": False, "error": f"Bad input to Kite API: {exc}"}), 400
+    except kite_exc.PermissionException as exc:
+        logger.warning("[Admin] Kite permission error: %s", exc)
+        return jsonify({"success": False, "error": f"Kite permission denied: {exc}"}), 400
     except Exception:
         logger.exception("[Admin] Broker linking failed")
-        return jsonify({"success": False, "error": "Failed to link admin broker"}), 500
+        return jsonify({"success": False, "error": "Failed to link admin broker — check Railway logs for details"}), 500
 
 
 @admin_bp.route("/broker/status", methods=["GET"])

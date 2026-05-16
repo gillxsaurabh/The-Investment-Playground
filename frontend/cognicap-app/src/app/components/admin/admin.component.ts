@@ -128,8 +128,15 @@ export class AdminComponent implements OnInit {
           this.kiteStep = 'error';
         }
       },
-      error: () => {
-        this.kiteError = 'Linking failed. Check the token and try again.';
+      error: (err) => {
+        const msg = err?.error?.error;
+        if (err?.status === 403) {
+          this.kiteError = 'Access denied — you must be admin to link the global token.';
+        } else if (msg) {
+          this.kiteError = msg;
+        } else {
+          this.kiteError = 'Linking failed. Check the Railway logs for details.';
+        }
         this.kiteStep = 'error';
       }
     });
