@@ -1093,3 +1093,8 @@
   line-height: 1.6;
   strong { color: $red; }
 }
+
+@media (max-width: 768px) {
+  .discover-container { margin-left: 0; }
+  .discover-layout { padding: 76px 16px 16px; grid-template-columns: 1fr; }
+}

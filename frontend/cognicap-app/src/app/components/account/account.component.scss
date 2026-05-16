@@ -1048,3 +1048,7 @@
 .llm-alert {
   margin-top: 10px;
 }
+
+@media (max-width: 768px) {
+  .account-container { margin-left: 0; padding: 76px 16px 24px; }
+}

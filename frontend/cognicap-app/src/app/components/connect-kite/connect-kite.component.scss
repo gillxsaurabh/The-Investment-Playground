@@ -279,3 +279,7 @@ h1 {
 }
 
 .spin { animation: spin 0.8s linear infinite; }
+
+@media (max-width: 768px) {
+  .page { margin-left: 0; padding-top: 76px; }
+}

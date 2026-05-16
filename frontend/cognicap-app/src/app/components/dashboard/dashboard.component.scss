@@ -1436,7 +1436,8 @@
 }
 
 @media (max-width: 768px) {
-  .dashboard-layout { padding: 16px; }
+  .dashboard-container { margin-left: 0; }
+  .dashboard-layout { padding: ($header-height + 16px) 16px 16px; }
 
   .summary-section {
     grid-template-columns: 1fr;

@@ -247,3 +247,7 @@
   .admin-wrap { padding: 16px 12px; }
   .admin-card { padding: 18px 16px; }
 }
+
+@media (max-width: 768px) {
+  .admin-wrap { margin-left: 0; padding: 76px 16px 24px; }
+}

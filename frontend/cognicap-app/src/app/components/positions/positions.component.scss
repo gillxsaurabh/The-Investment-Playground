@@ -317,3 +317,8 @@
   margin-bottom: 20px;
   overflow: hidden;
 }
+
+@media (max-width: 768px) {
+  .positions-container { margin-left: 0; }
+  .positions-layout { padding: 76px 16px 16px; }
+}
