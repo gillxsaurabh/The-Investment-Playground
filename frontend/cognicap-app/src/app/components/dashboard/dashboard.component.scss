@@ -1436,8 +1436,8 @@
 }
 
 @media (max-width: 768px) {
-  .dashboard-container { margin-left: 0; }
-  .dashboard-layout { padding: ($header-height + 16px) 16px 16px; }
+  .dashboard-container { margin-left: 0; overflow-x: hidden; }
+  .dashboard-layout { padding: ($header-height + 8px) 8px 8px; }
 
   .summary-section {
     grid-template-columns: 1fr;
@@ -1451,7 +1451,7 @@
   .health-cards-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
 
   .health-section {
-    padding: 16px;
+    padding: 12px 8px;
 
     .health-header .header-content .header-title-row { flex-wrap: wrap; gap: 8px; }
   }

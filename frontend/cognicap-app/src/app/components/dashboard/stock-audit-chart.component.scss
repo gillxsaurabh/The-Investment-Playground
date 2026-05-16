@@ -955,29 +955,33 @@ $audit-cols: 150px repeat(5, minmax(52px, 1fr)) 68px 130px 62px;
 
 // ── Mobile compact: 4 narrow columns ─────────────────────────────────────────
 @media (max-width: 600px) {
+  // The audit section wrapper — flush horizontal padding so all 4 cols fit
+  :host { display: block; }
+
   .audit-bucket {
-    padding: 8px 5px 6px;
+    padding: 6px 4px 5px;
     border-radius: 8px;
-    gap: 4px;
+    gap: 3px;
+    min-width: 0;  // allow columns to shrink below content size
   }
 
-  .bucket-label-text { font-size: 9px; letter-spacing: 0.04em; }
-  .bucket-count      { font-size: 9px; padding: 1px 4px; }
-  .bucket-dot        { width: 5px; height: 5px; }
-  .bucket-head       { gap: 3px; padding-bottom: 5px; }
+  .bucket-label-text { font-size: 8px; letter-spacing: 0.03em; }
+  .bucket-count      { font-size: 8px; padding: 1px 3px; }
+  .bucket-dot        { width: 5px; height: 5px; flex-shrink: 0; }
+  .bucket-head       { gap: 3px; padding-bottom: 4px; }
 
-  .bkt-card          { padding: 6px 5px 4px; border-radius: 7px; }
-  .bkt-sym           { font-size: 9px; }
-  .bkt-score         { font-size: 13px; }
-  .bkt-score-denom   { font-size: 8px; }
-  .bkt-pnl           { font-size: 9px; }
-  .bkt-top           { padding-left: 3px; }
-  .bkt-bottom        { padding-left: 3px; margin-top: 1px; }
+  .bkt-card          { padding: 5px 4px 3px; border-radius: 6px; }
+  .bkt-sym           { font-size: 8px; }
+  .bkt-score         { font-size: 12px; }
+  .bkt-score-denom   { font-size: 7px; }
+  .bkt-pnl           { font-size: 8px; }
+  .bkt-top           { padding-left: 2px; }
+  .bkt-bottom        { padding-left: 2px; margin-top: 1px; }
 
-  // Shrink radar chart so cards stay compact
+  // Shrink radar chart to fill its column
   .bkt-radar-wrap    { width: 100%; aspect-ratio: 1; }
 
-  // Hide the score progress bar on mobile — too small to be useful
+  // Hide progress bar — too small to be useful
   .bkt-bar-track     { display: none; }
 }
 
