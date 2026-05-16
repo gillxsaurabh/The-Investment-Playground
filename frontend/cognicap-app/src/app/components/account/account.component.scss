@@ -3,7 +3,8 @@
 .account-container {
   background: $bg-primary;
   min-height: calc(100vh - 120px);
-  padding: 32px 28px;
+  margin-left: var(--sidebar-w, #{$sidebar-width});
+  padding: ($header-height + $ticker-height + 32px) 28px 32px;
 }
 
 .account-content {

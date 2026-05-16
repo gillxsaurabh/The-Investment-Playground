@@ -6,7 +6,8 @@
   align-items: center;
   justify-content: center;
   background: $bg-primary;
-  padding: 24px;
+  margin-left: var(--sidebar-w, #{$sidebar-width});
+  padding: ($header-height + $ticker-height + 24px) 24px 24px;
 }
 
 .card {

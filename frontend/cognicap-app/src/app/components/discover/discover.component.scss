@@ -3,12 +3,13 @@
 .discover-container {
   min-height: 100vh;
   background: $bg-primary;
+  margin-left: var(--sidebar-w, #{$sidebar-width});
 }
 
 .discover-layout {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 24px 30px;
+  padding: ($header-height + $ticker-height + 24px) 30px 24px;
   display: grid;
   grid-template-columns: 1fr 280px;
   gap: 20px;

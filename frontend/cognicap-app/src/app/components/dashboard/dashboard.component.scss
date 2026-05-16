@@ -13,6 +13,8 @@
   background: $bg-primary;
   position: relative;
   overflow-x: hidden;
+  // Offset from fixed sidebar — use CSS var (set by sidebar JS) with SASS fallback
+  margin-left: var(--sidebar-w, #{$sidebar-width});
 }
 
 .dashboard-layout {

@@ -2,9 +2,9 @@
   min-height: 100vh;
   background: #0a0a0f;
   color: #e2e8f0;
-  padding: 40px 32px;
+  margin-left: var(--sidebar-w, 240px);
+  padding: 116px 32px 40px;
   max-width: 1000px;
-  margin: 0 auto;
 }
 
 .admin-header {

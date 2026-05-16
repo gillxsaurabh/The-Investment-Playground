@@ -3,12 +3,13 @@
 .positions-container {
   min-height: 100vh;
   background: $bg-primary;
+  margin-left: var(--sidebar-w, #{$sidebar-width});
 }
 
 .positions-layout {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 24px 30px;
+  padding: ($header-height + $ticker-height + 24px) 30px 24px;
   display: flex;
   flex-direction: column;
   gap: 20px;
