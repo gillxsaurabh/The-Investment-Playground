@@ -66,7 +66,7 @@ def managed_conn():
         conn.close()
 
 
-LATEST_SCHEMA_VERSION = 11
+LATEST_SCHEMA_VERSION = 12
 
 
 def init_db() -> None:
@@ -88,6 +88,7 @@ def init_db() -> None:
             (9,  "009_llm_usage.sql"),
             (10, "010_schema_hardening.sql"),
             (11, "011_consolidate_state.sql"),
+            (12, "012_restore_admin_broker_encrypted.sql"),
         ]
 
         for target_version, filename in migrations:

@@ -118,11 +118,13 @@ CREATE TABLE IF NOT EXISTS admin_broker_tokens_v2 (
     set_by_user_id  INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     created_at      DATETIME NOT NULL DEFAULT (datetime('now')),
     expires_at      DATETIME,
-    is_active       BOOLEAN NOT NULL DEFAULT TRUE
+    is_active       BOOLEAN NOT NULL DEFAULT TRUE,
+    encrypted       BOOLEAN NOT NULL DEFAULT FALSE
 );
 
 INSERT OR IGNORE INTO admin_broker_tokens_v2
-    SELECT id, broker, access_token, set_by_user_id, created_at, expires_at, is_active
+    SELECT id, broker, access_token, set_by_user_id, created_at, expires_at, is_active,
+           COALESCE(encrypted, FALSE)
     FROM admin_broker_tokens;
 
 DROP TABLE admin_broker_tokens;
