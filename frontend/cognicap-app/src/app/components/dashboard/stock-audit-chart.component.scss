@@ -695,11 +695,9 @@ $audit-cols: 150px repeat(5, minmax(52px, 1fr)) 68px 130px 62px;
   grid-template-columns: repeat(4, 1fr);
   gap: 10px;
 
-  @media (max-width: 900px) {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  @media (max-width: 520px) {
-    grid-template-columns: 1fr;
+  // Keep 4 columns on mobile but tighten the gap
+  @media (max-width: 600px) {
+    gap: 5px;
   }
 }
 
@@ -953,6 +951,34 @@ $audit-cols: 150px repeat(5, minmax(52px, 1fr)) 68px 130px 62px;
   &.bmore--stable   { color: rgba($stable,   0.7); &:hover { border-color: rgba($stable,   0.4); background: rgba($stable,   0.06); color: $stable; } }
   &.bmore--watch    { color: rgba($watch,    0.7); &:hover { border-color: rgba($watch,    0.4); background: rgba($watch,    0.06); color: $watch; } }
   &.bmore--critical { color: rgba($critical, 0.7); &:hover { border-color: rgba($critical, 0.4); background: rgba($critical, 0.06); color: $critical; } }
+}
+
+// ── Mobile compact: 4 narrow columns ─────────────────────────────────────────
+@media (max-width: 600px) {
+  .audit-bucket {
+    padding: 8px 5px 6px;
+    border-radius: 8px;
+    gap: 4px;
+  }
+
+  .bucket-label-text { font-size: 9px; letter-spacing: 0.04em; }
+  .bucket-count      { font-size: 9px; padding: 1px 4px; }
+  .bucket-dot        { width: 5px; height: 5px; }
+  .bucket-head       { gap: 3px; padding-bottom: 5px; }
+
+  .bkt-card          { padding: 6px 5px 4px; border-radius: 7px; }
+  .bkt-sym           { font-size: 9px; }
+  .bkt-score         { font-size: 13px; }
+  .bkt-score-denom   { font-size: 8px; }
+  .bkt-pnl           { font-size: 9px; }
+  .bkt-top           { padding-left: 3px; }
+  .bkt-bottom        { padding-left: 3px; margin-top: 1px; }
+
+  // Shrink radar chart so cards stay compact
+  .bkt-radar-wrap    { width: 100%; aspect-ratio: 1; }
+
+  // Hide the score progress bar on mobile — too small to be useful
+  .bkt-bar-track     { display: none; }
 }
 
 // ── Empty state ──────────────────────────────────────────────────────────────
