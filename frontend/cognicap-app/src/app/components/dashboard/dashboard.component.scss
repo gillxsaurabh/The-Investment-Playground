@@ -18,7 +18,8 @@
 .dashboard-layout {
   max-width: 1800px;
   margin: 0 auto;
-  padding: 14px 24px;
+  // SASS-compiled top padding keeps layout correct even if CSS vars don't resolve
+  padding: ($header-height + $ticker-height + 14px) 24px 14px;
   min-height: calc(100vh - 140px);
 }
 

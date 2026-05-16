@@ -1,18 +1,18 @@
-<div class="dashboard-container">
-  <!-- Common Header Banner (includes market ticker) -->
-  <app-header-banner
-    [userName]="user?.name || ''"
-    [activePage]="'dashboard'"
-    [brokerLinked]="brokerLinked"
-    [nifty]="nifty"
-    [sensex]="sensex"
-    [marketGainers]="marketGainers"
-    [marketLosers]="marketLosers"
-    [isMarketLoading]="isMarketLoading"
-    [marketError]="marketError"
-    (onLogout)="logout()">
-  </app-header-banner>
+<!-- Header banner outside overflow container so position:fixed children work correctly -->
+<app-header-banner
+  [userName]="user?.name || ''"
+  [activePage]="'dashboard'"
+  [brokerLinked]="brokerLinked"
+  [nifty]="nifty"
+  [sensex]="sensex"
+  [marketGainers]="marketGainers"
+  [marketLosers]="marketLosers"
+  [isMarketLoading]="isMarketLoading"
+  [marketError]="marketError"
+  (onLogout)="logout()">
+</app-header-banner>
 
+<div class="dashboard-container">
   <!-- Main Dashboard Layout -->
   <div class="dashboard-layout">
     <main class="dashboard-main">
