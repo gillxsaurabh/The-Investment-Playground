@@ -70,14 +70,22 @@ interface PortfolioVitals {
       </div>
     </div>
 
-    <!-- Charts Row -->
-    <div class="charts-split">
-      <div class="chart-half scatter-half">
-        <canvas #chartCanvas></canvas>
-      </div>
-      <div class="chart-half bar-half">
-        <canvas #barCanvas></canvas>
-      </div>
+    <!-- Chart View Toggle -->
+    <div class="chart-toggle-row">
+      <button class="chart-toggle-btn" [class.active]="chartView === 'scatter'" (click)="chartView = 'scatter'">
+        <span class="material-icons">scatter_plot</span> Risk Radar
+      </button>
+      <button class="chart-toggle-btn" [class.active]="chartView === 'bar'" (click)="chartView = 'bar'">
+        <span class="material-icons">bar_chart</span> P&L Snapshot
+      </button>
+    </div>
+
+    <!-- Charts (one at a time) -->
+    <div class="chart-full" [style.display]="chartView === 'scatter' ? 'block' : 'none'">
+      <canvas #chartCanvas></canvas>
+    </div>
+    <div class="chart-full" [style.display]="chartView === 'bar' ? 'block' : 'none'">
+      <canvas #barCanvas></canvas>
     </div>
   `,
   styles: [`
@@ -119,21 +127,41 @@ interface PortfolioVitals {
       &.down { color: #ef4444; }
     }
 
-    .charts-split {
+    .chart-toggle-row {
       display: flex;
-      gap: 8px;
-      min-height: 0;
+      gap: 6px;
+      margin-bottom: 8px;
     }
 
-    .chart-half {
-      flex: 1;
-      min-width: 0;
+    .chart-toggle-btn {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 12px;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.12);
+      background: transparent;
+      color: #9ca3af;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.15s;
+
+      .material-icons { font-size: 14px; }
+
+      &.active {
+        background: rgba(59, 130, 246, 0.15);
+        border-color: #3b82f6;
+        color: #93c5fd;
+      }
+
+      &:hover:not(.active) {
+        background: rgba(255,255,255,0.06);
+        color: #d1d5db;
+      }
     }
 
-    .scatter-half { flex: 3; }
-    .bar-half  { flex: 2; }
-
-    canvas {
+    .chart-full canvas {
       width: 100% !important;
       height: 220px !important;
     }
@@ -149,6 +177,7 @@ export class PositionsChartComponent implements AfterViewInit, OnChanges, OnDest
   @ViewChild('barCanvas') barCanvasRef!: ElementRef<HTMLCanvasElement>;
 
   vitals: PortfolioVitals = { totalInvested: 0, currentValue: 0, totalPnl: 0, roiPct: 0 };
+  chartView: 'scatter' | 'bar' = 'scatter';
 
   private chart: Chart | null = null;
   private barChart: Chart | null = null;

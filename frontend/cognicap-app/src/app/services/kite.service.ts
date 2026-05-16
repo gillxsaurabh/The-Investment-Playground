@@ -286,4 +286,8 @@ export class KiteService {
       ltp
     });
   }
+
+  getSavedDiscoverResult(): Observable<{ success: boolean; saved_at?: string; data?: any }> {
+    return this.http.get<{ success: boolean; saved_at?: string; data?: any }>(`${this.apiUrl}/decision-support/results`);
+  }
 }

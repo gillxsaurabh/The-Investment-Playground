@@ -1,4 +1,4 @@
-import { Component, OnDestroy, OnInit, NgZone } from '@angular/core';
+import { Component, ElementRef, OnDestroy, OnInit, NgZone, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
@@ -112,12 +112,50 @@ export class DiscoverComponent implements OnInit, OnDestroy {
     { id: 'sell_scoring', name: 'Sell Signal Engine', agentName: 'Sell Signal Engine', agentRole: 'Multi-factor sell urgency scoring with AI exit reasoning', status: 'pending', stocksRemaining: null, previousCount: null, startedAt: null, completedAt: null, durationMs: null },
   ];
 
+  @ViewChild('feedEl') feedEl?: ElementRef<HTMLElement>;
+
   pipelineMode: 'buy' | 'sell' = 'buy';
   selectedGear = 3;
-  selectedProvider: 'claude' | 'openai' = 'claude';
+  selectedProvider: 'claude' | 'openai' = 'claude';  // loaded from localStorage in ngOnInit
   isRunning = false;
   isCompleted = false;
   pipelineMessage = '';
+
+  // Live activity feed
+  activityLog: { step: string; message: string }[] = [];
+  currentActivity = '';
+  showDetailedLogs = false;
+  showStages = false;     // expands during a live run, collapses again on completion
+  hasRunPipeline = false; // becomes true only when user kicks off a live run this session
+
+  get currentStageLabel(): string {
+    const steps = this.pipelineMode === 'buy' ? this.pipelineSteps : this.sellPipelineSteps;
+    const running = steps.find(s => s.status === 'running');
+    if (running) return running.agentName.toUpperCase();
+    const lastCompleted = [...steps].reverse().find(s => s.status === 'completed');
+    if (lastCompleted && this.isCompleted) return 'COMPLETE';
+    return 'INITIALIZING';
+  }
+
+  get currentStepIndex(): number {
+    const steps = this.pipelineMode === 'buy' ? this.pipelineSteps : this.sellPipelineSteps;
+    const completed = steps.filter(s => s.status === 'completed' || s.status === 'error').length;
+    const running = steps.findIndex(s => s.status === 'running');
+    return running >= 0 ? running + 1 : completed;
+  }
+
+  get totalSteps(): number {
+    return (this.pipelineMode === 'buy' ? this.pipelineSteps : this.sellPipelineSteps).length;
+  }
+
+  get pipelineProgressPct(): number {
+    const steps = this.pipelineMode === 'buy' ? this.pipelineSteps : this.sellPipelineSteps;
+    const completed = steps.filter(s => s.status === 'completed' || s.status === 'error').length;
+    const hasRunning = steps.some(s => s.status === 'running');
+    return Math.round(((completed + (hasRunning ? 0.5 : 0)) / steps.length) * 100);
+  }
+
+  lastRunAt: string | null = null;
 
   stockResults: StockResult[] = [];
   sellResults: SellResult[] = [];
@@ -130,10 +168,9 @@ export class DiscoverComponent implements OnInit, OnDestroy {
     4: { label: 'Growth', description: 'Capital appreciation — shallow dips, relaxed fundamentals.' },
     5: { label: 'Turbo', description: 'Momentum plays — small caps, breakouts, no fundamental filter.' },
   };
-  readonly GEAR_ICONS: Record<number, string> = {
-    1: '🛡️', 2: '🧱', 3: '⚖️', 4: '🚀', 5: '🔥',
-  };
-  private readonly GEAR_COLORS: Record<number, string> = {
+  readonly ROMAN: Record<number, string> = { 1: 'I', 2: 'II', 3: 'III', 4: 'IV', 5: 'V' };
+  readonly intensitySegments = Array.from({ length: 20 }, (_, i) => i);
+  readonly GEAR_COLORS: Record<number, string> = {
     1: '#22c55e', 2: '#2dd4bf', 3: '#3b82f6', 4: '#f97316', 5: '#ef4444',
   };
 
@@ -161,6 +198,9 @@ export class DiscoverComponent implements OnInit, OnDestroy {
   bulkTradeLoading = false;
   bulkTradeExecuting = false;
   bulkTradeProgress: number | null = null;
+  bulkTotalInvestment = 0;
+  private bulkAvailableFunds = 0;
+  private bulkRawStocks: Array<{ symbol: string; ltp: number; atr: number; instrument_token?: number }> = [];
   bulkTradeDetails: {
     availableFunds: number;
     perStockAllocation: number;
@@ -183,8 +223,6 @@ export class DiscoverComponent implements OnInit, OnDestroy {
   private abortController: AbortController | null = null;
   private marketRefreshSub: Subscription | null = null;
 
-  private static readonly RESULTS_KEY = 'cognicap_discover_results';
-  private static readonly SELL_RESULTS_KEY = 'cognicap_discover_sell_results';
 
   get activePipelineSteps(): PipelineStep[] {
     return this.pipelineMode === 'sell' ? this.sellPipelineSteps : this.pipelineSteps;
@@ -201,6 +239,7 @@ export class DiscoverComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.selectedProvider = (localStorage.getItem('cognicap_preferred_provider') as 'claude' | 'openai') ?? 'claude';
     this.authService.user$.subscribe(u => { this.user = u; });
     this.authService.brokerLinked$.subscribe(l => { this.brokerLinked = l; });
     this.simulatorService.tradingMode$.subscribe(m => { this.tradingMode = m; });
@@ -229,12 +268,16 @@ export class DiscoverComponent implements OnInit, OnDestroy {
   }
 
   private loadSavedResults(): void {
-    try {
-      const saved = sessionStorage.getItem(DiscoverComponent.RESULTS_KEY);
-      if (saved) this.stockResults = JSON.parse(saved);
-      const savedSell = sessionStorage.getItem(DiscoverComponent.SELL_RESULTS_KEY);
-      if (savedSell) this.sellResults = JSON.parse(savedSell);
-    } catch { /* ignore */ }
+    this.kiteService.getSavedDiscoverResult().subscribe({
+      next: res => {
+        if (res.success && res.data?.stocks?.length) {
+          this.stockResults = res.data.stocks;
+          this.lastRunAt = res.saved_at ?? null;
+          this.isCompleted = true;
+        }
+      },
+      error: () => {}
+    });
   }
 
   togglePipelineMode(mode: 'buy' | 'sell'): void {
@@ -266,6 +309,11 @@ export class DiscoverComponent implements OnInit, OnDestroy {
     this.isRunning = true;
     this.isCompleted = false;
     this.pipelineMessage = '';
+    this.activityLog = [];
+    this.currentActivity = '';
+    this.showDetailedLogs = false;
+    this.showStages = true;
+    this.hasRunPipeline = true;
 
     if (this.pipelineMode === 'buy') {
       this.stockResults = [];
@@ -335,6 +383,21 @@ export class DiscoverComponent implements OnInit, OnDestroy {
       case 'step_start': {
         const step = steps.find(s => s.id === data.step);
         if (step) { step.status = 'running'; step.startedAt = new Date(); if (data.agent_name) step.agentName = data.agent_name; }
+        if (data.description) this.currentActivity = data.description;
+        break;
+      }
+      case 'step_log': {
+        const msg: string = data.message || '';
+        if (msg) {
+          const stepLabel = (data.step as string || '').replace(/_/g, ' ');
+          this.activityLog.push({ step: stepLabel, message: msg });
+          if (this.activityLog.length > 60) this.activityLog.shift();
+          setTimeout(() => {
+            if (this.feedEl?.nativeElement) {
+              this.feedEl.nativeElement.scrollTop = this.feedEl.nativeElement.scrollHeight;
+            }
+          }, 0);
+        }
         break;
       }
       case 'step_complete': {
@@ -363,22 +426,21 @@ export class DiscoverComponent implements OnInit, OnDestroy {
         // Buy pipeline: { stocks: [...] }
         if (this.pipelineMode === 'buy' && Array.isArray(data.stocks)) {
           this.stockResults = data.stocks as StockResult[];
-          try { sessionStorage.setItem(DiscoverComponent.RESULTS_KEY, JSON.stringify(this.stockResults)); } catch { /* ignore */ }
+          this.lastRunAt = data.completed_at ?? new Date().toISOString();
         }
         // Sell pipeline: { holdings: [...] }
         if (this.pipelineMode === 'sell' && Array.isArray(data.holdings)) {
           this.sellResults = data.holdings as SellResult[];
-          try { sessionStorage.setItem(DiscoverComponent.SELL_RESULTS_KEY, JSON.stringify(this.sellResults)); } catch { /* ignore */ }
         }
         this.pipelineMessage = data.message || 'Pipeline complete.';
+        this.currentActivity = '';
+        this.showStages = false;
         break;
       case 'stock_result':
-        // Fallback: handle per-stock events if backend sends them individually
         if (this.pipelineMode === 'buy' && data.symbol) {
           const existing = this.stockResults.findIndex(s => s.symbol === data.symbol);
           if (existing >= 0) this.stockResults[existing] = { ...this.stockResults[existing], ...data };
           else this.stockResults.push(data as StockResult);
-          try { sessionStorage.setItem(DiscoverComponent.RESULTS_KEY, JSON.stringify(this.stockResults)); } catch { /* ignore */ }
         }
         break;
       case 'sell_result':
@@ -386,7 +448,6 @@ export class DiscoverComponent implements OnInit, OnDestroy {
           const existing = this.sellResults.findIndex(s => s.symbol === data.symbol);
           if (existing >= 0) this.sellResults[existing] = { ...this.sellResults[existing], ...data };
           else this.sellResults.push(data as SellResult);
-          try { sessionStorage.setItem(DiscoverComponent.SELL_RESULTS_KEY, JSON.stringify(this.sellResults)); } catch { /* ignore */ }
         }
         break;
       case 'pipeline_complete':
@@ -487,6 +548,12 @@ export class DiscoverComponent implements OnInit, OnDestroy {
     this.router.navigate(['/login']);
   }
 
+  formatRunAt(iso: string | null): string {
+    if (!iso) return '';
+    const d = new Date(iso);
+    return d.toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  }
+
   getUrgencyClass(label: string): string {
     const map: Record<string, string> = { 'STRONG SELL': 'urgent-strong', 'SELL': 'urgent-sell', 'WATCH': 'urgent-watch', 'HOLD': 'urgent-hold' };
     return map[label] || '';
@@ -536,16 +603,17 @@ export class DiscoverComponent implements OnInit, OnDestroy {
     this.showBulkTradeModal = true;
     this.bulkTradeLoading = true;
     this.bulkTradeDetails = null;
+    this.bulkRawStocks = [];
 
     this.getFundsForMode().subscribe({
       next: funds => {
-        const riskBudget = funds * 0.02;
-        const stocks: Array<{ symbol: string; ltp: number; quantity: number; atr: number; status: 'pending' | 'success' | 'error'; instrument_token?: number }> = [];
-
+        this.bulkAvailableFunds = funds;
+        this.bulkTotalInvestment = Math.round(funds);
         let remaining = this.stagingList.length;
+
         const checkDone = () => {
           if (--remaining === 0) {
-            this.bulkTradeDetails = { availableFunds: funds, perStockAllocation: riskBudget, stocks };
+            this.buildBulkTradeDetails();
             this.bulkTradeLoading = false;
           }
         };
@@ -554,11 +622,12 @@ export class DiscoverComponent implements OnInit, OnDestroy {
           this.kiteService.calculateExits(s.symbol, s.instrument_token, s.current_price).subscribe({
             next: res => {
               if (res.success) {
-                const atr = res.atr ?? 0;
-                const trail = res.trail_multiplier ?? 1.5;
-                const riskPerShare = atr * trail;
-                const qty = riskPerShare > 0 ? Math.floor(riskBudget / riskPerShare) : 0;
-                stocks.push({ symbol: s.symbol, ltp: res.ltp ?? s.current_price, quantity: qty, atr, status: 'pending', instrument_token: s.instrument_token });
+                this.bulkRawStocks.push({
+                  symbol: s.symbol,
+                  ltp: res.ltp ?? s.current_price,
+                  atr: res.atr ?? 0,
+                  instrument_token: s.instrument_token,
+                });
               }
               checkDone();
             },
@@ -568,6 +637,25 @@ export class DiscoverComponent implements OnInit, OnDestroy {
       },
       error: () => { this.bulkTradeLoading = false; }
     });
+  }
+
+  private buildBulkTradeDetails(): void {
+    const n = this.bulkRawStocks.length;
+    if (n === 0) return;
+    const perStock = this.bulkTotalInvestment / n;
+    const stocks = this.bulkRawStocks.map(s => ({
+      symbol: s.symbol,
+      ltp: s.ltp,
+      quantity: s.ltp > 0 ? Math.floor(perStock / s.ltp) : 0,
+      atr: s.atr,
+      status: 'pending' as const,
+      instrument_token: s.instrument_token,
+    }));
+    this.bulkTradeDetails = { availableFunds: this.bulkAvailableFunds, perStockAllocation: perStock, stocks };
+  }
+
+  onBulkInvestmentChange(): void {
+    if (this.bulkTradeDetails) this.buildBulkTradeDetails();
   }
 
   executeAllTrades(): void {

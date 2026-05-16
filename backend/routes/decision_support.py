@@ -87,3 +87,15 @@ def run_sell_analysis():
 
     except Exception as e:
         return jsonify({"success": False, "error": "Sell analysis failed"}), 500
+
+
+@decision_support_bp.route("/results", methods=["GET"])
+@require_auth
+def get_discover_results():
+    """Return the last saved discover pipeline result for the current user."""
+    from services.analysis_storage import get_discover_result
+    user_id = g.current_user["id"]
+    result = get_discover_result(user_id)
+    if result:
+        return jsonify({"success": True, **result})
+    return jsonify({"success": False, "data": None})

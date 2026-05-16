@@ -28,6 +28,7 @@ from agents.decision_support.tools import (
 )
 from agents.shared.data_infra import PipelineSession
 from broker import get_broker
+from services.analysis_storage import save_discover_result
 from constants import (
     VIX_TIER1_THRESHOLD, VIX_TIER2_THRESHOLD, VIX_TIER3_THRESHOLD,
     VIX_TIER1_RSI_TIGHTEN, VIX_TIER2_RSI_TIGHTEN,
@@ -439,7 +440,8 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
             "portfolio_note": s.get("portfolio_note"),
         })
 
-    yield _sse("final_result", {
+    completed_at = datetime.now().isoformat()
+    final_payload = {
         "stocks": result_stocks,
         "total_scanned": total_scanned,
         "total_selected": len(result_stocks),
@@ -453,5 +455,13 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
             else "No stocks currently meet all criteria. The market may lack strong setups."
         ),
         "started_at": started_at,
-        "completed_at": datetime.now().isoformat(),
-    })
+        "completed_at": completed_at,
+    }
+
+    if user_id and result_stocks:
+        try:
+            save_discover_result(user_id, final_payload)
+        except Exception as _e:
+            pass  # never fail the stream over a storage error
+
+    yield _sse("final_result", final_payload)

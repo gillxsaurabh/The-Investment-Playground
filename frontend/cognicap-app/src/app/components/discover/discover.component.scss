@@ -15,196 +15,804 @@
   align-items: start;
 }
 
-// ---- Mode bar ----
-.mode-bar {
+// ============================================================
+// COCKPIT / THROTTLE redesign — Discover panel top controls
+// ============================================================
+
+// ---- Cockpit strip (mode bar) ----
+.cockpit-strip {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
+  justify-content: space-between;
+  padding: 10px 16px;
+  background: linear-gradient(180deg, rgba($accent, 0.04) 0%, transparent 100%);
+  border: 1px solid rgba($accent, 0.12);
+  border-radius: $radius-lg;
+  margin-bottom: 14px;
+  position: relative;
 }
-.mode-pills { display: flex; gap: 6px; }
-.mode-pill {
-  padding: 6px 16px;
-  border-radius: 20px;
-  border: 1px solid $border-default;
-  background: transparent;
+.strip-left { display: flex; align-items: center; gap: 12px; }
+.mode-indicator {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-family: var(--font-display);
+  font-size: 0.92rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  color: $accent;
+}
+.mode-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: $accent;
+  box-shadow: 0 0 8px rgba($accent, 0.7);
+  animation: cockpit-pulse 1.8s ease-in-out infinite;
+  flex-shrink: 0;
+}
+@keyframes cockpit-pulse {
+  0%, 100% { opacity: 1; box-shadow: 0 0 8px rgba($accent, 0.7); }
+  50%       { opacity: 0.35; box-shadow: 0 0 4px rgba($accent, 0.2); }
+}
+.strip-divider { width: 1px; height: 14px; background: $border-default; }
+.strip-sub {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
   color: $text-secondary;
+  letter-spacing: 0.005em;
+}
+.strip-right { display: flex; align-items: center; }
+.strip-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: $font-mono;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  color: $text-muted;
+  padding: 4px 12px;
+  border: 1px solid $border-default;
+  border-radius: 999px;
+}
+.status-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: $text-muted;
+  flex-shrink: 0;
+  &.live { background: $red; box-shadow: 0 0 6px rgba($red, 0.6); }
+}
+
+// ---- Gear Cockpit panel ----
+.gear-cockpit {
+  position: relative;
+  background:
+    radial-gradient(ellipse at top center, rgba($accent, 0.05) 0%, transparent 55%),
+    $bg-card;
+  border: 1px solid rgba($accent, 0.14);
+  border-radius: $radius-xl;
+  padding: 22px 22px 18px;
+  margin-bottom: 14px;
+  overflow: hidden;
+
+  // Subtle grid texture
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba($accent, 0.022) 1px, transparent 1px),
+      linear-gradient(90deg, rgba($accent, 0.022) 1px, transparent 1px);
+    background-size: 28px 28px;
+    pointer-events: none;
+    mask-image: radial-gradient(ellipse at center, black 0%, transparent 72%);
+  }
+}
+
+// Corner brackets
+.panel-corner {
+  position: absolute;
+  width: 11px; height: 11px;
+  border-color: rgba($accent, 0.38);
+  border-style: solid;
+  pointer-events: none;
+  &--tl { top: 9px; left: 9px; border-width: 1px 0 0 1px; }
+  &--tr { top: 9px; right: 9px; border-width: 1px 1px 0 0; }
+  &--bl { bottom: 9px; left: 9px; border-width: 0 0 1px 1px; }
+  &--br { bottom: 9px; right: 9px; border-width: 0 1px 1px 0; }
+}
+
+.gear-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 16px;
+  position: relative;
+  z-index: 1;
+}
+.gear-eyebrow {
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 600;
+  letter-spacing: 0.005em;
+  color: $accent;
+}
+.gear-readout {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+.gear-roman {
+  font-family: $font-mono;
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--gear-color);
+  letter-spacing: 0.08em;
+  text-shadow: 0 0 16px color-mix(in srgb, var(--gear-color) 40%, transparent);
+  transition: color 0.25s, text-shadow 0.25s;
+}
+.gear-name {
+  font-family: $font-mono;
   font-size: 0.8rem;
   font-weight: 700;
-  cursor: pointer;
-  letter-spacing: 0.05em;
-  transition: all 0.2s;
-  &:disabled { opacity: 0.4; cursor: not-allowed; }
-  &.active-buy { background: $green-dim; border-color: $green; color: $green; }
-  &.active-sell { background: $red-dim; border-color: $red; color: $red; }
+  color: $text-primary;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
 }
-.mode-desc { font-size: 0.78rem; color: $text-muted; }
-.sell-desc { color: rgba($red, 0.7); }
 
-// ---- Gear slider ----
-.gear-section {
-  background: $bg-card;
+// Throttle gate
+.throttle-row {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 6px;
+  padding: 8px;
+  background: $bg-primary;
   border: 1px solid $border-subtle;
-  border-radius: 12px;
-  padding: 14px 16px;
+  border-radius: $radius-md;
   margin-bottom: 14px;
-  &.turbo { border-color: rgba($red, 0.3); animation: turbo-shake 0.4s ease-in-out; }
+  position: relative;
+  z-index: 1;
 }
-@keyframes turbo-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+.throttle-slot {
+  position: relative;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: $radius-sm;
+  padding: 13px 6px 11px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  transition: background 0.18s, border-color 0.18s, box-shadow 0.18s;
 
-.gear-icon { font-size: 1.4rem; margin-bottom: 8px; &.shake { animation: turbo-shake 0.4s ease-in-out; } }
-.gear-slider-wrap { display: flex; flex-direction: column; gap: 6px; }
-.gear-slider {
-  -webkit-appearance: none;
-  width: 100%; height: 4px;
-  border-radius: 2px;
-  background: linear-gradient(to right, #22c55e, #2dd4bf, #3b82f6, #f97316, #ef4444);
-  outline: none; cursor: pointer;
-  &::-webkit-slider-thumb { -webkit-appearance: none; width: 16px; height: 16px; border-radius: 50%; background: var(--slider-color, #{$accent}); cursor: pointer; transition: transform 0.2s; &:hover { transform: scale(1.2); } }
-  &::-moz-range-thumb { width: 16px; height: 16px; border-radius: 50%; background: var(--slider-color, #{$accent}); cursor: pointer; border: none; }
+  &:hover:not(:disabled):not(.active) {
+    background: rgba(255,255,255,0.025);
+    border-color: rgba(255,255,255,0.07);
+    .slot-roman, .slot-label { color: $text-secondary; }
+  }
+  &:disabled { cursor: not-allowed; opacity: 0.45; }
+
+  &.active {
+    background: color-mix(in srgb, var(--slot-color) 12%, transparent);
+    border-color: var(--slot-color);
+    box-shadow: 0 0 18px color-mix(in srgb, var(--slot-color) 22%, transparent);
+    .slot-roman { color: var(--slot-color); text-shadow: 0 0 12px color-mix(in srgb, var(--slot-color) 55%, transparent); }
+    .slot-label { color: $text-primary; }
+    .slot-bracket { opacity: 1; }
+  }
 }
-.gear-labels { display: flex; justify-content: space-between; }
-.gear-label { font-size: 0.7rem; color: $text-muted; cursor: pointer; &.active { font-weight: 700; } }
-.gear-desc { font-size: 0.78rem; margin-top: 6px; }
+.slot-roman {
+  font-family: $font-mono;
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: $text-muted;
+  letter-spacing: 0.06em;
+  transition: color 0.18s, text-shadow 0.18s;
+}
+.slot-label {
+  font-family: $font-mono;
+  font-size: 0.56rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: $text-muted;
+  text-transform: uppercase;
+  transition: color 0.18s;
+  white-space: nowrap;
+}
+.slot-bracket {
+  position: absolute;
+  inset: 5px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s;
 
-// ---- Provider row ----
-.provider-row {
+  &::before, &::after {
+    content: '';
+    position: absolute;
+    width: 5px; height: 5px;
+    border-color: var(--slot-color);
+    border-style: solid;
+  }
+  &::before { top: 0; left: 0; border-width: 1px 0 0 1px; }
+  &::after  { bottom: 0; right: 0; border-width: 0 1px 1px 0; }
+}
+
+// Intensity meter
+.intensity {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 14px;
-  flex-wrap: wrap;
-}
-.provider-label { font-size: 0.75rem; color: $text-secondary; display: flex; align-items: center; gap: 4px; .material-icons { font-size: 14px; color: $accent; } }
-.provider-chips { display: flex; gap: 6px; }
-.provider-chip {
-  padding: 4px 12px;
-  border-radius: 16px;
-  border: 1px solid $border-default;
-  background: transparent;
-  color: $text-secondary;
-  font-size: 0.75rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-  &.active { background: $accent-dim; border-color: $accent; color: $accent; }
-  &:hover:not(.active):not(:disabled) { border-color: rgba(255,255,255,0.2); }
-  &:disabled { opacity: 0.4; }
-}
-
-// ---- Run button ----
-.run-row { margin-bottom: 16px; }
-.btn-run {
-  width: 100%;
-  padding: 11px;
-  background: $accent;
-  color: #fff;
-  border: none;
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.2s;
-  &:hover { filter: brightness(1.1); }
-}
-.btn-cancel {
-  width: 100%;
-  padding: 11px;
-  background: rgba(239,68,68,0.12);
-  color: $red;
-  border: 1px solid rgba(239,68,68,0.3);
-  border-radius: 8px;
-  font-size: 0.875rem;
-  font-weight: 700;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  transition: all 0.2s;
-}
-
-// ---- Stepper (horizontal) ----
-.stepper {
-  display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  gap: 0;
-  margin-bottom: 16px;
-  overflow-x: auto;
-  padding: 4px 0 8px;
-}
-
-.step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-  min-width: 80px;
+  margin-bottom: 13px;
   position: relative;
+  z-index: 1;
 }
-
-.step-indicator {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  width: 100%;
+.intensity-label {
+  font-family: var(--font-display);
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.005em;
+  color: $text-secondary;
+  white-space: nowrap;
 }
-
-.step-dot {
-  width: 26px; height: 26px;
-  border-radius: 50%;
-  border: 2px solid $border-default;
-  background: $bg-elevated;
-  display: flex; align-items: center; justify-content: center;
-  font-size: 0.65rem; color: $text-muted; flex-shrink: 0;
-  .material-icons { font-size: 13px; }
-  .step-num { font-size: 0.65rem; font-weight: 700; }
+.intensity-pct {
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--gear-color);
+  min-width: 38px;
+  text-align: right;
+  transition: color 0.25s;
+  white-space: nowrap;
 }
-
-.step.running .step-dot { border-color: $accent; background: $accent-dim; color: $accent; }
-.step.completed .step-dot { border-color: $green; background: $green-dim; color: $green; }
-.step.error .step-dot { border-color: $red; background: $red-dim; color: $red; }
-
-// Horizontal connector between dots
-.step-line {
+.intensity-bar {
   flex: 1;
-  height: 2px;
-  width: auto;
-  min-width: 8px;
-  background: $border-subtle;
-  margin: 0 2px;
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+.intensity-segment {
+  flex: 1;
+  height: 10px;
+  background: rgba(255,255,255,0.05);
+  border-radius: 1px;
+  transition: background 0.25s ease, height 0.25s ease, box-shadow 0.25s ease;
+
+  &.filled {
+    background: var(--gear-color);
+    height: 13px;
+    box-shadow: 0 0 5px color-mix(in srgb, var(--gear-color) 35%, transparent);
+  }
 }
 
-// Label + counts below the dot
-.step-info {
+.gear-desc {
+  font-family: var(--font-display);
+  font-size: 0.82rem;
+  color: $text-secondary;
+  letter-spacing: 0.005em;
+  line-height: 1.55;
+  border-top: 1px dashed $border-subtle;
+  padding-top: 11px;
+  margin: 0;
+  position: relative;
+  z-index: 1;
+}
+
+// ---- CTA row ----
+.cta-row { margin-bottom: 16px; }
+.cta-engage {
+  width: 100%;
+  position: relative;
+  background: linear-gradient(180deg, rgba($accent, 0.13) 0%, rgba($accent, 0.05) 100%);
+  border: 1px solid $accent;
+  border-radius: $radius-lg;
+  color: $accent;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  padding: 13px 22px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  overflow: hidden;
+  transition: background 0.22s, color 0.22s, box-shadow 0.22s;
+
+  // Sheen sweep
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba($accent, 0.22) 50%, transparent 100%);
+    transform: translateX(-120%);
+    transition: transform 0.55s ease;
+    pointer-events: none;
+  }
+  &:hover {
+    background: linear-gradient(180deg, rgba($accent, 0.22) 0%, rgba($accent, 0.10) 100%);
+    color: #ffe8a0;
+    box-shadow: 0 0 22px rgba($accent, 0.28), inset 0 0 0 1px rgba($accent, 0.35);
+    &::before { transform: translateX(120%); }
+    .cta-arrow { transform: translateX(5px); }
+  }
+}
+.cta-label { flex: 0 0 auto; }
+.cta-arrow { transition: transform 0.22s; font-size: 1.05rem; line-height: 1; }
+
+.cta-abort {
+  width: 100%;
+  padding: 13px 22px;
+  background: rgba($red, 0.08);
+  border: 1px solid rgba($red, 0.4);
+  border-radius: $radius-lg;
+  color: $red;
+  font-family: var(--font-display);
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  transition: background 0.2s, box-shadow 0.2s;
+  &:hover { background: rgba($red, 0.16); box-shadow: 0 0 16px rgba($red, 0.2); }
+}
+
+// ---- Telemetry rail ----
+.telemetry {
+  background: $bg-card;
+  border: 1px solid $border-subtle;
+  border-radius: $radius-lg;
+  padding: 16px 18px 20px;
+  margin-bottom: 14px;
+}
+.tele-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 12px;
+}
+
+// Overall progress bar with percentage readout
+.tele-progress-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.tele-progress-wrap {
+  flex: 1;
+  height: 3px;
+  background: $border-subtle;
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+
+  // shimmer overlay while running
+  &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba($accent, 0.35) 50%, transparent 100%);
+    transform: translateX(-100%);
+    animation: progress-shimmer 1.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+}
+.tele-progress-bar {
+  height: 100%;
+  background: $accent;
+  border-radius: 2px;
+  transition: width 0.55s ease, background 0.3s;
+  box-shadow: 0 0 10px rgba($accent, 0.6);
+  position: relative;
+  z-index: 1;
+  &.complete {
+    background: $green;
+    box-shadow: 0 0 10px rgba($green, 0.55);
+  }
+}
+.tele-progress-pct {
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  color: $accent;
+  min-width: 38px;
+  text-align: right;
+}
+@keyframes progress-shimmer {
+  0%   { transform: translateX(-100%); }
+  60%  { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+.tele-eyebrow {
+  font-family: $font-mono;
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: $accent;
+  text-transform: uppercase;
+}
+.tele-status {
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  color: $red;
+  letter-spacing: 0.005em;
+  line-height: 1.4;
+  text-align: right;
+}
+
+// Stage list — vertical timeline (replaces horizontal node rail)
+.stage-list {
+  list-style: none;
+  margin: 14px 0 0;
+  padding: 0;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 6px 4px 0;
-  width: 100%;
+  position: relative;
+
+  // Continuous connector line through the icons
+  &::before {
+    content: '';
+    position: absolute;
+    left: 10px;
+    top: 18px;
+    bottom: 18px;
+    width: 1px;
+    background: $border-subtle;
+    z-index: 0;
+  }
 }
 
-.step-name { font-size: 0.67rem; font-weight: 600; color: $text-primary; line-height: 1.3; }
-.step-counts { display: flex; align-items: center; gap: 3px; font-size: 0.65rem; color: $text-muted; margin-top: 2px; }
-.count-badge { background: $accent-dim; color: $accent; border-radius: 4px; padding: 0 4px; font-weight: 700; font-size: 0.62rem; }
-.arrow-sm { font-size: 10px !important; }
-.step-dur { font-size: 0.62rem; color: $text-muted; margin-top: 1px; }
-.spin-sm { animation: spin 0.6s linear infinite; }
+.stage-row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 0;
+  position: relative;
+  z-index: 1;
+  transition: opacity 0.25s;
+
+  &.stage-pending { opacity: 0.5; }
+}
+
+.stage-icon {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: $bg-card;
+  border: 1.5px solid $border-default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  position: relative;
+  transition: background 0.25s, border-color 0.25s, box-shadow 0.25s;
+
+  .material-icons { font-size: 13px; }
+
+  .stage-done & {
+    background: rgba($green, 0.12);
+    border-color: $green;
+    color: $green;
+  }
+  .stage-running & {
+    background: rgba($accent, 0.15);
+    border-color: $accent;
+    color: $accent;
+    box-shadow: 0 0 0 0 rgba($accent, 0.45);
+    animation: stage-icon-pulse 1.6s ease-in-out infinite;
+  }
+  .stage-error & {
+    background: rgba($red, 0.12);
+    border-color: $red;
+    color: $red;
+  }
+  .stage-pending & { color: $text-muted; }
+}
+@keyframes stage-icon-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba($accent, 0.45); }
+  50%       { box-shadow: 0 0 0 6px rgba($accent, 0); }
+}
+.stage-num {
+  font-family: $font-mono;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: $text-muted;
+}
+.stage-pulse {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: $accent;
+  box-shadow: 0 0 6px rgba($accent, 0.8);
+  animation: stage-dot-pulse 1.2s ease-in-out infinite;
+}
+@keyframes stage-dot-pulse {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50%       { transform: scale(0.55); opacity: 0.5; }
+}
+
+.stage-name {
+  font-family: var(--font-display);
+  font-size: 0.86rem;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: $text-primary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  .stage-pending & { color: $text-muted; font-weight: 400; }
+  .stage-running & { color: $accent; font-weight: 600; }
+  .stage-done & { color: $text-secondary; }
+  .stage-error & { color: $red; font-weight: 600; }
+}
+
+.stage-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  font-family: $font-mono;
+  font-size: 0.7rem;
+  white-space: nowrap;
+}
+.stage-flow {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  color: $text-secondary;
+}
+.flow-prev { color: $text-muted; }
+.flow-arrow { color: $text-muted; font-size: 0.66rem; }
+.flow-current {
+  color: $text-primary;
+  font-weight: 700;
+  .stage-done & { color: $green; }
+  .stage-running & { color: $accent; }
+  .stage-error & { color: $red; }
+}
+.stage-hint {
+  color: $accent;
+  font-style: italic;
+  font-size: 0.66rem;
+  letter-spacing: 0.04em;
+  &--pending { color: $text-muted; font-style: normal; text-transform: uppercase; font-size: 0.6rem; letter-spacing: 0.14em; }
+}
+.stage-dur {
+  color: $text-muted;
+  font-size: 0.64rem;
+  min-width: 38px;
+  text-align: right;
+}
+.spin-sm { animation: spin 0.65s linear infinite; }
 @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
 
-// ---- Pipeline message ----
-.pipeline-msg { font-size: 0.8rem; color: $text-muted; background: $bg-card; border: 1px solid $border-subtle; border-radius: 8px; padding: 8px 12px; margin-bottom: 12px; }
+// Primary status card — replaces the small log-style activity line
+.status-card {
+  margin-top: 4px;
+  padding: 14px 16px;
+  background: linear-gradient(180deg, rgba($accent, 0.05) 0%, rgba($accent, 0.015) 100%);
+  border: 1px solid rgba($accent, 0.18);
+  border-radius: $radius-lg;
+  position: relative;
+  overflow: hidden;
+
+  // Soft moving glow strip behind content while running
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(90deg, transparent 0%, rgba($accent, 0.06) 50%, transparent 100%);
+    transform: translateX(-100%);
+    animation: status-sweep 2.6s ease-in-out infinite;
+    pointer-events: none;
+  }
+
+  &.status-done {
+    background: linear-gradient(180deg, rgba($green, 0.06) 0%, rgba($green, 0.015) 100%);
+    border-color: rgba($green, 0.25);
+    &::before { display: none; }
+  }
+}
+@keyframes status-sweep {
+  0%   { transform: translateX(-100%); }
+  60%  { transform: translateX(100%); }
+  100% { transform: translateX(100%); }
+}
+
+.status-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 1;
+}
+.status-spinner {
+  width: 22px; height: 22px;
+  position: relative;
+  flex-shrink: 0;
+}
+.spinner-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid rgba($accent, 0.18);
+  border-top-color: $accent;
+  border-right-color: $accent;
+  animation: spinner-rotate 0.9s linear infinite;
+  box-shadow: 0 0 12px rgba($accent, 0.35);
+}
+@keyframes spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+.status-check {
+  width: 22px; height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: $green;
+  .material-icons { font-size: 22px; filter: drop-shadow(0 0 6px rgba($green, 0.5)); }
+}
+.status-label {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.status-stage {
+  font-family: $font-mono;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: $accent;
+  text-transform: uppercase;
+  .status-done & { color: $green; }
+}
+.status-step {
+  font-family: $font-mono;
+  font-size: 0.62rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  color: $text-muted;
+  text-transform: uppercase;
+}
+.status-msg {
+  margin: 10px 0 0;
+  font-family: var(--font-display);
+  font-size: 0.88rem;
+  font-weight: 400;
+  line-height: 1.55;
+  letter-spacing: 0.005em;
+  color: $text-primary;
+  position: relative;
+  z-index: 1;
+  .status-done & { color: $text-secondary; }
+}
+
+// Toggle row — holds both "Show stages" and "Show detailed analysis"
+.toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+// Details toggle — text link, low-emphasis
+.details-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 5px 10px 5px 4px;
+  background: transparent;
+  border: none;
+  border-radius: $radius-sm;
+  color: $text-muted;
+  font-family: $font-mono;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition: color 0.18s, background 0.18s;
+  text-transform: uppercase;
+
+  .material-icons { font-size: 16px; }
+
+  &:hover {
+    color: $accent;
+    background: rgba($accent, 0.05);
+  }
+}
+.details-count {
+  margin-left: 4px;
+  padding: 1px 6px;
+  background: rgba($accent, 0.12);
+  color: $accent;
+  border-radius: 999px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: none;
+}
+
+// Live log feed (scrolling) — shown only via "Show detailed analysis" toggle
+.activity-feed {
+  margin-top: 8px;
+  max-height: 140px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  background: $bg-primary;
+  border: 1px solid $border-subtle;
+  border-radius: $radius-md;
+  position: relative;
+
+  // Top fade
+  &::before {
+    content: '';
+    position: sticky;
+    top: 0;
+    left: 0; right: 0;
+    height: 12px;
+    margin-bottom: -12px;
+    background: linear-gradient(180deg, $bg-primary 0%, transparent 100%);
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { background: rgba($accent, 0.25); border-radius: 2px; }
+  &::-webkit-scrollbar-thumb:hover { background: rgba($accent, 0.4); }
+}
+.activity-entry {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-family: $font-mono;
+  font-size: 0.66rem;
+  line-height: 1.45;
+  animation: entry-fade-in 0.22s ease;
+}
+.entry-step {
+  color: $accent;
+  font-weight: 700;
+  flex-shrink: 0;
+  opacity: 0.65;
+  font-size: 0.58rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  min-width: 88px;
+}
+.entry-msg {
+  color: $text-secondary;
+  word-break: break-word;
+  flex: 1;
+}
+@keyframes entry-fade-in {
+  from { opacity: 0; transform: translateX(-3px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
 
 // ---- Results ----
 .results-section { margin-top: 8px; }
-.results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.results-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 6px; }
 .results-title { font-size: 0.85rem; font-weight: 700; color: $text-primary; }
+.results-timestamp {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  color: $text-muted;
+  .material-icons { font-size: 12px; }
+}
 
 .stock-cards { display: flex; flex-direction: column; gap: 8px; }
 .stock-card {
@@ -339,6 +947,40 @@
 
 // ---- Bulk trade modal ----
 .bulk-modal { max-width: 420px; }
+.bulk-invest-row {
+  background: $bg-elevated;
+  border: 1px solid $border-subtle;
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.bulk-invest-label {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  span:first-child { font-size: 0.82rem; font-weight: 600; color: $text-primary; }
+}
+.bulk-avail { font-size: 0.72rem; color: $text-muted; }
+.bulk-invest-input {
+  width: 100%;
+  padding: 7px 10px;
+  background: $bg-card;
+  border: 1px solid $border-default;
+  border-radius: 6px;
+  color: $text-primary;
+  font-size: 0.9rem;
+  font-weight: 600;
+  outline: none;
+  &:focus { border-color: $accent; }
+}
+.bulk-per-stock {
+  font-size: 0.75rem;
+  color: $text-secondary;
+  text-align: right;
+}
 .bulk-summary {
   display: flex;
   gap: 12px;

@@ -518,6 +518,22 @@
         Add your own API keys to use your personal AI quota. If no key is provided, the platform's shared quota is used (subscription required).
       </p>
 
+      <!-- Default AI Provider -->
+      <div class="pref-provider-section">
+        <div class="config-row">
+          <div class="config-label-group">
+            <span class="config-label">Default AI Provider</span>
+            <span class="config-desc">Used for stock discovery and sell audit pipelines</span>
+          </div>
+          <div class="provider-chips">
+            <button class="provider-chip-btn" [class.active]="preferredProvider === 'claude'"
+              (click)="setPreferredProvider('claude')">Claude</button>
+            <button class="provider-chip-btn" [class.active]="preferredProvider === 'openai'"
+              (click)="setPreferredProvider('openai')">GPT-4o</button>
+          </div>
+        </div>
+      </div>
+
       <div *ngIf="tierInfo" class="tier-badge-row">
         <span class="tier-badge" [class.tier-rockstar]="tierInfo.tier === 3" [class.tier-ideal]="tierInfo.tier === 2" [class.tier-general]="tierInfo.tier === 1">
           <span class="material-icons">workspace_premium</span>

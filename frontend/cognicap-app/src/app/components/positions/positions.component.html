@@ -45,13 +45,6 @@
 
       <!-- Actions -->
       <div class="header-actions">
-        <!-- Mode toggle -->
-        <div class="mode-toggle" *ngIf="tradingMode === 'simulator'">
-          <button class="btn-secondary" (click)="showModeConfirmDialog = true">
-            <span class="material-icons">swap_horiz</span>
-            Switch to Live
-          </button>
-        </div>
         <div class="mode-toggle" *ngIf="tradingMode === 'live'">
           <button class="btn-secondary warn" (click)="switchToSimulator()">
             <span class="material-icons">computer</span>

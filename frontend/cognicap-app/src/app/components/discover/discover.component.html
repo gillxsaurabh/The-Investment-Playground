@@ -18,92 +18,174 @@
     <!-- LEFT: Pipeline Controls + Results -->
     <div class="pipeline-panel">
 
-      <!-- Mode Toggle -->
-      <div class="mode-bar">
-        <div class="mode-pills">
-          <button class="mode-pill active-buy" [disabled]="isRunning">&#9650; BUY</button>
+      <!-- Cockpit Strip -->
+      <div class="cockpit-strip">
+        <div class="strip-left">
+          <span class="mode-indicator">
+            <span class="mode-dot"></span>
+            Stock Analysis &amp; Trading
+          </span>
+          <span class="strip-divider"></span>
+          <span class="strip-sub">Find new stocks to enter</span>
         </div>
-        <span class="mode-desc">Find new stocks to enter</span>
+        <div class="strip-right">
+          <span class="strip-status">
+            <span class="status-dot" [class.live]="tradingMode === 'live'"></span>
+            {{ tradingMode === 'live' ? 'LIVE' : 'SIM' }}
+          </span>
+        </div>
       </div>
 
-      <!-- Gear Slider (buy only) -->
-      <div class="gear-section" *ngIf="pipelineMode === 'buy'"
-        [class.turbo]="selectedGear === 5"
-        [style.--gear-color]="getSliderColor()">
-        <div class="gear-icon" [class.shake]="selectedGear === 5">{{ GEAR_ICONS[selectedGear] }}</div>
-        <div class="gear-slider-wrap">
-          <input type="range" class="gear-slider" min="1" max="5" step="1"
-            [(ngModel)]="selectedGear" [disabled]="isRunning"
-            [style.--slider-color]="getSliderColor()">
-          <div class="gear-labels">
-            <span *ngFor="let g of [1,2,3,4,5]" class="gear-label"
-              [class.active]="g === selectedGear"
-              [style.color]="g === selectedGear ? getSliderColor() : ''"
-              (click)="selectedGear = g">
-              {{ GEAR_INFO[g].label }}
-            </span>
-          </div>
-        </div>
-        <p class="gear-desc" [style.color]="getSliderColor()">Level {{ selectedGear }} — {{ GEAR_INFO[selectedGear].description }}</p>
-      </div>
+      <!-- Strategy Gear Cockpit -->
+      <section class="gear-cockpit" *ngIf="pipelineMode === 'buy'"
+               [style.--gear-color]="getSliderColor()">
+        <span class="panel-corner panel-corner--tl"></span>
+        <span class="panel-corner panel-corner--tr"></span>
+        <span class="panel-corner panel-corner--bl"></span>
+        <span class="panel-corner panel-corner--br"></span>
 
-      <!-- AI Provider -->
-      <div class="provider-row">
-        <span class="provider-label"><span class="material-icons">smart_toy</span> AI Provider</span>
-        <div class="provider-chips">
-          <button *ngFor="let p of ['claude', 'openai']"
-            class="provider-chip" [class.active]="selectedProvider === p"
-            [disabled]="isRunning" (click)="selectedProvider = $any(p)">
-            {{ p === 'claude' ? 'Claude' : 'GPT-4o' }}
+        <header class="gear-head">
+          <span class="gear-eyebrow">Choose a risk profile</span>
+          <span class="gear-readout">
+            <span class="gear-roman">{{ ROMAN[selectedGear] }}</span>
+            <span class="gear-name">{{ GEAR_INFO[selectedGear].label }}</span>
+          </span>
+        </header>
+
+        <div class="throttle-row">
+          <button *ngFor="let g of [1,2,3,4,5]" class="throttle-slot"
+                  [class.active]="g === selectedGear"
+                  [disabled]="isRunning"
+                  [style.--slot-color]="GEAR_COLORS[g]"
+                  (click)="selectedGear = g">
+            <span class="slot-roman">{{ ROMAN[g] }}</span>
+            <span class="slot-label">{{ GEAR_INFO[g].label }}</span>
+            <span class="slot-bracket"></span>
           </button>
         </div>
-      </div>
 
-      <!-- Run Button -->
-      <div class="run-row">
-        <button class="btn-run" *ngIf="!isRunning" (click)="startPipeline()">
-          <span class="material-icons">search</span>
-          Discover Stocks
-        </button>
-        <button class="btn-cancel" *ngIf="isRunning" (click)="cancelPipeline()">
-          <span class="material-icons">stop</span> Cancel
-        </button>
-      </div>
-
-      <!-- Pipeline Stepper -->
-      <div class="stepper" *ngIf="isRunning || isCompleted">
-        <div *ngFor="let step of activePipelineSteps; let i = index" class="step"
-          [class.running]="step.status === 'running'"
-          [class.completed]="step.status === 'completed'"
-          [class.error]="step.status === 'error'">
-          <div class="step-indicator">
-            <div class="step-dot">
-              <span class="material-icons" *ngIf="step.status === 'completed'">check</span>
-              <span class="material-icons spin-sm" *ngIf="step.status === 'running'">refresh</span>
-              <span class="material-icons" *ngIf="step.status === 'error'">error</span>
-              <span *ngIf="step.status === 'pending'" class="step-num">{{ i + 1 }}</span>
-            </div>
-            <div class="step-line" *ngIf="i < activePipelineSteps.length - 1"></div>
+        <div class="intensity">
+          <span class="intensity-label">Risk · Reward</span>
+          <div class="intensity-bar">
+            <span *ngFor="let i of intensitySegments"
+                  class="intensity-segment"
+                  [class.filled]="i < selectedGear * 4"></span>
           </div>
-          <div class="step-info">
-            <div class="step-name">{{ step.agentName }}</div>
-            <div class="step-counts" *ngIf="step.stocksRemaining !== null">
-              <span *ngIf="step.previousCount">{{ step.previousCount }}</span>
-              <span class="material-icons arrow-sm" *ngIf="step.previousCount">arrow_forward</span>
-              <span class="count-badge">{{ step.stocksRemaining }}</span>
+          <span class="intensity-pct">{{ selectedGear * 20 }}%</span>
+        </div>
+
+        <p class="gear-desc">{{ GEAR_INFO[selectedGear].description }}</p>
+      </section>
+
+      <!-- CTA -->
+      <div class="cta-row">
+        <button class="cta-engage" *ngIf="!isRunning" (click)="startPipeline()">
+          <span class="cta-label">Run Stock Analysis</span>
+          <span class="cta-arrow">→</span>
+        </button>
+        <button class="cta-abort" *ngIf="isRunning" (click)="cancelPipeline()">
+          <span class="cta-label">Cancel analysis</span>
+        </button>
+      </div>
+
+      <!-- Telemetry rail -->
+      <section class="telemetry" *ngIf="isRunning || hasRunPipeline">
+        <header class="tele-head">
+          <span class="tele-eyebrow">TELEMETRY</span>
+          <span class="tele-status" *ngIf="pipelineMessage">{{ pipelineMessage }}</span>
+        </header>
+
+        <!-- Overall progress bar -->
+        <div class="tele-progress-row">
+          <div class="tele-progress-wrap">
+            <div class="tele-progress-bar" [style.width.%]="pipelineProgressPct"
+                 [class.complete]="pipelineProgressPct === 100"></div>
+          </div>
+          <span class="tele-progress-pct">{{ pipelineProgressPct }}%</span>
+        </div>
+
+        <!-- Status card (primary view) -->
+        <div class="status-card" *ngIf="isRunning || (isCompleted && pipelineMessage)"
+             [class.status-done]="!isRunning && isCompleted">
+          <div class="status-head">
+            <span class="status-spinner" *ngIf="isRunning">
+              <span class="spinner-ring"></span>
+            </span>
+            <span class="status-check" *ngIf="!isRunning && isCompleted">
+              <span class="material-icons">check_circle</span>
+            </span>
+            <div class="status-label">
+              <span class="status-stage">{{ currentStageLabel }}</span>
+              <span class="status-step" *ngIf="isRunning">Stage {{ currentStepIndex }} of {{ totalSteps }}</span>
             </div>
-            <div class="step-dur" *ngIf="step.durationMs">{{ (step.durationMs / 1000).toFixed(1) }}s</div>
+          </div>
+          <p class="status-msg">
+            <ng-container *ngIf="isRunning">{{ currentActivity || 'Preparing pipeline…' }}</ng-container>
+            <ng-container *ngIf="!isRunning && isCompleted">{{ pipelineMessage }}</ng-container>
+          </p>
+        </div>
+
+        <!-- Stage list — vertical timeline of pipeline stages -->
+        <ul class="stage-list" *ngIf="isRunning || showStages">
+          <li *ngFor="let step of activePipelineSteps; let i = index"
+              class="stage-row"
+              [class.stage-done]="step.status === 'completed'"
+              [class.stage-running]="step.status === 'running'"
+              [class.stage-error]="step.status === 'error'"
+              [class.stage-pending]="step.status === 'pending'">
+            <div class="stage-icon">
+              <span *ngIf="step.status === 'completed'" class="material-icons">check</span>
+              <span *ngIf="step.status === 'running'" class="stage-pulse"></span>
+              <span *ngIf="step.status === 'error'" class="material-icons">priority_high</span>
+              <span *ngIf="step.status === 'pending'" class="stage-num">{{ i + 1 }}</span>
+            </div>
+            <span class="stage-name">{{ step.agentName }}</span>
+            <span class="stage-meta">
+              <span class="stage-flow" *ngIf="step.stocksRemaining !== null">
+                <span *ngIf="step.previousCount !== null" class="flow-prev">{{ step.previousCount }}</span>
+                <span *ngIf="step.previousCount !== null" class="flow-arrow">→</span>
+                <span class="flow-current">{{ step.stocksRemaining }}</span>
+              </span>
+              <span class="stage-hint" *ngIf="step.status === 'running' && step.stocksRemaining === null">analyzing…</span>
+              <span class="stage-hint stage-hint--pending" *ngIf="step.status === 'pending'">pending</span>
+              <span class="stage-dur" *ngIf="step.durationMs">{{ (step.durationMs / 1000).toFixed(1) }}s</span>
+            </span>
+          </li>
+        </ul>
+
+        <!-- Toggle row -->
+        <div class="toggle-row" *ngIf="(hasRunPipeline && !isRunning) || activityLog.length > 0">
+          <button class="details-toggle" *ngIf="hasRunPipeline && !isRunning"
+                  (click)="showStages = !showStages">
+            <span class="material-icons">{{ showStages ? 'expand_less' : 'expand_more' }}</span>
+            {{ showStages ? 'Hide stages' : 'Show pipeline stages' }}
+          </button>
+          <button class="details-toggle" *ngIf="activityLog.length > 0"
+                  (click)="showDetailedLogs = !showDetailedLogs">
+            <span class="material-icons">{{ showDetailedLogs ? 'expand_less' : 'expand_more' }}</span>
+            {{ showDetailedLogs ? 'Hide details' : 'Show detailed analysis' }}
+            <span class="details-count" *ngIf="!showDetailedLogs">{{ activityLog.length }}</span>
+          </button>
+        </div>
+
+        <!-- Live log feed (collapsed by default) -->
+        <div class="activity-feed" #feedEl *ngIf="showDetailedLogs && activityLog.length > 0">
+          <div *ngFor="let entry of activityLog" class="activity-entry">
+            <span class="entry-step">{{ entry.step }}</span>
+            <span class="entry-msg">{{ entry.message }}</span>
           </div>
         </div>
-      </div>
 
-      <!-- Pipeline message -->
-      <div class="pipeline-msg" *ngIf="pipelineMessage">{{ pipelineMessage }}</div>
+      </section>
 
       <!-- BUY Results -->
       <div class="results-section" *ngIf="pipelineMode === 'buy' && stockResults.length > 0">
         <div class="results-header">
           <span class="results-title">{{ stockResults.length }} Stocks Found</span>
+          <span class="results-timestamp" *ngIf="lastRunAt">
+            <span class="material-icons">schedule</span>
+            {{ formatRunAt(lastRunAt) }}
+          </span>
         </div>
         <div class="stock-cards">
           <div *ngFor="let stock of stockResults" class="stock-card"
@@ -239,9 +321,14 @@
       <p>Calculating parameters for {{ stagingList.length }} stocks...</p>
     </div>
     <div class="modal-body" *ngIf="!bulkTradeLoading && bulkTradeDetails">
-      <div class="bulk-summary">
-        <div class="bulk-stat"><span>Available Funds</span><strong>&#8377;{{ bulkTradeDetails.availableFunds.toFixed(0) }}</strong></div>
-        <div class="bulk-stat"><span>Risk Budget / Stock</span><strong>&#8377;{{ bulkTradeDetails.perStockAllocation.toFixed(0) }}</strong></div>
+      <div class="bulk-invest-row">
+        <div class="bulk-invest-label">
+          <span>How much to invest?</span>
+          <span class="bulk-avail">Available: &#8377;{{ bulkTradeDetails.availableFunds.toFixed(0) }}</span>
+        </div>
+        <input type="number" class="bulk-invest-input" [(ngModel)]="bulkTotalInvestment"
+          (ngModelChange)="onBulkInvestmentChange()" min="0" [max]="bulkTradeDetails.availableFunds" step="1000">
+        <span class="bulk-per-stock">&#8377;{{ bulkTradeDetails.perStockAllocation.toFixed(0) }} / stock</span>
       </div>
       <div class="bulk-stocks">
         <div *ngFor="let s of bulkTradeDetails.stocks" class="bulk-row" [class.bulk-success]="s.status === 'success'" [class.bulk-error]="s.status === 'error'">

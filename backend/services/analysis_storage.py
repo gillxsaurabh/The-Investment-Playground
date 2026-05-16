@@ -64,6 +64,52 @@ def get_all_audit_results(user_id: Any) -> list:
         conn.close()
 
 
+_DISCOVER_KEY = "__DISCOVER__"
+
+
+def save_discover_result(user_id: Any, result_data: Dict[str, Any]) -> None:
+    """Save (upsert) the latest discover pipeline result for a user."""
+    record = dict(result_data)
+    record["type"] = "discover"
+    record["saved_at"] = datetime.now().isoformat()
+    conn = get_conn()
+    try:
+        conn.execute(
+            """
+            INSERT INTO user_analysis_cache (user_id, symbol, analysis_json, saved_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(user_id, symbol) DO UPDATE SET
+                analysis_json = excluded.analysis_json,
+                saved_at = excluded.saved_at
+            """,
+            (int(user_id), _DISCOVER_KEY, json.dumps(record), record["saved_at"]),
+        )
+        conn.commit()
+    except Exception as e:
+        logger.error("Error saving discover result (user=%s): %s", user_id, e)
+    finally:
+        conn.close()
+
+
+def get_discover_result(user_id: Any) -> Optional[Dict[str, Any]]:
+    """Return the latest saved discover pipeline result for a user, or None."""
+    conn = get_conn()
+    try:
+        row = conn.execute(
+            "SELECT analysis_json, saved_at FROM user_analysis_cache WHERE user_id = ? AND symbol = ?",
+            (int(user_id), _DISCOVER_KEY),
+        ).fetchone()
+        if row:
+            data = json.loads(row["analysis_json"])
+            return {"saved_at": row["saved_at"], "data": data}
+        return None
+    except Exception as e:
+        logger.error("Error loading discover result (user=%s): %s", user_id, e)
+        return None
+    finally:
+        conn.close()
+
+
 def get_saved_analysis(user_id: Any, symbol: str) -> Optional[Dict[str, Any]]:
     """Get saved analysis result for a user+symbol pair."""
     conn = get_conn()

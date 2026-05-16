@@ -63,6 +63,7 @@ export class AccountComponent implements OnInit, OnDestroy {
     { id: 'anthropic', label: 'Anthropic Claude', icon: 'smart_toy' },
     { id: 'openai', label: 'OpenAI GPT', icon: 'psychology' }
   ];
+  preferredProvider: 'claude' | 'openai' = 'claude';
   configuredProviders: string[] = [];
   llmKeyInputs: Record<string, string> = { anthropic: '', openai: '' };
   llmSaveStatus: Record<string, 'idle' | 'loading' | 'success' | 'error'> = { anthropic: 'idle', openai: 'idle' };
@@ -94,6 +95,7 @@ export class AccountComponent implements OnInit, OnDestroy {
   ) {}
 
   ngOnInit(): void {
+    this.preferredProvider = (localStorage.getItem('cognicap_preferred_provider') as 'claude' | 'openai') ?? 'claude';
     this.authService.user$.subscribe(u => { this.user = u; });
     this.authService.brokerLinked$.subscribe(linked => { this.brokerLinked = linked; });
     this.loadMarketData();
@@ -314,6 +316,11 @@ export class AccountComponent implements OnInit, OnDestroy {
   }
 
   // ── AI Models ─────────────────────────────────────────────────
+
+  setPreferredProvider(provider: 'claude' | 'openai'): void {
+    this.preferredProvider = provider;
+    localStorage.setItem('cognicap_preferred_provider', provider);
+  }
 
   loadAIModels(): void {
     forkJoin({
