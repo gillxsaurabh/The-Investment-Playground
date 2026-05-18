@@ -200,14 +200,12 @@ export class SimulatorService implements OnDestroy {
     instrumentToken?: number,
     ltp?: number
   ): Observable<ExecuteOrderResponse> {
-    return this.http.post<ExecuteOrderResponse>(`${this.apiUrl}/execute`, {
-      symbol,
-      quantity,
-      atr,
-      trail_multiplier: trailMultiplier,
-      instrument_token: instrumentToken,
-      ltp
-    }).pipe(
+    const isLive = this.tradingModeSubject.value === 'live';
+    const url = isLive
+      ? `${this.tradingApiUrl}/execute`
+      : `${this.apiUrl}/execute`;
+    const body: any = { symbol, quantity, atr: atr, trail_multiplier: trailMultiplier, instrument_token: instrumentToken, ltp };
+    return this.http.post<ExecuteOrderResponse>(url, body).pipe(
       tap(() => this.refreshPositions())
     );
   }
@@ -233,15 +231,17 @@ export class SimulatorService implements OnDestroy {
   }
 
   getPositions(): Observable<SimulatorState> {
-    return this.http.get<SimulatorState>(`${this.apiUrl}/positions`).pipe(
+    const isLive = this.tradingModeSubject.value === 'live';
+    const url = isLive ? `${this.tradingApiUrl}/positions` : `${this.apiUrl}/positions`;
+    return this.http.get<SimulatorState>(url).pipe(
       tap(state => this.stateSubject.next(state))
     );
   }
 
   closePosition(tradeId: string): Observable<ClosePositionResponse> {
-    return this.http.post<ClosePositionResponse>(`${this.apiUrl}/close`, {
-      trade_id: tradeId
-    }).pipe(
+    const isLive = this.tradingModeSubject.value === 'live';
+    const url = isLive ? `${this.tradingApiUrl}/close` : `${this.apiUrl}/close`;
+    return this.http.post<ClosePositionResponse>(url, { trade_id: tradeId }).pipe(
       tap(() => this.refreshPositions())
     );
   }
@@ -255,9 +255,9 @@ export class SimulatorService implements OnDestroy {
   }
 
   getPriceHistory(minutes: number = 60): Observable<PriceHistoryResponse> {
-    return this.http.get<PriceHistoryResponse>(`${this.apiUrl}/price-history`, {
-      params: { minutes: minutes.toString() }
-    });
+    const isLive = this.tradingModeSubject.value === 'live';
+    const url = isLive ? `${this.tradingApiUrl}/price-history` : `${this.apiUrl}/price-history`;
+    return this.http.get<PriceHistoryResponse>(url, { params: { minutes: minutes.toString() } });
   }
 
   startPolling(intervalMs: number = 10000): void {

@@ -38,10 +38,19 @@ def get_trading_engine(access_token: str, mode: Optional[str] = None) -> Trading
             if engine is None:
                 from broker import get_broker
                 from services.live_engine import LiveTradingEngine
+                from services.simulator_engine import start_position_monitor
+                from services.order_tracker import get_order_tracker
                 broker = get_broker(access_token)
                 engine = LiveTradingEngine(broker)
                 _engines["live"] = engine
-                logger.info("[EngineFactory] Created LiveTradingEngine singleton")
+                # Start background trailing-stop / stall-exit monitor (same cadence as simulator)
+                start_position_monitor(engine)
+                # Resume tracking any orders that were PENDING when the server last stopped
+                try:
+                    get_order_tracker().recover_pending_orders(broker)
+                except Exception as e:
+                    logger.warning("[EngineFactory] Pending order recovery failed: %s", e)
+                logger.info("[EngineFactory] Created LiveTradingEngine singleton with monitor")
             else:
                 # Update broker token if it changed (new login)
                 try:

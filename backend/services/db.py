@@ -66,7 +66,7 @@ def managed_conn():
         conn.close()
 
 
-LATEST_SCHEMA_VERSION = 13
+LATEST_SCHEMA_VERSION = 14
 
 
 def init_db() -> None:
@@ -90,6 +90,7 @@ def init_db() -> None:
             (11, "011_consolidate_state.sql"),
             (12, None),  # handled inline below — ALTER TABLE IF NOT EXISTS workaround
             (13, "013_retrospective.sql"),
+            (14, "014_live_entry_status.sql"),
         ]
 
         for target_version, filename in migrations:

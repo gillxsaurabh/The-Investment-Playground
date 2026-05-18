@@ -35,6 +35,7 @@ class TradingEngine(ABC):
         ltp: Optional[float] = None,
         automation_run_id: Optional[str] = None,
         automation_gear: Optional[int] = None,
+        scan_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Execute a buy order. Returns dict with success/failure details."""
         ...

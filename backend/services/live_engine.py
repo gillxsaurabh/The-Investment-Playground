@@ -67,6 +67,7 @@ class LiveTradingEngine(TradingEngine):
         ltp: Optional[float] = None,
         automation_run_id: Optional[str] = None,
         automation_gear: Optional[int] = None,
+        scan_context: Optional[Dict[str, Any]] = None,
     ) -> Dict[str, Any]:
         """Place a real CNC market buy order via Kite Connect."""
         try:
@@ -87,6 +88,12 @@ class LiveTradingEngine(TradingEngine):
 
             with self._lock:
                 open_count = len(self._positions)
+
+            # Daily loss circuit breaker — halt if today's realized loss exceeds the limit
+            daily_loss_breached, loss_reason = self._risk.check_daily_loss_from_db(available_equity)
+            if daily_loss_breached:
+                logger.warning(f"[LiveEngine] Daily loss limit hit: {loss_reason}")
+                return {"success": False, "error": f"Daily loss limit: {loss_reason}"}
 
             # Pre-trade risk check
             allowed, reason = self._risk.pre_trade_check(
@@ -110,14 +117,16 @@ class LiveTradingEngine(TradingEngine):
             now = datetime.now()
             trade_id = f"LIVE_{now.strftime('%d%m%y')}_{symbol}_{order_id[-6:]}"
             initial_sl = round(ltp - (trail_multiplier * atr_at_entry), 2)
+            sc = scan_context or {}
 
             position = {
                 "trade_id": trade_id,
                 "symbol": symbol,
                 "instrument_token": instrument_token,
                 "entry_ltp": ltp,
-                "entry_price": ltp,   # will be updated on fill
+                "entry_price": ltp,               # will be updated on fill
                 "quantity": quantity,
+                "total_cost": round(ltp * quantity, 2),  # approx; updated on fill
                 "atr_at_entry": round(atr_at_entry, 2),
                 "trail_multiplier": trail_multiplier,
                 "initial_sl": initial_sl,
@@ -133,6 +142,9 @@ class LiveTradingEngine(TradingEngine):
                 "automation_run_id": automation_run_id,
                 "automation_gear": automation_gear,
                 "trading_mode": "live",
+                "scan_id": sc.get("scan_id"),
+                "scan_rank": sc.get("scan_rank"),
+                "scan_ai_conviction": sc.get("scan_ai_conviction"),
             }
 
             # Persist to DB
@@ -186,27 +198,61 @@ class LiveTradingEngine(TradingEngine):
 
         try:
             # Cancel existing SL-M if present
+            slm_was_cancelled = False
             if sl_order_id:
                 try:
                     self.broker.cancel_order(
                         variety=self.broker.VARIETY_REGULAR,
                         order_id=sl_order_id,
                     )
+                    slm_was_cancelled = True
                     logger.info(f"[LiveEngine] Cancelled SL-M {sl_order_id} for {symbol}")
                 except Exception as e:
+                    # SL-M may already have triggered — treat as gone
                     logger.warning(f"[LiveEngine] Could not cancel SL-M {sl_order_id}: {e}")
 
-            # Place market sell
-            exit_order_id = self.broker.place_order(
-                variety=self.broker.VARIETY_REGULAR,
-                exchange=self.broker.EXCHANGE_NSE,
-                tradingsymbol=symbol,
-                transaction_type=self.broker.TRANSACTION_TYPE_SELL,
-                quantity=qty,
-                order_type=self.broker.ORDER_TYPE_MARKET,
-                product=self.broker.PRODUCT_CNC,
-                tag=trade_id[:20],
-            )
+            # Place market sell — if this fails we re-place the SL-M so the position is not uncovered
+            try:
+                exit_order_id = self.broker.place_order(
+                    variety=self.broker.VARIETY_REGULAR,
+                    exchange=self.broker.EXCHANGE_NSE,
+                    tradingsymbol=symbol,
+                    transaction_type=self.broker.TRANSACTION_TYPE_SELL,
+                    quantity=qty,
+                    order_type=self.broker.ORDER_TYPE_MARKET,
+                    product=self.broker.PRODUCT_CNC,
+                    tag=trade_id[:20],
+                )
+            except Exception as place_err:
+                # Market sell failed — restore protection if we cancelled the SL-M
+                if slm_was_cancelled:
+                    try:
+                        new_sl = position.get("current_sl", 0)
+                        if new_sl > 0:
+                            restored_sl_id = self.broker.place_order(
+                                variety=self.broker.VARIETY_REGULAR,
+                                exchange=self.broker.EXCHANGE_NSE,
+                                tradingsymbol=symbol,
+                                transaction_type=self.broker.TRANSACTION_TYPE_SELL,
+                                quantity=qty,
+                                order_type=self.broker.ORDER_TYPE_SLM,
+                                product=self.broker.PRODUCT_CNC,
+                                trigger_price=new_sl,
+                                tag=trade_id[:20],
+                            )
+                            with self._lock:
+                                if trade_id in self._positions:
+                                    self._positions[trade_id]["sl_order_id"] = restored_sl_id
+                            logger.warning(
+                                f"[LiveEngine] Market sell failed for {symbol}; SL-M restored at {new_sl} "
+                                f"(sl_order_id={restored_sl_id})"
+                            )
+                    except Exception as restore_err:
+                        logger.error(
+                            f"[LiveEngine] CRITICAL: market sell AND SL-M restore both failed for "
+                            f"{symbol} ({trade_id}): sell={place_err}, restore={restore_err}"
+                        )
+                raise place_err
 
             # Store exit reason for the fill callback
             with self._lock:
@@ -553,17 +599,37 @@ class LiveTradingEngine(TradingEngine):
             untracked = kite_symbols - db_symbols
             externally_closed = db_symbols - kite_symbols
 
-            # Mark externally closed trades
+            # Mark externally closed trades — fetch LTP for real exit_price/pnl
             for trade in open_trades:
                 if trade["symbol"] in externally_closed:
                     exit_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    exit_price = 0.0
+                    realized_pnl = 0.0
+                    pnl_pct = 0.0
+                    try:
+                        ltp_data = self.broker.get_ltp([f"NSE:{trade['symbol']}"])
+                        exit_price = ltp_data.get(f"NSE:{trade['symbol']}", {}).get("last_price", 0.0)
+                        entry_price = float(trade.get("entry_price") or 0)
+                        qty = int(trade.get("quantity") or 0)
+                        if exit_price and entry_price and qty:
+                            realized_pnl = round((exit_price - entry_price) * qty, 2)
+                            pnl_pct = round((exit_price - entry_price) / entry_price * 100, 2)
+                    except Exception:
+                        pass
+                    try:
+                        entry_dt = datetime.strptime(str(trade["entry_time"]), "%Y-%m-%d %H:%M:%S")
+                        holding_days = (datetime.now() - entry_dt).days
+                    except Exception:
+                        holding_days = 0
                     update_trade_exit(
-                        trade["trade_id"], 0, exit_time, "External Close", 0, 0, 0
+                        trade["trade_id"], exit_price, exit_time,
+                        "External Close", realized_pnl, pnl_pct, holding_days
                     )
                     with self._lock:
                         self._positions.pop(trade["trade_id"], None)
                     logger.warning(
-                        f"[LiveEngine] Reconcile: {trade['symbol']} closed externally"
+                        f"[LiveEngine] Reconcile: {trade['symbol']} closed externally "
+                        f"@ {exit_price}, P&L={realized_pnl}"
                     )
 
             result = {

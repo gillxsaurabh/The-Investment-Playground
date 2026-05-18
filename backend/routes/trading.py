@@ -70,6 +70,7 @@ def execute_order():
             ltp=data.get("ltp"),
             automation_run_id=data.get("automation_run_id"),
             automation_gear=data.get("automation_gear"),
+            scan_context=data.get("scan_context"),
         )
         status = 200 if result.get("success") else 400
         return jsonify(result), status

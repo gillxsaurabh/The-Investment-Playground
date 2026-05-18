@@ -106,7 +106,11 @@ class OrderTracker:
                                 f"trigger={trigger_price}, sl_order_id={sl_order_id}"
                             )
                     except Exception as e:
-                        logger.error(f"[OrderTracker] SL-M placement failed for {symbol}: {e}")
+                        # SL-M failure is dangerous — log at ERROR so it surfaces in Sentry/alerts
+                        logger.error(
+                            f"[OrderTracker] CRITICAL: SL-M placement failed for {symbol} "
+                            f"(trade={trade_id}): {e}. Position is UNPROTECTED."
+                        )
 
                     on_fill(trade_id, avg_price, filled_qty, sl_order_id)
                     return
@@ -119,10 +123,16 @@ class OrderTracker:
             except Exception as e:
                 logger.warning(f"[OrderTracker] Poll error for {order_id}: {e}")
 
+        # Timeout — attempt to cancel the order so it doesn't fill later without SL-M
         logger.error(
             f"[OrderTracker] Timeout on entry order {order_id} ({symbol}) after "
-            f"{MAX_RETRIES * POLL_INTERVAL}s"
+            f"{MAX_RETRIES * POLL_INTERVAL}s — attempting cancel"
         )
+        try:
+            broker.cancel_order(variety=broker.VARIETY_REGULAR, order_id=order_id)
+            logger.info(f"[OrderTracker] Cancelled timed-out entry order {order_id} for {symbol}")
+        except Exception as cancel_err:
+            logger.warning(f"[OrderTracker] Cancel of timed-out order {order_id} failed: {cancel_err}")
         on_fill(trade_id, 0, 0, None, "TIMEOUT")
 
     def _poll_exit(self, broker, order_id: str, trade_id: str, on_exit: Callable) -> None:
