@@ -103,6 +103,18 @@ class BrokerLinkBody(BaseModel):
     request_token: str = Field(..., min_length=5, max_length=200)
 
 
+class ScanContextBody(BaseModel):
+    scan_id: Optional[str] = None
+    scan_rank: Optional[int] = None
+    scan_ai_conviction: Optional[int] = None
+    scan_composite_score: Optional[float] = None
+    scan_final_rank_score: Optional[float] = None
+    scan_rsi: Optional[float] = None
+    scan_adx: Optional[float] = None
+    scan_rsi_trigger: Optional[str] = None
+    scan_news_flag: Optional[str] = None
+
+
 class SimulatorExecuteBody(BaseModel):
     symbol: str = Field(..., min_length=1, max_length=30)
     quantity: int = Field(..., ge=1)
@@ -110,6 +122,7 @@ class SimulatorExecuteBody(BaseModel):
     trail_multiplier: float = Field(default=1.5, ge=0.5, le=5.0)
     instrument_token: Optional[int] = None
     ltp: Optional[float] = Field(default=None, gt=0)
+    scan_context: Optional[ScanContextBody] = None
 
     @field_validator("symbol")
     @classmethod
@@ -119,6 +132,7 @@ class SimulatorExecuteBody(BaseModel):
 
 class SimulatorCloseBody(BaseModel):
     trade_id: str = Field(..., min_length=1)
+    audit_id: Optional[str] = None
 
 
 class SimulatorResetBody(BaseModel):

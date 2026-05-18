@@ -73,6 +73,7 @@ def simulator_execute(body: SimulatorExecuteBody):
         if not token:
             return jsonify({"success": False, "error": "No market data token available"}), 503
         sim = _get_simulator(g.current_user["id"], token)
+        sc = body.scan_context.model_dump() if body.scan_context else None
         result = sim.execute_order(
             symbol=body.symbol,
             quantity=body.quantity,
@@ -80,6 +81,7 @@ def simulator_execute(body: SimulatorExecuteBody):
             trail_multiplier=body.trail_multiplier,
             instrument_token=body.instrument_token,
             ltp=body.ltp,
+            scan_context=sc,
         )
         status = 200 if result.get("success") else 400
         return jsonify(result), status
@@ -114,7 +116,7 @@ def simulator_close(body: SimulatorCloseBody):
         if not token:
             return jsonify({"success": False, "error": "No market data token available"}), 503
         sim = _get_simulator(g.current_user["id"], token)
-        result = sim.close_position(trade_id=body.trade_id)
+        result = sim.close_position(trade_id=body.trade_id, audit_id=body.audit_id)
         status = 200 if result.get("success") else 404
         return jsonify(result), status
 

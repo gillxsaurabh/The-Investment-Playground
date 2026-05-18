@@ -13,6 +13,7 @@ Agents in the pipeline:
 """
 
 import json
+import random
 import time
 from datetime import datetime
 
@@ -69,6 +70,22 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
 
     session = PipelineSession()
     started_at = datetime.now().isoformat()
+
+    # Generate a unique scan_id for this pipeline run
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    rand_suffix = "".join(random.choices("abcdefghijklmnopqrstuvwxyz0123456789", k=6))
+    scan_id = f"scan_{ts}_{rand_suffix}"
+
+    # Persistent funnel counts (updated as each stage completes)
+    _funnel = {
+        "total_scanned": 0,
+        "universe_filter_passed": 0,
+        "technical_filter_passed": 0,
+        "fundamental_filter_passed": 0,
+        "sector_filter_passed": 0,
+        "final_selected": 0,
+    }
+
     yield _sse("step_start", {
         "step": "pipeline",
         "description": "Starting Decision Support Agent...",
@@ -127,6 +144,29 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
         "message": f"Market regime: {market_regime['regime'].upper()} (VIX: {market_regime.get('vix', 'N/A')})",
     })
 
+    # Persist scan start to DB (fire-and-forget)
+    try:
+        from services.db import insert_scan
+        gear_profile_for_db = STRATEGY_GEARS.get(gear, STRATEGY_GEARS[DEFAULT_GEAR])
+        insert_scan({
+            "scan_id": scan_id,
+            "started_at": started_at,
+            "gear": gear,
+            "gear_label": gear_profile_for_db.get("label", "Balanced"),
+            "universe": resolved.get("universe", "nifty500"),
+            "min_turnover": resolved.get("min_turnover", 50_000_000),
+            "rsi_buy_limit": resolved.get("rsi_buy_limit", 30),
+            "adx_min": 20,
+            "trail_multiplier": resolved.get("atr_stop_loss_multiplier", 1.5),
+            "fundamental_check": resolved.get("fundamental_check", "standard"),
+            "sector_5d_tolerance": -0.5,
+            "min_volume_ratio": 0.7,
+            "vix": market_regime.get("vix"),
+            "market_regime": market_regime.get("regime"),
+        })
+    except Exception:
+        pass
+
     # ── Step 1: Market Scanner ───────────────────────────────────────────
     universe_key = resolved.get("universe", "nifty500")
     universe_label = universe_key.replace("_", " ").title()
@@ -175,6 +215,8 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
     logs.clear()
 
     step1_ms = int((time.monotonic() - step1_started) * 1000)
+    _funnel["total_scanned"] = total_scanned
+    _funnel["universe_filter_passed"] = len(universe_stocks)
     yield _sse("step_complete", {
         "step": "universe_filter",
         "stocks_remaining": len(universe_stocks),
@@ -182,6 +224,17 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
         "completed_at": datetime.now().isoformat(),
         "duration_ms": step1_ms,
     })
+
+    # Persist universe-filter candidates (passing stocks only — rejected ones don't have enough data yet)
+    try:
+        from services.db import upsert_scan_candidate
+        for s in universe_stocks:
+            upsert_scan_candidate(scan_id, s.get("symbol", ""), {
+                **s,
+                "passed_universe_filter": True,
+            })
+    except Exception:
+        pass
 
     if not universe_stocks:
         yield _sse("final_result", {
@@ -222,6 +275,7 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
     logs.clear()
 
     step2_ms = int((time.monotonic() - step2_started) * 1000)
+    _funnel["technical_filter_passed"] = len(technical_stocks)
     yield _sse("step_complete", {
         "step": "technical_setup",
         "stocks_remaining": len(technical_stocks),
@@ -229,6 +283,27 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
         "completed_at": datetime.now().isoformat(),
         "duration_ms": step2_ms,
     })
+
+    # Persist technical results; mark failed ones
+    try:
+        from services.db import upsert_scan_candidate
+        passed_symbols = {s.get("symbol") for s in technical_stocks}
+        for s in universe_stocks:
+            sym = s.get("symbol", "")
+            if sym in passed_symbols:
+                matched = next(x for x in technical_stocks if x.get("symbol") == sym)
+                upsert_scan_candidate(scan_id, sym, {
+                    **matched,
+                    "passed_technical_filter": True,
+                })
+            else:
+                upsert_scan_candidate(scan_id, sym, {
+                    **s,
+                    "passed_technical_filter": False,
+                    "technical_fail_reason": s.get("technical_fail_reason", "adx_or_rsi_trigger_missing"),
+                })
+    except Exception:
+        pass
 
     if not technical_stocks:
         yield _sse("final_result", {
@@ -269,6 +344,7 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
     logs.clear()
 
     step3_ms = int((time.monotonic() - step3_started) * 1000)
+    _funnel["fundamental_filter_passed"] = len(fundamental_stocks)
     yield _sse("step_complete", {
         "step": "fundamentals",
         "stocks_remaining": len(fundamental_stocks),
@@ -276,6 +352,27 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
         "completed_at": datetime.now().isoformat(),
         "duration_ms": step3_ms,
     })
+
+    # Persist fundamentals results
+    try:
+        from services.db import upsert_scan_candidate
+        passed_symbols = {s.get("symbol") for s in fundamental_stocks}
+        for s in technical_stocks:
+            sym = s.get("symbol", "")
+            if sym in passed_symbols:
+                matched = next(x for x in fundamental_stocks if x.get("symbol") == sym)
+                upsert_scan_candidate(scan_id, sym, {
+                    **matched,
+                    "passed_fundamental_filter": True,
+                })
+            else:
+                upsert_scan_candidate(scan_id, sym, {
+                    **s,
+                    "passed_fundamental_filter": False,
+                    "fundamental_fail_reason": s.get("fundamental_fail_reason", "profit_or_roe_check_failed"),
+                })
+    except Exception:
+        pass
 
     if not fundamental_stocks:
         yield _sse("final_result", {
@@ -311,6 +408,7 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
     logs.clear()
 
     step4_ms = int((time.monotonic() - step4_started) * 1000)
+    _funnel["sector_filter_passed"] = len(sector_stocks)
     yield _sse("step_complete", {
         "step": "sector_health",
         "stocks_remaining": len(sector_stocks),
@@ -318,6 +416,27 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
         "completed_at": datetime.now().isoformat(),
         "duration_ms": step4_ms,
     })
+
+    # Persist sector results
+    try:
+        from services.db import upsert_scan_candidate
+        passed_symbols = {s.get("symbol") for s in sector_stocks}
+        for s in fundamental_stocks:
+            sym = s.get("symbol", "")
+            if sym in passed_symbols:
+                matched = next(x for x in sector_stocks if x.get("symbol") == sym)
+                upsert_scan_candidate(scan_id, sym, {
+                    **matched,
+                    "passed_sector_filter": True,
+                })
+            else:
+                upsert_scan_candidate(scan_id, sym, {
+                    **s,
+                    "passed_sector_filter": False,
+                    "sector_fail_reason": "sector_declining",
+                })
+    except Exception:
+        pass
 
     if not sector_stocks:
         yield _sse("final_result", {
@@ -463,5 +582,38 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
             save_discover_result(user_id, final_payload)
         except Exception as _e:
             pass  # never fail the stream over a storage error
+
+    # Persist final shortlist and complete the scan record
+    try:
+        from services.db import upsert_scan_candidate, mark_final_shortlist, update_scan_completion
+        final_symbols = []
+        for s in final_stocks:
+            sym = s.get("symbol", "")
+            final_symbols.append(sym)
+            upsert_scan_candidate(scan_id, sym, {
+                **s,
+                "passed_universe_filter": True,
+                "passed_technical_filter": True,
+                "passed_fundamental_filter": True,
+                "passed_sector_filter": True,
+                "reached_final_shortlist": True,
+            })
+        mark_final_shortlist(scan_id, final_symbols)
+        _funnel["final_selected"] = len(final_symbols)
+        update_scan_completion(
+            scan_id=scan_id,
+            status="completed",
+            total_scanned=_funnel["total_scanned"],
+            universe_filter_passed=_funnel["universe_filter_passed"],
+            technical_filter_passed=_funnel["technical_filter_passed"],
+            fundamental_filter_passed=_funnel["fundamental_filter_passed"],
+            sector_filter_passed=_funnel["sector_filter_passed"],
+            final_selected=_funnel["final_selected"],
+        )
+    except Exception:
+        pass
+
+    # Embed scan_id so frontend can pass it through to the buy call
+    final_payload["scan_id"] = scan_id
 
     yield _sse("final_result", final_payload)

@@ -423,6 +423,17 @@ def _execute_trades(
                 f"risk/share={risk_per_share:.2f}, qty={quantity}"
             )
 
+            scan_context = {
+                "scan_id": stock.get("scan_id"),
+                "scan_rank": stock.get("final_rank"),
+                "scan_ai_conviction": stock.get("ai_conviction"),
+                "scan_composite_score": stock.get("composite_score"),
+                "scan_final_rank_score": stock.get("final_rank_score"),
+                "scan_rsi": stock.get("rsi"),
+                "scan_adx": stock.get("adx"),
+                "scan_rsi_trigger": stock.get("rsi_trigger"),
+                "scan_news_flag": stock.get("news_flag"),
+            }
             result = engine.execute_order(
                 symbol=symbol,
                 quantity=quantity,
@@ -432,6 +443,7 @@ def _execute_trades(
                 ltp=ltp,
                 automation_run_id=automation_run_id,
                 automation_gear=gear,
+                scan_context=scan_context,
             )
             results.append({"symbol": symbol, "gear": gear, **result})
             status = "OK" if result.get("success") else f"FAILED: {result.get('error')}"

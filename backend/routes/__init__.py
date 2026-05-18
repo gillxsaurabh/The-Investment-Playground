@@ -19,6 +19,7 @@ def register_blueprints(app):
     from routes.trading import trading_bp
     from routes.audit import audit_bp
     from routes.admin import admin_bp
+    from routes.retrospective import retrospective_bp
 
     app.register_blueprint(auth_bp)
     app.register_blueprint(portfolio_bp)
@@ -33,3 +34,4 @@ def register_blueprints(app):
     app.register_blueprint(trading_bp)
     app.register_blueprint(audit_bp)
     app.register_blueprint(admin_bp)
+    app.register_blueprint(retrospective_bp)

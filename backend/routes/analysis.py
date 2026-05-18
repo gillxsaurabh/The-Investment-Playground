@@ -150,6 +150,11 @@ def analyze_stock_stream(body: AnalyzeStockBody):
 
             if final_data:
                 save_analysis_result(user_id, symbol, final_data)
+                try:
+                    from services.db import insert_stock_analysis
+                    insert_stock_analysis({"symbol": symbol, "triggered_by": "user", **final_data})
+                except Exception:
+                    pass
 
         return Response(
             stream_with_context(generate()),

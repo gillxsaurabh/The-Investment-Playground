@@ -66,7 +66,7 @@ def managed_conn():
         conn.close()
 
 
-LATEST_SCHEMA_VERSION = 12
+LATEST_SCHEMA_VERSION = 13
 
 
 def init_db() -> None:
@@ -89,6 +89,7 @@ def init_db() -> None:
             (10, "010_schema_hardening.sql"),
             (11, "011_consolidate_state.sql"),
             (12, None),  # handled inline below — ALTER TABLE IF NOT EXISTS workaround
+            (13, "013_retrospective.sql"),
         ]
 
         for target_version, filename in migrations:
@@ -432,5 +433,572 @@ def get_simulator_account(user_id: int) -> Optional[Dict[str, Any]]:
     except Exception as e:
         logger.warning("[DB] get_simulator_account failed for user %s: %s", user_id, e)
         return None
+    finally:
+        conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Scan lifecycle (buy pipeline)
+# ---------------------------------------------------------------------------
+
+def insert_scan(scan: Dict[str, Any]) -> None:
+    """Insert a new scan row (status=running). Fire-and-forget."""
+    conn = get_conn()
+    try:
+        conn.execute("""
+            INSERT OR IGNORE INTO scans (
+                scan_id, started_at, status,
+                gear, gear_label, universe,
+                min_turnover, rsi_buy_limit, adx_min, trail_multiplier,
+                fundamental_check, sector_5d_tolerance, min_volume_ratio,
+                vix, market_regime
+            ) VALUES (
+                :scan_id, :started_at, 'running',
+                :gear, :gear_label, :universe,
+                :min_turnover, :rsi_buy_limit, :adx_min, :trail_multiplier,
+                :fundamental_check, :sector_5d_tolerance, :min_volume_ratio,
+                :vix, :market_regime
+            )
+        """, scan)
+        conn.commit()
+    except Exception as e:
+        logger.warning("[DB] insert_scan failed for %s: %s", scan.get("scan_id"), e)
+    finally:
+        conn.close()
+
+
+def update_scan_completion(
+    scan_id: str,
+    status: str,
+    total_scanned: int,
+    universe_filter_passed: int,
+    technical_filter_passed: int,
+    fundamental_filter_passed: int,
+    sector_filter_passed: int,
+    final_selected: int,
+    completed_at: Optional[str] = None,
+    error_message: Optional[str] = None,
+) -> None:
+    """Update funnel counts and status when a scan completes or fails."""
+    conn = get_conn()
+    try:
+        conn.execute("""
+            UPDATE scans SET
+                status = :status,
+                completed_at = :completed_at,
+                error_message = :error_message,
+                total_scanned = :total_scanned,
+                universe_filter_passed = :universe_filter_passed,
+                technical_filter_passed = :technical_filter_passed,
+                fundamental_filter_passed = :fundamental_filter_passed,
+                sector_filter_passed = :sector_filter_passed,
+                final_selected = :final_selected
+            WHERE scan_id = :scan_id
+        """, {
+            "scan_id": scan_id,
+            "status": status,
+            "completed_at": completed_at or datetime.utcnow().isoformat(sep=" ", timespec="seconds"),
+            "error_message": error_message,
+            "total_scanned": total_scanned,
+            "universe_filter_passed": universe_filter_passed,
+            "technical_filter_passed": technical_filter_passed,
+            "fundamental_filter_passed": fundamental_filter_passed,
+            "sector_filter_passed": sector_filter_passed,
+            "final_selected": final_selected,
+        })
+        conn.commit()
+    except Exception as e:
+        logger.warning("[DB] update_scan_completion failed for %s: %s", scan_id, e)
+    finally:
+        conn.close()
+
+
+def upsert_scan_candidate(scan_id: str, symbol: str, data: Dict[str, Any]) -> None:
+    """Insert or update a single stock's stage data within a scan."""
+    conn = get_conn()
+    try:
+        conn.execute("""
+            INSERT INTO scan_candidates (scan_id, symbol, instrument_token, sector, sector_index,
+                current_price, avg_volume_20d, avg_turnover_20d, volume_ratio,
+                ema_200, stock_3m_return, nifty_3m_return, sector_3m_return,
+                passed_universe_filter, universe_fail_reason,
+                ema_20, rsi, adx, rsi_trigger,
+                passed_technical_filter, technical_fail_reason,
+                profit_yoy_growing, profit_qoq_growing, quarterly_profit_growth,
+                roe, debt_to_equity,
+                passed_fundamental_filter, fundamental_fail_reason,
+                sector_5d_change, passed_sector_filter, sector_fail_reason,
+                composite_score, score_technical, score_fundamental,
+                score_relative_strength, score_volume_health,
+                ai_conviction, why_selected, news_sentiment, news_flag, news_headlines,
+                final_rank, final_rank_score, rank_reason,
+                rank_factor_conviction_norm, rank_factor_composite_norm,
+                rank_factor_rs_norm, rank_factor_fundamental_norm, rank_factor_sector_norm,
+                reached_final_shortlist
+            ) VALUES (
+                :scan_id, :symbol, :instrument_token, :sector, :sector_index,
+                :current_price, :avg_volume_20d, :avg_turnover_20d, :volume_ratio,
+                :ema_200, :stock_3m_return, :nifty_3m_return, :sector_3m_return,
+                :passed_universe_filter, :universe_fail_reason,
+                :ema_20, :rsi, :adx, :rsi_trigger,
+                :passed_technical_filter, :technical_fail_reason,
+                :profit_yoy_growing, :profit_qoq_growing, :quarterly_profit_growth,
+                :roe, :debt_to_equity,
+                :passed_fundamental_filter, :fundamental_fail_reason,
+                :sector_5d_change, :passed_sector_filter, :sector_fail_reason,
+                :composite_score, :score_technical, :score_fundamental,
+                :score_relative_strength, :score_volume_health,
+                :ai_conviction, :why_selected, :news_sentiment, :news_flag, :news_headlines,
+                :final_rank, :final_rank_score, :rank_reason,
+                :rank_factor_conviction_norm, :rank_factor_composite_norm,
+                :rank_factor_rs_norm, :rank_factor_fundamental_norm, :rank_factor_sector_norm,
+                :reached_final_shortlist
+            )
+            ON CONFLICT(scan_id, symbol) DO UPDATE SET
+                instrument_token = excluded.instrument_token,
+                sector = excluded.sector,
+                sector_index = excluded.sector_index,
+                current_price = excluded.current_price,
+                avg_volume_20d = excluded.avg_volume_20d,
+                avg_turnover_20d = excluded.avg_turnover_20d,
+                volume_ratio = excluded.volume_ratio,
+                ema_200 = excluded.ema_200,
+                stock_3m_return = excluded.stock_3m_return,
+                nifty_3m_return = excluded.nifty_3m_return,
+                sector_3m_return = excluded.sector_3m_return,
+                passed_universe_filter = excluded.passed_universe_filter,
+                universe_fail_reason = excluded.universe_fail_reason,
+                ema_20 = excluded.ema_20,
+                rsi = excluded.rsi,
+                adx = excluded.adx,
+                rsi_trigger = excluded.rsi_trigger,
+                passed_technical_filter = excluded.passed_technical_filter,
+                technical_fail_reason = excluded.technical_fail_reason,
+                profit_yoy_growing = excluded.profit_yoy_growing,
+                profit_qoq_growing = excluded.profit_qoq_growing,
+                quarterly_profit_growth = excluded.quarterly_profit_growth,
+                roe = excluded.roe,
+                debt_to_equity = excluded.debt_to_equity,
+                passed_fundamental_filter = excluded.passed_fundamental_filter,
+                fundamental_fail_reason = excluded.fundamental_fail_reason,
+                sector_5d_change = excluded.sector_5d_change,
+                passed_sector_filter = excluded.passed_sector_filter,
+                sector_fail_reason = excluded.sector_fail_reason,
+                composite_score = excluded.composite_score,
+                score_technical = excluded.score_technical,
+                score_fundamental = excluded.score_fundamental,
+                score_relative_strength = excluded.score_relative_strength,
+                score_volume_health = excluded.score_volume_health,
+                ai_conviction = excluded.ai_conviction,
+                why_selected = excluded.why_selected,
+                news_sentiment = excluded.news_sentiment,
+                news_flag = excluded.news_flag,
+                news_headlines = excluded.news_headlines,
+                final_rank = excluded.final_rank,
+                final_rank_score = excluded.final_rank_score,
+                rank_reason = excluded.rank_reason,
+                rank_factor_conviction_norm = excluded.rank_factor_conviction_norm,
+                rank_factor_composite_norm = excluded.rank_factor_composite_norm,
+                rank_factor_rs_norm = excluded.rank_factor_rs_norm,
+                rank_factor_fundamental_norm = excluded.rank_factor_fundamental_norm,
+                rank_factor_sector_norm = excluded.rank_factor_sector_norm,
+                reached_final_shortlist = excluded.reached_final_shortlist
+        """, {
+            "scan_id": scan_id,
+            "symbol": symbol,
+            "instrument_token": data.get("instrument_token"),
+            "sector": data.get("sector"),
+            "sector_index": data.get("sector_index"),
+            "current_price": data.get("current_price"),
+            "avg_volume_20d": data.get("avg_volume_20d"),
+            "avg_turnover_20d": data.get("avg_turnover_20d"),
+            "volume_ratio": data.get("volume_ratio"),
+            "ema_200": data.get("ema_200"),
+            "stock_3m_return": data.get("stock_3m_return"),
+            "nifty_3m_return": data.get("nifty_3m_return"),
+            "sector_3m_return": data.get("sector_3m_return"),
+            "passed_universe_filter": data.get("passed_universe_filter"),
+            "universe_fail_reason": data.get("universe_fail_reason"),
+            "ema_20": data.get("ema_20"),
+            "rsi": data.get("rsi"),
+            "adx": data.get("adx"),
+            "rsi_trigger": data.get("rsi_trigger"),
+            "passed_technical_filter": data.get("passed_technical_filter"),
+            "technical_fail_reason": data.get("technical_fail_reason"),
+            "profit_yoy_growing": data.get("profit_yoy_growing"),
+            "profit_qoq_growing": data.get("profit_qoq_growing"),
+            "quarterly_profit_growth": data.get("quarterly_profit_growth"),
+            "roe": data.get("roe"),
+            "debt_to_equity": data.get("debt_to_equity"),
+            "passed_fundamental_filter": data.get("passed_fundamental_filter"),
+            "fundamental_fail_reason": data.get("fundamental_fail_reason"),
+            "sector_5d_change": data.get("sector_5d_change"),
+            "passed_sector_filter": data.get("passed_sector_filter"),
+            "sector_fail_reason": data.get("sector_fail_reason"),
+            "composite_score": data.get("composite_score"),
+            "score_technical": data.get("score_technical"),
+            "score_fundamental": data.get("score_fundamental"),
+            "score_relative_strength": data.get("score_relative_strength"),
+            "score_volume_health": data.get("score_volume_health"),
+            "ai_conviction": data.get("ai_conviction"),
+            "why_selected": data.get("why_selected"),
+            "news_sentiment": data.get("news_sentiment"),
+            "news_flag": data.get("news_flag"),
+            "news_headlines": data.get("news_headlines"),
+            "final_rank": data.get("final_rank"),
+            "final_rank_score": data.get("final_rank_score"),
+            "rank_reason": data.get("rank_reason"),
+            "rank_factor_conviction_norm": data.get("rank_factor_conviction_norm"),
+            "rank_factor_composite_norm": data.get("rank_factor_composite_norm"),
+            "rank_factor_rs_norm": data.get("rank_factor_rs_norm"),
+            "rank_factor_fundamental_norm": data.get("rank_factor_fundamental_norm"),
+            "rank_factor_sector_norm": data.get("rank_factor_sector_norm"),
+            "reached_final_shortlist": data.get("reached_final_shortlist", False),
+        })
+        conn.commit()
+    except Exception as e:
+        logger.warning("[DB] upsert_scan_candidate failed for %s/%s: %s", scan_id, symbol, e)
+    finally:
+        conn.close()
+
+
+def mark_final_shortlist(scan_id: str, symbols: List[str]) -> None:
+    """Mark the given symbols as reached_final_shortlist=TRUE for this scan."""
+    if not symbols:
+        return
+    conn = get_conn()
+    try:
+        placeholders = ",".join("?" * len(symbols))
+        conn.execute(
+            f"UPDATE scan_candidates SET reached_final_shortlist = TRUE "
+            f"WHERE scan_id = ? AND symbol IN ({placeholders})",
+            [scan_id, *symbols],
+        )
+        conn.commit()
+    except Exception as e:
+        logger.warning("[DB] mark_final_shortlist failed for %s: %s", scan_id, e)
+    finally:
+        conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Sell audit
+# ---------------------------------------------------------------------------
+
+def insert_sell_audit(audit: Dict[str, Any]) -> None:
+    """Insert a sell audit row. Captures exceptions to Sentry."""
+    import json as _json
+    conn = get_conn()
+    try:
+        conn.execute("""
+            INSERT OR IGNORE INTO sell_audits (
+                audit_id, audited_at, symbol, instrument_token, sector,
+                trading_mode, user_id, trade_id,
+                current_price, unrealized_pnl_pct,
+                rsi, adx, ema_20, ema_50, ema_200,
+                stock_3m_return, nifty_3m_return, sector_5d_change,
+                roe, debt_to_equity, profit_declining_quarters,
+                urgency_score, urgency_level,
+                urgency_reasons, sell_score_breakdown,
+                ai_reasoning, news_sentiment, news_flag
+            ) VALUES (
+                :audit_id, :audited_at, :symbol, :instrument_token, :sector,
+                :trading_mode, :user_id, :trade_id,
+                :current_price, :unrealized_pnl_pct,
+                :rsi, :adx, :ema_20, :ema_50, :ema_200,
+                :stock_3m_return, :nifty_3m_return, :sector_5d_change,
+                :roe, :debt_to_equity, :profit_declining_quarters,
+                :urgency_score, :urgency_level,
+                :urgency_reasons, :sell_score_breakdown,
+                :ai_reasoning, :news_sentiment, :news_flag
+            )
+        """, {
+            "audit_id": audit.get("audit_id"),
+            "audited_at": audit.get("audited_at"),
+            "symbol": audit.get("symbol"),
+            "instrument_token": audit.get("instrument_token"),
+            "sector": audit.get("sector"),
+            "trading_mode": audit.get("trading_mode", "simulator"),
+            "user_id": audit.get("user_id"),
+            "trade_id": audit.get("trade_id"),
+            "current_price": audit.get("current_price"),
+            "unrealized_pnl_pct": audit.get("pnl_percentage"),
+            "rsi": audit.get("rsi"),
+            "adx": audit.get("adx"),
+            "ema_20": audit.get("ema_20"),
+            "ema_50": audit.get("ema_50"),
+            "ema_200": audit.get("ema_200"),
+            "stock_3m_return": audit.get("stock_3m_return"),
+            "nifty_3m_return": audit.get("nifty_3m_return"),
+            "sector_5d_change": audit.get("sector_5d_change"),
+            "roe": audit.get("roe"),
+            "debt_to_equity": audit.get("debt_to_equity"),
+            "profit_declining_quarters": audit.get("profit_declining_quarters"),
+            "urgency_score": audit.get("sell_urgency_score", 0),
+            "urgency_level": audit.get("sell_urgency_label", "HOLD"),
+            "urgency_reasons": _json.dumps(audit.get("sell_signals", [])),
+            "sell_score_breakdown": _json.dumps(audit.get("sell_score_breakdown") or {}),
+            "ai_reasoning": audit.get("sell_reason") or audit.get("hold_reason"),
+            "news_sentiment": audit.get("news_sentiment"),
+            "news_flag": audit.get("news_flag"),
+        })
+        conn.commit()
+    except Exception as e:
+        _capture(e)
+        logger.warning("[DB] insert_sell_audit failed for %s: %s", audit.get("audit_id"), e)
+    finally:
+        conn.close()
+
+
+def link_exit_audit(trade_id: str, audit_id: str) -> None:
+    """Record which sell audit prompted a trade exit."""
+    conn = get_conn()
+    try:
+        conn.execute(
+            "UPDATE trades SET exit_audit_id = ? WHERE trade_id = ?",
+            (audit_id, trade_id),
+        )
+        conn.commit()
+    except Exception as e:
+        logger.warning("[DB] link_exit_audit failed for %s: %s", trade_id, e)
+    finally:
+        conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Stock analyses (on-demand deep analysis)
+# ---------------------------------------------------------------------------
+
+def insert_stock_analysis(analysis: Dict[str, Any]) -> None:
+    """Persist a completed on-demand stock analysis."""
+    conn = get_conn()
+    try:
+        conn.execute("""
+            INSERT INTO stock_analyses (
+                symbol, analyzed_at, triggered_by, overall_score,
+                recency_score, recency_stock_return, recency_nifty_return,
+                recency_outperformance, recency_detail,
+                trend_score, trend_adx, trend_ema_20, trend_ema_50,
+                trend_strength, trend_direction, stats_explanation,
+                fundamental_score, fund_roe, fund_debt_to_equity, fund_sales_growth,
+                fundamental_summary, fundamental_explanation,
+                news_score, news_explanation
+            ) VALUES (
+                :symbol, :analyzed_at, :triggered_by, :overall_score,
+                :recency_score, :recency_stock_return, :recency_nifty_return,
+                :recency_outperformance, :recency_detail,
+                :trend_score, :trend_adx, :trend_ema_20, :trend_ema_50,
+                :trend_strength, :trend_direction, :stats_explanation,
+                :fundamental_score, :fund_roe, :fund_debt_to_equity, :fund_sales_growth,
+                :fundamental_summary, :fundamental_explanation,
+                :news_score, :news_explanation
+            )
+        """, {
+            "symbol": analysis.get("symbol"),
+            "analyzed_at": analysis.get("analyzed_at", datetime.utcnow().isoformat(sep=" ", timespec="seconds")),
+            "triggered_by": analysis.get("triggered_by", "user"),
+            "overall_score": analysis.get("overall_score"),
+            "recency_score": analysis.get("recency_score"),
+            "recency_stock_return": analysis.get("recency_stock_return"),
+            "recency_nifty_return": analysis.get("recency_nifty_return"),
+            "recency_outperformance": analysis.get("recency_outperformance"),
+            "recency_detail": analysis.get("recency_detail"),
+            "trend_score": analysis.get("trend_score"),
+            "trend_adx": analysis.get("trend_adx"),
+            "trend_ema_20": analysis.get("trend_ema_20"),
+            "trend_ema_50": analysis.get("trend_ema_50"),
+            "trend_strength": analysis.get("trend_strength"),
+            "trend_direction": analysis.get("trend_direction"),
+            "stats_explanation": analysis.get("stats_explanation"),
+            "fundamental_score": analysis.get("fundamental_score"),
+            "fund_roe": analysis.get("fund_roe"),
+            "fund_debt_to_equity": analysis.get("fund_debt_to_equity"),
+            "fund_sales_growth": analysis.get("fund_sales_growth"),
+            "fundamental_summary": analysis.get("fundamental_summary"),
+            "fundamental_explanation": analysis.get("fundamental_explanation"),
+            "news_score": analysis.get("news_score"),
+            "news_explanation": analysis.get("news_explanation"),
+        })
+        conn.commit()
+    except Exception as e:
+        logger.warning("[DB] insert_stock_analysis failed for %s: %s", analysis.get("symbol"), e)
+    finally:
+        conn.close()
+
+
+# ---------------------------------------------------------------------------
+# Retrospective reports
+# ---------------------------------------------------------------------------
+
+def insert_retrospective_report(report: Dict[str, Any]) -> None:
+    """Persist a completed retrospective report."""
+    import json as _json
+    conn = get_conn()
+    try:
+        conn.execute("""
+            INSERT OR IGNORE INTO retrospective_reports (
+                report_id, generated_at, trading_mode,
+                period_start, period_end, lookback_days,
+                trades_analyzed, winners, losers, win_rate_pct, total_pnl, avg_pnl_pct,
+                cohort_aggregates, winner_patterns, loser_patterns,
+                filter_audit, sl_calibration, conviction_cal, sell_audit_cal,
+                claude_findings, claude_recommendations,
+                triggered_by, user_id
+            ) VALUES (
+                :report_id, :generated_at, :trading_mode,
+                :period_start, :period_end, :lookback_days,
+                :trades_analyzed, :winners, :losers, :win_rate_pct, :total_pnl, :avg_pnl_pct,
+                :cohort_aggregates, :winner_patterns, :loser_patterns,
+                :filter_audit, :sl_calibration, :conviction_cal, :sell_audit_cal,
+                :claude_findings, :claude_recommendations,
+                :triggered_by, :user_id
+            )
+        """, {
+            "report_id": report.get("report_id"),
+            "generated_at": report.get("generated_at"),
+            "trading_mode": report.get("trading_mode", "simulator"),
+            "period_start": report.get("period_start"),
+            "period_end": report.get("period_end"),
+            "lookback_days": report.get("lookback_days", 90),
+            "trades_analyzed": report.get("trades_analyzed", 0),
+            "winners": report.get("winners", 0),
+            "losers": report.get("losers", 0),
+            "win_rate_pct": report.get("win_rate_pct"),
+            "total_pnl": report.get("total_pnl"),
+            "avg_pnl_pct": report.get("avg_pnl_pct"),
+            "cohort_aggregates": _json.dumps(report.get("cohort_aggregates") or {}),
+            "winner_patterns": _json.dumps(report.get("winner_patterns") or {}),
+            "loser_patterns": _json.dumps(report.get("loser_patterns") or {}),
+            "filter_audit": _json.dumps(report.get("filter_audit") or {}),
+            "sl_calibration": _json.dumps(report.get("sl_calibration") or {}),
+            "conviction_cal": _json.dumps(report.get("conviction_cal") or {}),
+            "sell_audit_cal": _json.dumps(report.get("sell_audit_cal") or {}),
+            "claude_findings": report.get("claude_findings"),
+            "claude_recommendations": _json.dumps(report.get("claude_recommendations") or []),
+            "triggered_by": report.get("triggered_by", "manual"),
+            "user_id": report.get("user_id"),
+        })
+        conn.commit()
+    except Exception as e:
+        _capture(e)
+        logger.warning("[DB] insert_retrospective_report failed for %s: %s", report.get("report_id"), e)
+    finally:
+        conn.close()
+
+
+def list_retrospective_reports(
+    trading_mode: Optional[str] = None,
+    limit: int = 20,
+) -> List[Dict[str, Any]]:
+    """List retrospective reports, most recent first."""
+    conn = get_conn()
+    try:
+        if trading_mode:
+            rows = conn.execute(
+                "SELECT * FROM retrospective_reports WHERE trading_mode = ? "
+                "ORDER BY generated_at DESC LIMIT ?",
+                (trading_mode, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM retrospective_reports ORDER BY generated_at DESC LIMIT ?",
+                (limit,),
+            ).fetchall()
+        return [dict(r) for r in rows]
+    except Exception as e:
+        logger.warning("[DB] list_retrospective_reports failed: %s", e)
+        return []
+    finally:
+        conn.close()
+
+
+def get_retrospective_report(report_id: str) -> Optional[Dict[str, Any]]:
+    """Fetch a single retrospective report by ID."""
+    conn = get_conn()
+    try:
+        row = conn.execute(
+            "SELECT * FROM retrospective_reports WHERE report_id = ?", (report_id,)
+        ).fetchone()
+        return dict(row) if row else None
+    except Exception as e:
+        logger.warning("[DB] get_retrospective_report failed for %s: %s", report_id, e)
+        return None
+    finally:
+        conn.close()
+
+
+def get_closed_trades_for_retrospective(
+    trading_mode: str,
+    period_start: str,
+    period_end: str,
+) -> List[Dict[str, Any]]:
+    """Fetch all closed trades in window with joined scan_candidates and sell_audit data."""
+    conn = get_conn()
+    try:
+        rows = conn.execute("""
+            SELECT
+                t.*,
+                sc.passed_universe_filter, sc.universe_fail_reason,
+                sc.passed_technical_filter, sc.technical_fail_reason,
+                sc.passed_fundamental_filter, sc.fundamental_fail_reason,
+                sc.passed_sector_filter, sc.sector_fail_reason,
+                sc.composite_score AS sc_composite_score,
+                sc.score_technical, sc.score_fundamental,
+                sc.score_relative_strength, sc.score_volume_health,
+                sc.ai_conviction AS sc_ai_conviction,
+                sc.why_selected, sc.news_flag AS sc_news_flag,
+                sc.final_rank AS sc_final_rank,
+                sc.final_rank_score AS sc_final_rank_score,
+                sc.rank_reason,
+                sa.urgency_score AS exit_urgency_score,
+                sa.urgency_level AS exit_urgency_level,
+                sa.urgency_reasons AS exit_urgency_reasons,
+                sa.ai_reasoning AS exit_ai_reasoning
+            FROM trades t
+            LEFT JOIN scan_candidates sc
+                ON t.scan_id = sc.scan_id AND t.symbol = sc.symbol
+            LEFT JOIN sell_audits sa
+                ON t.exit_audit_id = sa.audit_id
+            WHERE t.status = 'CLOSED'
+              AND t.trading_mode = ?
+              AND t.exit_time BETWEEN ? AND ?
+            ORDER BY t.exit_time ASC
+        """, (trading_mode, period_start, period_end)).fetchall()
+        return [dict(r) for r in rows]
+    except Exception as e:
+        logger.warning("[DB] get_closed_trades_for_retrospective failed: %s", e)
+        return []
+    finally:
+        conn.close()
+
+
+def get_scan_rejection_stats(
+    period_start: str,
+    period_end: str,
+) -> List[Dict[str, Any]]:
+    """Get rejection counts per stage across all scans in the window."""
+    conn = get_conn()
+    try:
+        rows = conn.execute("""
+            SELECT
+                sc.universe_fail_reason,
+                sc.technical_fail_reason,
+                sc.fundamental_fail_reason,
+                sc.sector_fail_reason,
+                sc.passed_universe_filter,
+                sc.passed_technical_filter,
+                sc.passed_fundamental_filter,
+                sc.passed_sector_filter,
+                sc.reached_final_shortlist,
+                s.gear_label,
+                s.started_at
+            FROM scan_candidates sc
+            JOIN scans s ON sc.scan_id = s.scan_id
+            WHERE s.started_at BETWEEN ? AND ?
+        """, (period_start, period_end)).fetchall()
+        return [dict(r) for r in rows]
+    except Exception as e:
+        logger.warning("[DB] get_scan_rejection_stats failed: %s", e)
+        return []
     finally:
         conn.close()

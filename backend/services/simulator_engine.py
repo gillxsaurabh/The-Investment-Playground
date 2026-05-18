@@ -38,6 +38,7 @@ class PaperTradingSimulator(TradingEngine):
         self.history_file = str(history_file or SIMULATOR_PRICE_HISTORY_FILE)
         self._lock = threading.Lock()
         self._history_lock = threading.Lock()
+        self._last_snapshot_time = 0.0  # epoch; throttle DB position_snapshots to 1/min
         self._load_data()
         self._load_price_history()
 
@@ -127,6 +128,39 @@ class PaperTradingSimulator(TradingEngine):
             self._price_history.append({"time": now, "values": values})
             self._prune_history()
 
+        # Write position_snapshots to DB at most once per 60 seconds
+        current_epoch = time.monotonic()
+        if current_epoch - self._last_snapshot_time >= 60:
+            self._last_snapshot_time = current_epoch
+            try:
+                from services.db import insert_position_snapshot
+                snap_time = now
+                for p in positions:
+                    sym = p["symbol"]
+                    ltp_v = ltps.get(sym) if ltps else None
+                    if ltp_v is None:
+                        continue
+                    entry_f = float(p.get("entry_price", 0))
+                    qty_i = int(p.get("quantity", 0))
+                    current_sl_v = float(p.get("current_sl", p.get("stop_loss", 0)))
+                    high_v = float(p.get("highest_price_seen", entry_f))
+                    upnl = round((float(ltp_v) - entry_f) * qty_i, 2)
+                    upnl_pct = round((float(ltp_v) - entry_f) / entry_f * 100, 4) if entry_f else 0
+                    insert_position_snapshot({
+                        "trade_id": p.get("trade_id"),
+                        "symbol": sym,
+                        "snapshot_time": snap_time,
+                        "ltp": float(ltp_v),
+                        "entry_price": entry_f,
+                        "current_sl": current_sl_v,
+                        "highest_price_seen": high_v,
+                        "unrealized_pnl": upnl,
+                        "unrealized_pnl_pct": upnl_pct,
+                        "quantity": qty_i,
+                    })
+            except Exception:
+                pass
+
     def get_price_history(self, minutes=60):
         """Return price history for the last N minutes."""
         with self._history_lock:
@@ -150,7 +184,8 @@ class PaperTradingSimulator(TradingEngine):
         return {s: quotes[f"NSE:{s}"]["last_price"] for s in symbols}
 
     def execute_order(self, symbol, quantity, atr_at_entry, trail_multiplier=DEFAULT_TRAIL_MULTIPLIER,
-                      instrument_token=None, ltp=None, automation_run_id=None, automation_gear=None):
+                      instrument_token=None, ltp=None, automation_run_id=None, automation_gear=None,
+                      scan_context=None):
         """Execute a virtual buy order with spread simulation and trailing stop.
 
         Args:
@@ -159,6 +194,9 @@ class PaperTradingSimulator(TradingEngine):
                  and confirm causes "Insufficient Virtual Funds".
             automation_run_id: Optional tag (e.g. "AUTO_20260223") for automation tracking.
             automation_gear: Optional gear number (1-5) this trade was selected from.
+            scan_context: Optional dict with discovery context:
+                {scan_id, scan_rank, scan_ai_conviction, scan_composite_score,
+                 scan_final_rank_score, scan_rsi, scan_adx, scan_rsi_trigger, scan_news_flag}
         """
         with self._lock:
             if ltp is None:
@@ -205,7 +243,8 @@ class PaperTradingSimulator(TradingEngine):
 
             # Secondary persistence: write to SQLite (fire-and-forget)
             try:
-                from services.db import insert_trade
+                from services.db import insert_trade, insert_account_snapshot
+                sc = scan_context or {}
                 insert_trade({
                     **position,
                     "total_cost": total_cost,
@@ -214,7 +253,35 @@ class PaperTradingSimulator(TradingEngine):
                     "trading_mode": "simulator",
                     "account_balance_before": self._data["account_summary"]["current_balance"] + total_cost,
                     "account_balance_after": self._data["account_summary"]["current_balance"],
+                    "scan_id": sc.get("scan_id"),
+                    "scan_rank": sc.get("scan_rank"),
+                    "scan_ai_conviction": sc.get("scan_ai_conviction"),
+                    "scan_composite_score": sc.get("scan_composite_score"),
+                    "scan_final_rank_score": sc.get("scan_final_rank_score"),
+                    "scan_rsi": sc.get("scan_rsi"),
+                    "scan_adx": sc.get("scan_adx"),
+                    "scan_rsi_trigger": sc.get("scan_rsi_trigger"),
+                    "scan_news_flag": sc.get("scan_news_flag"),
                 }, user_id=self.user_id)
+                acct = self._data["account_summary"]
+                history = self._data.get("trade_history", [])
+                wins = sum(1 for t in history if t.get("realized_pnl", 0) > 0)
+                losses = sum(1 for t in history if t.get("realized_pnl", 0) <= 0)
+                open_cost = sum(p["entry_price"] * p["quantity"] for p in self._data["active_positions"])
+                insert_account_snapshot({
+                    "snapshot_time": now.strftime("%Y-%m-%d %H:%M:%S"),
+                    "event_type": "trade_open",
+                    "trade_id": trade_id,
+                    "initial_capital": acct["initial_capital"],
+                    "current_balance": acct["current_balance"],
+                    "total_realized_pnl": acct.get("total_pnl", 0.0),
+                    "open_position_cost": open_cost,
+                    "unrealized_pnl": 0.0,
+                    "net_equity": acct["current_balance"] + open_cost,
+                    "total_trades": len(history),
+                    "winning_trades": wins,
+                    "losing_trades": losses,
+                })
             except Exception:
                 pass
 
@@ -230,7 +297,7 @@ class PaperTradingSimulator(TradingEngine):
                 "message": f"Virtual BUY executed: {quantity} x {symbol} @ {entry_price}",
             }
 
-    def close_position(self, trade_id, exit_price=None, reason="Manual Close"):
+    def close_position(self, trade_id, exit_price=None, reason="Manual Close", audit_id=None):
         """Close a virtual position and move to history."""
         with self._lock:
             position = None
@@ -278,15 +345,36 @@ class PaperTradingSimulator(TradingEngine):
 
             # Secondary persistence: update SQLite (fire-and-forget)
             try:
-                from services.db import update_trade_exit
+                from services.db import update_trade_exit, link_exit_audit, insert_account_snapshot
+                exit_time_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                 entry_dt = datetime.strptime(str(position["entry_time"]), "%Y-%m-%d %H:%M:%S")
                 holding_days = (datetime.now() - entry_dt).days
                 pnl_pct = round((exit_price - entry) / entry * 100, 2) if entry else 0
                 update_trade_exit(
-                    trade_id, exit_price,
-                    datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    trade_id, exit_price, exit_time_str,
                     reason, realized_pnl, pnl_pct, holding_days,
                 )
+                if audit_id:
+                    link_exit_audit(trade_id, audit_id)
+                acct = self._data["account_summary"]
+                history = self._data.get("trade_history", [])
+                wins = sum(1 for t in history if t.get("realized_pnl", 0) > 0)
+                losses = sum(1 for t in history if t.get("realized_pnl", 0) <= 0)
+                open_cost = sum(p["entry_price"] * p["quantity"] for p in self._data["active_positions"])
+                insert_account_snapshot({
+                    "snapshot_time": exit_time_str,
+                    "event_type": "trade_close",
+                    "trade_id": trade_id,
+                    "initial_capital": acct["initial_capital"],
+                    "current_balance": acct["current_balance"],
+                    "total_realized_pnl": acct.get("total_pnl", 0.0),
+                    "open_position_cost": open_cost,
+                    "unrealized_pnl": 0.0,
+                    "net_equity": acct["current_balance"] + open_cost,
+                    "total_trades": len(history),
+                    "winning_trades": wins,
+                    "losing_trades": losses,
+                })
             except Exception:
                 pass
 

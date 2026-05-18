@@ -13,6 +13,7 @@ Stages:
 """
 
 import json
+import random
 import time
 from datetime import datetime
 
@@ -316,6 +317,39 @@ def run_sell_pipeline_stream(access_token: str, config: dict | None = None, user
         })
 
     flagged_count = strong_sell + sell
+
+    # Persist sell audit rows and attach audit_ids to each holding in the result
+    audit_id_map: dict[str, str] = {}  # symbol -> audit_id
+    try:
+        from services.db import insert_sell_audit, get_open_trades
+        open_trades = {t["symbol"]: t["trade_id"] for t in get_open_trades(trading_mode="simulator", user_id=user_id)}
+        audited_at = datetime.utcnow().isoformat(sep=" ", timespec="seconds")
+        for h in holdings:
+            sym = h.get("symbol", "")
+            ts_str = datetime.now().strftime("%Y%m%d%H%M%S")
+            rand_s = "".join(random.choices("abcdefghijklmnopqrstuvwxyz0123456789", k=4))
+            audit_id = f"SAUDIT_{ts_str}_{sym}_{rand_s}"
+            audit_id_map[sym] = audit_id
+            insert_sell_audit({
+                "audit_id": audit_id,
+                "audited_at": audited_at,
+                "symbol": sym,
+                "instrument_token": h.get("instrument_token"),
+                "sector": h.get("sector"),
+                "trading_mode": "simulator",
+                "user_id": user_id,
+                "trade_id": open_trades.get(sym),
+                "current_price": h.get("last_price"),
+                "pnl_percentage": h.get("pnl_percentage"),
+                **h,
+            })
+    except Exception:
+        pass
+
+    # Attach audit_id to each result holding so frontend can pass it on close
+    for rh in result_holdings:
+        rh["audit_id"] = audit_id_map.get(rh.get("symbol", ""))
+
     yield _sse("final_result", {
         "holdings": result_holdings,
         "total_holdings": len(result_holdings),

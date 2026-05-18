@@ -179,6 +179,8 @@ def get_llm(
     pipeline: str = "unknown",
     # Legacy param ignored (was Gemini model name)
     model_name: str = None,
+    # Override the Claude model ID (e.g. "claude-opus-4-7" for synthesizer)
+    model_override: str = None,
 ):
     """Create an LLM instance.
 
@@ -200,17 +202,18 @@ def get_llm(
     is_rockstar = _is_rockstar_plan(user_id)
 
     if provider == LLM_PROVIDER_CLAUDE:
+        effective_model = model_override or CLAUDE_MODEL_DEFAULT
         user_key = _get_user_api_key(user_id, "anthropic")
         if user_key:
-            print(f"[LLM] Using Claude ({CLAUDE_MODEL_DEFAULT}, user key)")
+            print(f"[LLM] Using Claude ({effective_model}, user key)")
             inner = ClaudeChatModel(
-                model_name=CLAUDE_MODEL_DEFAULT,
+                model_name=effective_model,
                 temperature=temperature,
                 api_key=user_key,
                 extended_thinking=extended_thinking,
                 thinking_budget=thinking_budget,
             )
-            return TrackingChatModel(inner, pipeline, user_id, "anthropic", CLAUDE_MODEL_DEFAULT)
+            return TrackingChatModel(inner, pipeline, user_id, "anthropic", effective_model)
         if is_rockstar:
             raise ValueError(
                 "BYOK_REQUIRED:anthropic — Lone Wolf plan requires your own Anthropic API key. "
@@ -222,15 +225,15 @@ def get_llm(
                 "[LLM] ANTHROPIC_API_KEY is not set. "
                 "Add it to your .env file to use Claude."
             )
-        print(f"[LLM] Using Claude ({CLAUDE_MODEL_DEFAULT}, platform key), extended_thinking={extended_thinking}")
+        print(f"[LLM] Using Claude ({effective_model}, platform key), extended_thinking={extended_thinking}")
         inner = ClaudeChatModel(
-            model_name=CLAUDE_MODEL_DEFAULT,
+            model_name=effective_model,
             temperature=temperature,
             api_key=platform_key,
             extended_thinking=extended_thinking,
             thinking_budget=thinking_budget,
         )
-        return TrackingChatModel(inner, pipeline, user_id, "anthropic", CLAUDE_MODEL_DEFAULT)
+        return TrackingChatModel(inner, pipeline, user_id, "anthropic", effective_model)
 
     # Default: OpenAI
     user_key = _get_user_api_key(user_id, "openai")

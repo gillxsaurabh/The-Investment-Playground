@@ -251,3 +251,303 @@
 @media (max-width: 768px) {
   .admin-wrap { margin-left: 0; padding: 76px 16px 24px; }
 }
+
+// ── Retrospective Analysis ─────────────────────────────────────────────────
+.retro-section {
+  margin-top: 40px;
+  background: #12121a;
+  border: 1px solid #1e293b;
+  border-radius: 16px;
+  padding: 28px;
+}
+
+.retro-header {
+  margin-bottom: 20px;
+  h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin: 0 0 6px;
+    .material-icons { color: #6366f1; font-size: 1.2rem; }
+  }
+}
+
+.retro-controls {
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 20px;
+}
+
+.ctrl-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  label { font-size: 0.75rem; color: #64748b; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+}
+
+.mode-toggle {
+  display: flex;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  overflow: hidden;
+  button {
+    background: transparent;
+    color: #64748b;
+    border: none;
+    padding: 8px 16px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    &.active { background: #6366f1; color: #fff; }
+    &:hover:not(.active) { background: #1e293b; }
+  }
+}
+
+.retro-select {
+  background: #0f0f17;
+  border: 1px solid #1e293b;
+  color: #e2e8f0;
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  &:focus { outline: none; border-color: #6366f1; }
+}
+
+.retro-pipeline {
+  background: #0a0a0f;
+  border: 1px solid #1e293b;
+  border-radius: 12px;
+  padding: 16px;
+  margin-bottom: 20px;
+}
+
+.pipeline-stages {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.stage-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: #12121a;
+  border: 1px solid #1e293b;
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 0.78rem;
+  color: #64748b;
+  transition: all 0.2s;
+
+  .stage-icon { font-size: 0.9rem; color: #334155; }
+
+  &.running {
+    border-color: #6366f1;
+    color: #a5b4fc;
+    .stage-icon { color: #6366f1; animation: spin 1s linear infinite; }
+  }
+  &.done {
+    border-color: #166534;
+    color: #4ade80;
+    .stage-icon { color: #22c55e; }
+  }
+  &.error {
+    border-color: #7f1d1d;
+    color: #f87171;
+    .stage-icon { color: #ef4444; }
+  }
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.retro-log {
+  max-height: 120px;
+  overflow-y: auto;
+  .log-line { font-size: 0.78rem; color: #4b5563; font-family: monospace; padding: 1px 0; }
+}
+
+.retro-reports {
+  margin-top: 20px;
+  h3 { font-size: 0.9rem; font-weight: 600; color: #94a3b8; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 0.05em; }
+}
+
+.retro-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+
+  th { text-align: left; color: #475569; font-weight: 500; padding: 6px 8px; border-bottom: 1px solid #1e293b; }
+  td { padding: 8px 8px; border-bottom: 1px solid #12121a; color: #94a3b8; }
+  tr:hover td { background: #0f0f17; }
+}
+
+.mode-badge {
+  background: #1e1e3f;
+  color: #818cf8;
+  border: 1px solid #2e2e5f;
+  border-radius: 4px;
+  padding: 2px 7px;
+  font-size: 0.77rem;
+  font-weight: 500;
+}
+
+// Report detail overlay
+.report-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.75);
+  z-index: 200;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 40px 16px;
+  overflow-y: auto;
+}
+
+.report-modal {
+  background: #12121a;
+  border: 1px solid #2e3347;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 860px;
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+
+.report-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid #1e293b;
+  h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 1rem; .material-icons { color: #6366f1; } }
+}
+
+.icon-btn {
+  background: transparent;
+  border: none;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  &:hover { color: #e2e8f0; }
+  .material-icons { font-size: 1.3rem; }
+}
+
+.report-body { padding: 20px 24px 28px; }
+
+.report-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.chip {
+  background: #1e293b;
+  color: #94a3b8;
+  border-radius: 20px;
+  padding: 4px 12px;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.findings-section {
+  margin-bottom: 24px;
+  h4 { color: #64748b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin: 0 0 12px; }
+}
+
+.findings-text {
+  color: #cbd5e1;
+  font-size: 0.88rem;
+  line-height: 1.7;
+  white-space: pre-line;
+  background: #0a0a0f;
+  border-radius: 8px;
+  padding: 16px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.recs-section {
+  h4 { color: #64748b; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; margin: 0 0 12px; }
+}
+
+.rec-card {
+  background: #0f0f17;
+  border: 1px solid #1e293b;
+  border-radius: 10px;
+  padding: 14px 16px;
+  margin-bottom: 10px;
+}
+
+.rec-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+.rec-rank {
+  background: #6366f1;
+  color: #fff;
+  border-radius: 50%;
+  width: 22px; height: 22px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.rec-param {
+  font-family: monospace;
+  font-size: 0.85rem;
+  color: #a5b4fc;
+  background: #1e1e3f;
+  padding: 2px 8px;
+  border-radius: 4px;
+  flex: 1;
+}
+
+.conf-badge {
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 10px;
+  text-transform: uppercase;
+  &.conf-high { background: #14532d; color: #4ade80; }
+  &.conf-medium { background: #78350f; color: #fbbf24; }
+  &.conf-low { background: #1e293b; color: #94a3b8; }
+}
+
+.rec-change {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-size: 0.82rem;
+}
+
+.change-from { color: #ef4444; text-decoration: line-through; }
+.change-to { color: #22c55e; font-weight: 600; }
+.rec-file { color: #475569; font-family: monospace; font-size: 0.75rem; margin-left: 8px; }
+
+.rec-reasoning {
+  color: #94a3b8;
+  font-size: 0.83rem;
+  line-height: 1.5;
+  margin: 0 0 4px;
+}
+
+.rec-impact {
+  color: #6366f1;
+  font-size: 0.8rem;
+  margin: 0;
+}
