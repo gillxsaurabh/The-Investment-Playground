@@ -87,6 +87,7 @@ def filter_market_universe(
     ema_period: int = DEFAULT_EMA_PERIOD,
     universe: str = "nifty500",
     session: Optional[PipelineSession] = None,
+    rejected_out: Optional[list] = None,
 ) -> list[dict]:
     """Filter stock universe: turnover, volume trend, 200-EMA, relative strength vs Nifty + sector.
 
@@ -164,6 +165,12 @@ def filter_market_universe(
         "passed": 0,
     }
 
+    def _reject(stock: dict, reason: str) -> None:
+        """Tag stock with rejection reason and optionally collect it."""
+        if rejected_out is not None:
+            with rate_lock:
+                rejected_out.append({**stock, "universe_fail_reason": reason})
+
     def fetch_and_filter(stock: dict) -> Optional[dict]:
         with rate_lock:
             request_count[0] += 1
@@ -173,10 +180,12 @@ def filter_market_universe(
         if df is None:
             with rate_lock:
                 counters["fetch_failed"] += 1
+            _reject(stock, "fetch_failed")
             return None
         if len(df) < 200:
             with rate_lock:
                 counters["too_few_candles"] += 1
+            _reject(stock, "too_few_candles")
             return None
 
         # --- Turnover filter: 20-day avg (price x volume) ------------------
@@ -186,6 +195,7 @@ def filter_market_universe(
         if avg_turnover_20d < min_turnover:
             with rate_lock:
                 counters["turnover_rejected"] += 1
+            _reject(stock, "turnover_below_min")
             return None
 
         # --- Volume trend filter: 5-day vs 20-day avg volume ---------------
@@ -194,6 +204,7 @@ def filter_market_universe(
         if volume_ratio < MIN_VOLUME_RATIO:
             with rate_lock:
                 counters["volume_trend_rejected"] += 1
+            _reject(stock, "volume_trend_weak")
             return None
 
         # --- EMA filter ---------------------------------------------------
@@ -203,11 +214,13 @@ def filter_market_universe(
         if pd.isna(ema_val):
             with rate_lock:
                 counters["ema_nan"] += 1
+            _reject(stock, "ema_nan")
             return None
 
         if current_price <= ema_val:
             with rate_lock:
                 counters["ema_rejected"] += 1
+            _reject(stock, "price_below_200ema")
             return None
 
         # --- 3-month relative strength vs Nifty ---------------------------
@@ -219,6 +232,7 @@ def filter_market_universe(
         if stock_3m_return <= nifty_3m_return:
             with rate_lock:
                 counters["nifty_rs_rejected"] += 1
+            _reject(stock, "nifty_rs_underperform")
             return None
 
         # --- 3-month relative strength vs sector index --------------------
@@ -233,6 +247,7 @@ def filter_market_universe(
                 if stock_3m_return <= sector_3m_return:
                     with rate_lock:
                         counters["sector_rs_rejected"] += 1
+                    _reject(stock, "sector_rs_underperform")
                     return None
 
         with rate_lock:
@@ -310,6 +325,7 @@ def analyze_technicals(
         df = cache.get(token)
         if df is None or len(df) < 50:
             counters["no_data"] += 1
+            stock["technical_fail_reason"] = "no_data"
             continue
 
         current_price = df["Close"].iloc[-1]
@@ -320,11 +336,13 @@ def analyze_technicals(
         adx_val = calculate_adx(df)
         if adx_val is None or pd.isna(adx_val) or adx_val < ADX_PIPELINE_MIN:
             counters["adx_weak"] += 1
+            stock["technical_fail_reason"] = "adx_weak"
             continue
 
         rsi_series = _canonical_rsi(df["Close"], 14)
         if rsi_series.empty or rsi_series.isna().all():
             counters["no_data"] += 1
+            stock["technical_fail_reason"] = "no_data"
             continue
         current_rsi = rsi_series.iloc[-1]
 
@@ -341,14 +359,17 @@ def analyze_technicals(
             # Pullback: price must be above 200-EMA (can be below 20-EMA)
             if current_price <= ema_200:
                 counters["no_trigger"] += 1
+                stock["technical_fail_reason"] = "pullback_below_200ema"
                 continue
         elif momentum:
             # Momentum: price must be above 20-EMA
             if current_price <= ema_20:
                 counters["no_trigger"] += 1
+                stock["technical_fail_reason"] = "momentum_below_20ema"
                 continue
         else:
             counters["no_trigger"] += 1
+            stock["technical_fail_reason"] = "no_rsi_trigger"
             continue
 
         counters["passed"] += 1

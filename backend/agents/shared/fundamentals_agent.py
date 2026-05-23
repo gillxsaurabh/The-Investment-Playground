@@ -222,20 +222,25 @@ def enrich_with_fundamentals(
         if is_filter_mode:
             if mode == "filter_strict":
                 if not (yoy_growing is True or (yoy_growing is None and qoq_growing)):
+                    item["fundamental_fail_reason"] = "profit_not_growing"
                     return None
                 roe = item.get("roe")
                 de = item.get("debt_to_equity")
                 if roe is None or roe < STRICT_ROE_MIN:
+                    item["fundamental_fail_reason"] = "roe_below_min"
                     return None
                 if de is not None and de > STRICT_DE_MAX:
+                    item["fundamental_fail_reason"] = "de_above_max"
                     return None
 
             elif mode == "filter_standard":
                 if not (yoy_growing is True or (yoy_growing is None and qoq_growing)):
+                    item["fundamental_fail_reason"] = "profit_not_growing"
                     return None
 
             elif mode == "filter_loose":
                 if not data.get("quarterly_profit_positive", False):
+                    item["fundamental_fail_reason"] = "profit_not_positive"
                     return None
 
         return item

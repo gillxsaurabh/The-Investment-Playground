@@ -110,6 +110,18 @@ export interface SectorLeaderboardResponse {
   error?: string;
 }
 
+export interface ScanContext {
+  scan_id?: string;
+  scan_rank?: number;
+  scan_ai_conviction?: number;
+  scan_composite_score?: number;
+  scan_final_rank_score?: number;
+  scan_rsi?: number;
+  scan_adx?: number;
+  scan_rsi_trigger?: string;
+  scan_news_flag?: string;
+}
+
 export interface AutomationStockSummary {
   symbol: string;
   gear: number;
@@ -198,13 +210,17 @@ export class SimulatorService implements OnDestroy {
     atr: number,
     trailMultiplier: number = 1.5,
     instrumentToken?: number,
-    ltp?: number
+    ltp?: number,
+    scanContext?: ScanContext,
   ): Observable<ExecuteOrderResponse> {
     const isLive = this.tradingModeSubject.value === 'live';
     const url = isLive
       ? `${this.tradingApiUrl}/execute`
       : `${this.apiUrl}/execute`;
     const body: any = { symbol, quantity, atr: atr, trail_multiplier: trailMultiplier, instrument_token: instrumentToken, ltp };
+    if (scanContext && Object.keys(scanContext).length > 0) {
+      body.scan_context = scanContext;
+    }
     return this.http.post<ExecuteOrderResponse>(url, body).pipe(
       tap(() => this.refreshPositions())
     );

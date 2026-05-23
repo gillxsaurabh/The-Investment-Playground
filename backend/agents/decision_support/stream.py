@@ -180,6 +180,7 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
     })
 
     universe_stocks = []
+    rejected_universe: list = []
     total_scanned = 0
     try:
         log_fn = make_logger("universe_filter")
@@ -194,6 +195,7 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
             ema_period=resolved.get("ema_period", 200),
             universe=universe_key,
             session=session,
+            rejected_out=rejected_universe,
         )
     except Exception as e:
         yield _sse("error", {"step": "universe_filter", "message": str(e)})
@@ -225,13 +227,18 @@ def run_decision_support_stream(access_token: str, config: dict | None = None, u
         "duration_ms": step1_ms,
     })
 
-    # Persist universe-filter candidates (passing stocks only — rejected ones don't have enough data yet)
+    # Persist universe-filter candidates: both passing and rejected stocks
     try:
         from services.db import upsert_scan_candidate
         for s in universe_stocks:
             upsert_scan_candidate(scan_id, s.get("symbol", ""), {
                 **s,
                 "passed_universe_filter": True,
+            })
+        for r in rejected_universe:
+            upsert_scan_candidate(scan_id, r.get("symbol", ""), {
+                **r,
+                "passed_universe_filter": False,
             })
     except Exception:
         pass

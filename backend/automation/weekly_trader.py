@@ -12,6 +12,7 @@ Runs every Monday at 9:00 AM IST:
 
 import json
 import logging
+import random
 from datetime import datetime, date
 from pathlib import Path
 
@@ -216,6 +217,11 @@ def _run_pipeline_for_gear(access_token: str, gear_number: int) -> list[dict]:
     # Create a fresh request-scoped cache so gears don't bleed into each other
     session = PipelineSession()
 
+    # Generate scan_id so trades can be traced back to this pipeline run
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    rand_suffix = "".join(random.choices("abcdefghijklmnopqrstuvwxyz0123456789", k=6))
+    scan_id = f"scan_auto_g{gear_number}_{ts}_{rand_suffix}"
+
     def log_fn(msg: str):
         logger.info(f"[Automation][{label}] {msg}")
 
@@ -259,6 +265,28 @@ def _run_pipeline_for_gear(access_token: str, gear_number: int) -> list[dict]:
         "regime": regime,
     }
 
+    # Register scan in DB so trades can be joined back to it
+    try:
+        from services.db import insert_scan
+        insert_scan({
+            "scan_id": scan_id,
+            "started_at": datetime.now().isoformat(),
+            "gear": gear_number,
+            "gear_label": label,
+            "universe": config.get("universe", "nifty500"),
+            "min_turnover": config.get("min_turnover", 50_000_000),
+            "rsi_buy_limit": rsi_buy_limit,
+            "adx_min": 20,
+            "trail_multiplier": config.get("atr_stop_loss_multiplier", 1.5),
+            "fundamental_check": config.get("fundamental_check", "standard"),
+            "sector_5d_tolerance": -0.5,
+            "min_volume_ratio": 0.7,
+            "vix": vix_value,
+            "market_regime": regime,
+        })
+    except Exception:
+        pass
+
     try:
         # Stage 1: Market Scanner
         stocks = filter_market_universe(
@@ -296,6 +324,10 @@ def _run_pipeline_for_gear(access_token: str, gear_number: int) -> list[dict]:
 
         # Stage 6: Portfolio Ranker
         stocks = rank_final_shortlist(stocks, log=log_fn, session=session)
+
+        # Tag every selected stock with the scan_id so trade records link back
+        for s in stocks:
+            s.setdefault("scan_id", scan_id)
 
         logger.info(f"[Automation][{label}] Pipeline complete — {len(stocks)} stocks ranked")
         return stocks

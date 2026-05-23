@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { KiteService, MarketIndex, Stock } from '../../services/kite.service';
-import { SimulatorService } from '../../services/simulator.service';
+import { SimulatorService, ScanContext } from '../../services/simulator.service';
 import { AuthService, User } from '../../services/auth.service';
 import { DemoService } from '../../services/demo.service';
 import { TierService } from '../../services/tier.service';
@@ -159,6 +159,7 @@ export class DiscoverComponent implements OnInit, OnDestroy {
 
   stockResults: StockResult[] = [];
   sellResults: SellResult[] = [];
+  currentScanId: string | null = null;
 
   // Strategy gear info
   readonly GEAR_INFO: Record<number, { label: string; description: string }> = {
@@ -423,10 +424,11 @@ export class DiscoverComponent implements OnInit, OnDestroy {
         break;
       }
       case 'final_result':
-        // Buy pipeline: { stocks: [...] }
+        // Buy pipeline: { stocks: [...], scan_id: "..." }
         if (this.pipelineMode === 'buy' && Array.isArray(data.stocks)) {
           this.stockResults = data.stocks as StockResult[];
           this.lastRunAt = data.completed_at ?? new Date().toISOString();
+          this.currentScanId = data.scan_id ?? null;
         }
         // Sell pipeline: { holdings: [...] }
         if (this.pipelineMode === 'sell' && Array.isArray(data.holdings)) {
@@ -525,11 +527,26 @@ export class DiscoverComponent implements OnInit, OnDestroy {
     this.tradeError = '';
   }
 
+  private buildScanContext(stock: StockResult): ScanContext | undefined {
+    const ctx: ScanContext = {};
+    if (this.currentScanId) ctx.scan_id = this.currentScanId;
+    if (stock.final_rank != null) ctx.scan_rank = stock.final_rank;
+    if (stock.ai_conviction != null) ctx.scan_ai_conviction = stock.ai_conviction;
+    if (stock.composite_score != null) ctx.scan_composite_score = stock.composite_score;
+    if (stock.final_rank_score != null) ctx.scan_final_rank_score = stock.final_rank_score;
+    if (stock.rsi != null) ctx.scan_rsi = stock.rsi;
+    if (stock.adx != null) ctx.scan_adx = stock.adx;
+    if (stock.rsi_trigger) ctx.scan_rsi_trigger = stock.rsi_trigger;
+    if (stock.news_flag) ctx.scan_news_flag = stock.news_flag;
+    return Object.keys(ctx).length > 0 ? ctx : undefined;
+  }
+
   executeTrade(): void {
     if (!this.tradeDetails || !this.tradingStock) return;
     const { symbol, quantity, atr, trailMultiplier, ltp } = this.tradeDetails;
     const token = this.tradingStock.instrument_token;
-    this.simulatorService.executeOrder(symbol, quantity, atr, trailMultiplier, token, ltp).subscribe({
+    const scanCtx = this.buildScanContext(this.tradingStock);
+    this.simulatorService.executeOrder(symbol, quantity, atr, trailMultiplier, token, ltp, scanCtx).subscribe({
       next: (res) => {
         if (res.success) {
           this.closeTradeModal();
@@ -674,7 +691,9 @@ export class DiscoverComponent implements OnInit, OnDestroy {
         return;
       }
       const s = this.bulkTradeDetails.stocks[i];
-      this.simulatorService.executeOrder(s.symbol, s.quantity, s.atr, 1.5, s.instrument_token, s.ltp).subscribe({
+      const staged = this.stagingList.find(st => st.symbol === s.symbol);
+      const scanCtx = staged ? this.buildScanContext(staged) : undefined;
+      this.simulatorService.executeOrder(s.symbol, s.quantity, s.atr, 1.5, s.instrument_token, s.ltp, scanCtx).subscribe({
         next: res => { s.status = res.success ? 'success' : 'error'; this.bulkTradeProgress = i + 1; doNext(i + 1); },
         error: () => { s.status = 'error'; this.bulkTradeProgress = i + 1; doNext(i + 1); }
       });
