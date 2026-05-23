@@ -414,7 +414,6 @@ Respond with JSON:
         llm = get_llm(
             provider="claude",
             model_override="claude-opus-4-7",
-            temperature=1.0,   # Anthropic requires temperature=1.0 for extended thinking
             extended_thinking=True,
             thinking_budget=8000,
             user_id=user_id,

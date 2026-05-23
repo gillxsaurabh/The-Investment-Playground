@@ -33,8 +33,9 @@ class ClaudeChatModel(BaseChatModel):
     extended thinking requires the ``thinking`` parameter which the LangChain
     wrapper does not yet expose cleanly.
 
-    NOTE: When ``extended_thinking=True``, Anthropic's API requires
-    ``temperature=1.0`` regardless of the value passed to ``get_llm()``.
+    NOTE: When ``extended_thinking=True``, the new Anthropic API uses
+    ``thinking={"type": "adaptive"}`` + ``output_config={"effort": ...}``.
+    The ``thinking_budget`` is mapped to effort: <=4k→low, <=12k→medium, >12k→high.
     """
 
     model_name: str = "claude-sonnet-4-6"
@@ -70,12 +71,19 @@ class ClaudeChatModel(BaseChatModel):
         formatted = self._format_messages(messages)
 
         if self.extended_thinking:
+            # Map budget_tokens to effort level (new API format for Claude 4.x models)
+            if self.thinking_budget <= 4000:
+                effort = "low"
+            elif self.thinking_budget <= 12000:
+                effort = "medium"
+            else:
+                effort = "high"
             resp = client.messages.create(
                 model=self.model_name,
                 max_tokens=16000,
-                thinking={"type": "enabled", "budget_tokens": self.thinking_budget},
+                thinking={"type": "adaptive"},
+                output_config={"effort": effort},
                 messages=formatted,
-                temperature=1.0,
             )
         else:
             resp = client.messages.create(
@@ -190,10 +198,10 @@ def get_llm(
         provider:          "claude" | "openai".
                            claude  → claude-sonnet-4-6 (financial analysis, conviction, synthesis)
                            openai  → gpt-4o-mini (orchestration, routing, lightweight tasks)
-        extended_thinking: When True and provider="claude", activates Claude's extended
+        extended_thinking: When True and provider="claude", activates Claude's adaptive
                            thinking mode for deeper multi-step reasoning.
-        thinking_budget:   Token budget for the thinking phase (only used when
-                           extended_thinking=True).
+        thinking_budget:   Controls effort level when extended_thinking=True:
+                           <=4000→low, <=12000→medium, >12000→high.
         user_id:           When provided, per-user BYOK keys are checked first before
                            falling back to the global environment variable.
     """
